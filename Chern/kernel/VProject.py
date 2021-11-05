@@ -1,3 +1,7 @@
+""" The helper class that is used to "operate" the project
+    It is only used to "operate" things since all the information are stored in disk
+    The core part may move to c language in the future
+"""
 import Chern
 from Chern.kernel.VObject import VObject
 from Chern.utils.utils import debug
@@ -35,12 +39,35 @@ class VProject(VObject):
                 return "unfinished"
         return "finished"
 
+
+######################################
+# Helper functions
+def create_readme(project_path):
+    open(project_path+"/.chern/project.json", "w").close()
+    with open(project_path + "/.chern/README.md", "w") as f:
+        f.write("Please write README for this project")
+    # FIXME: should add a test whether vim is available
+    subprocess.call("vim {}/.chern/README.md".format(project_path), shell=True)
+
+def create_configfile(project_path, uuid):
+    config_file = metadata.ConfigFile(project_path+"/.chern/config.json")
+    config_file.write_variable("object_type", "project")
+    config_file.write_variable("chern_version", "4.0.0")
+    config_file.write_variable("project_uuid", uuid)
+
+
+
+
+
+######################################
+# Functions:
+
 def init_project():
     """ Create a new project from the existing folder
     """
     pwd = os.getcwd()
     if os.listdir(pwd) != []:
-        raise Exception("Initialize on a unempty directory is not allowed")
+        raise Exception("[ERROR] Initialize on a unempty directory is not allowed {}".format(pwd))
     project_name = pwd[pwd.rfind("/")+1:]
     print("The project name is ``{}'', would you like to change it? [y/n]".format(project_name))
     change = input()
@@ -59,23 +86,13 @@ def init_project():
         check_project_failed(project_name, forbidden_names)
 
     project_path = pwd
-    config_file = metadata.ConfigFile(project_path+"/.chern/config.json")
-    config_file.write_variable("object_type", "project")
-    config_file.write_variable("chern_version", "3.0.0")
-    open(project_path+"/.chern/project.json", "w").close()
-    # config_file.write_variable("ncpus", ncpus)
-    # config_file.write_variable("user_name", user_name)
-    # config_file.write_variable("user_mail", user_mail)
-    with open(project_path + "/README.md", "w") as f:
-        f.write("Please write README for this project")
-    subprocess.call("vim %s/README.md"%project_path, shell=True)
+    uuid = csys.generate_uuid()
+    create_readme(project_path, uuid)
     global_config_file = metadata.ConfigFile(csys.local_config_path())
     projects_path = global_config_file.read_variable("projects_path", {})
-    print("Read")
     projects_path[project_name] = project_path
     global_config_file.write_variable("projects_path", projects_path)
     global_config_file.write_variable("current_project", project_name)
-    print("Written")
     os.chdir(project_path)
 
 def use_project(path):
@@ -100,6 +117,7 @@ def use_project(path):
         check_project_failed(project_name, forbidden_names)
 
     project_path = path
+    uuid = csys.generate_uuid()
     config_file = utils.ConfigFile(project_path+"/.chern/config.json")
     object_type = config_file.read_variable("object_type", "")
     if object_type != "project":
@@ -109,10 +127,6 @@ def use_project(path):
     os.chdir(path)
     project = VObject(path)
     print(path)
-    if not project.is_git_committed():
-        print("Not committed")
-        os.chdir(cwd)
-        return
     global_config_file = metadata.ConfigFile(csys.local_config_path())
     projects_path = global_config_file.read_variable("projects_path", {})
     projects_path[project_name] = project_path
@@ -139,25 +153,15 @@ def new_project(project_name):
     if project_name in forbidden_names:
         check_project_failed(project_name, forbidden_names)
 
-    ncpus = int(input("Please input the number of cpus to use for this project: "))
-    # user_name = input("Please input your name: ")
-    # user_mail = input("Please input your email: ")
-
     pwd = os.getcwd()
     project_path = pwd + "/" + project_name
     if not os.path.exists(project_path):
         os.mkdir(project_path)
     else:
         raise Exception("Project exist")
-    config_file = metadata.ConfigFile(project_path+"/.chern/config.json")
-    config_file.write_variable("object_type", "project")
-    open(project_path+"/.chern/project.json", "w").close()
-    # config_file.write_variable("ncpus", ncpus)
-    # config_file.write_variable("user_name", user_name)
-    # config_file.write_variable("user_mail", user_mail)
-    with open(project_path + "/README.md", "w") as f:
-        f.write("Please write README for this project")
-    subprocess.call("vim %s/README.md"%project_path, shell=True)
+    uuid = csys.generate_uuid()
+    create_configfile(project_path, uuid)
+    create_readme(project_path)
     global_config_file = metadata.ConfigFile(csys.local_config_path())
     projects_path = global_config_file.read_variable("projects_path")
     if projects_path is None:
@@ -166,9 +170,4 @@ def new_project(project_name):
     global_config_file.write_variable("projects_path", projects_path)
     global_config_file.write_variable("current_project", project_name)
     os.chdir(project_path)
-    # call("git init", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    # call("git add .chern/config.py", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    # call("git commit -m \" Create config file for the project\"", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    # call("git add README.md", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    # call("git commit -m \" Create README file for the project\"", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
