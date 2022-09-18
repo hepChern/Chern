@@ -91,9 +91,11 @@ from Chern.utils import metadata
 from Chern.utils.pretty import colorize
 from Chern.utils.utils import color_print
 from Chern.kernel.ChernDaemon import status as daemon_status
-from Chern.kernel.ChernDatabase import ChernDatabase
+from Chern.kernel.VImpression import VImpression
 
-cherndb = ChernDatabase.instance()
+from Chern.kernel.ChernDatabase import ChernDatabase
+from Chern.kernel.ChernCommunicator import ChernCommunicator
+# cherndb = ChernDatabase.instance()
 
 class VObject(object):
     """ Virtual class of the objects, including VData, VAlgorithm and VDirectory
@@ -122,7 +124,7 @@ class VObject(object):
         """ The path relative to the project root.
         It is invariant when the project is moved.
         """
-        project_path = csys.project_path()
+        project_path = csys.project_path(self.path)
         path = os.path.relpath(self.path, project_path)
         return path
 
@@ -155,6 +157,7 @@ class VObject(object):
         return color_tag
 
     def ls(self, show_readme=True, show_predecessors=True, show_sub_objects=True, show_status=False, show_successors=False):
+        cherncc = ChernCommunicator.instance()
         """ Print the subdirectory of the object
         I recommend to print also the README
         and the parameters|inputs|outputs ...
@@ -167,6 +170,17 @@ class VObject(object):
         if daemon_status() != "started":
             color_print("!!Warning: runner not started, the status is {}".format(daemon_status()), color="warning")
         """
+
+        # Should have a flag whether to show the runner
+        hosts = cherncc.hosts()
+        hosts_status = colorize(">>>> Runners connection : ", "title0")
+        for host in hosts:
+            status = cherncc.host_status(host)
+            if (status == "ok"):
+                hosts_status += colorize("["+host+"] ", "success")
+            elif (status == "unconnected"):
+                hosts_status += colorize("["+host+"] ", "warning")
+        print(hosts_status)
 
         if show_readme:
             print(colorize("README:", "comment"))
@@ -208,7 +222,6 @@ class VObject(object):
                 succ_path = succ_object.invariant_path()
                 obj_type = "("+succ_object.object_type()+")"
                 print("{2} {0:<12} {3:>10}: @/{1:<20}".format(obj_type, succ_path, order, alias))
-
 
     def add_arc_from(self, obj):
         """ Add an link from the object contains in `path' to this object.
@@ -273,7 +286,7 @@ class VObject(object):
         """
         succ_str = self.config_file.read_variable("successors", [])
         successors = []
-        project_path = csys.project_path()
+        project_path = csys.project_path(self.path)
         for path in succ_str:
             successors.append(VObject(project_path+"/"+path))
         return successors
@@ -284,7 +297,7 @@ class VObject(object):
         """
         pred_str = self.config_file.read_variable("predecessors", [])
         predecessors = []
-        project_path = csys.project_path()
+        project_path = csys.project_path(self.path)
         for path in pred_str:
             predecessors.append(VObject(project_path+"/"+path))
         return predecessors
@@ -339,7 +352,7 @@ has a link to object {}".format(succ_object, obj) )
             alias_to_path = obj.config_file.read_variable("alias_to_path", {})
             path_to_alias = obj.config_file.read_variable("path_to_alias", {})
             for path in path_to_alias.keys():
-                project_path = csys.project_path()
+                project_path = csys.project_path(self.path)
                 pred_obj = VObject(project_path+"/"+path)
                 if not obj.has_predecessor(pred_obj):
                     print("There seems being a zombie alias to {} in {}".format(pred_obj, obj))
@@ -575,33 +588,25 @@ has a link to object {}".format(succ_object, obj) )
         return queue
 
     def is_impressed_fast(self):
-        consult_table = cherndb.impression_consult_table
+        consult_table = None # cherndb.impression_consult_table
+        # FIXME cherndb should be replaced by some function called like cache
         last_consult_time, is_impressed = consult_table.get(self.path, (-1,-1))
         now = time.time()
         if now - last_consult_time < 1:
             return is_impressed
-        modification_time = csys.dir_mtime( cherndb.project_path() )
+        modification_time = csys.dir_mtime( csys.project_path(self.path) )
         if modification_time < last_consult_time:
             return is_impressed
         is_impressed = self.is_impressed()
         consult_table[self.path] = (time.time(), is_impressed)
         return is_impressed
 
-    def impression_file_list(self, impression = ""):
-        if impression != "":
-            config_file = metadata.ConfigFile(self.path+"/.chern/impressions/{}/config.json".format(impression))
-            return config_file.read_variable("tree")
-        file_list = []
-        for dirpath, dirnames, filenames in csys.walk(self.path):
-            if "README.md" in filenames:
-                filenames.remove("README.md")
-            file_list.append([dirpath, dirnames, filenames])
-        return file_list
 
-    def pred_impressions(self, impression = ""):
-        if impression != "":
-            config_file = metadata.ConfigFile(self.path+"/.chern/impressions/{}/config.json".format(impression))
-            return config_file.read_variable("dependencies")
+    def pred_impressions(self):
+        """ Get the impression dependencies
+        """
+        # FIXME An assumption is that all the predcessor's are impressed, if they are not, we should impress them first
+        # Add check to this
         dependencies = []
         for pred in self.predecessors():
             dependencies.append(pred.impression())
@@ -612,35 +617,29 @@ has a link to object {}".format(succ_object, obj) )
         """
         # Check whether there is an impression already
         impression = self.impression()
-        if self.impression() == "":
+        if impression is None:
             return False
 
+        # Fast check whether it is impressed
         for pred in self.predecessors():
             if not pred.is_impressed_fast():
                 return False
 
-        file_list = self.impression_file_list()
-        if file_list != self.impression_file_list(impression):
+        # Check whether the dependent impressions are the same as the impressed things
+        if self.pred_impressions() != impression.pred_impressions():
             return False
-        if self.pred_impressions() != self.pred_impressions(impression):
+
+        # Check the file change: first to check the tree
+        file_list = csys.tree_excluded(self.path)
+        if file_list != impression.tree():
             return False
 
         for dirpath, dirnames, filenames in file_list:
             for f in filenames:
                 if not filecmp.cmp(self.path+"/{}/{}".format(dirpath, f),
-                               self.path+"/.chern/impressions/{}/contents/{}/{}".format(impression, dirpath, f)):
+                               "{}/contents/{}/{}".format(impression.path, dirpath, f)):
                     return False
         return True
-
-    def pack_impression(self, impression, difference=None):
-        if (is_packed(difference)):
-            unpack_impression(difference)
-
-    def unpack_impression(self, impression):
-        pass
-
-    def is_packed(self):
-        pass
 
     def impress(self):
         """ Create an impression.
@@ -662,42 +661,18 @@ has a link to object {}".format(succ_object, obj) )
         for pred in self.predecessors():
             if not pred.is_impressed_fast():
                 pred.impress()
-
-        impression = uuid.uuid4().hex
-        self.config_file.write_variable("impression", impression)
-        impressions = self.config_file.read_variable("impressions", [])
-        impressions.append(impression)
-        self.config_file.write_variable("impressions", impressions)
-
-        # Create an impression directory and
-        file_list = self.impression_file_list()
-        csys.mkdir(self.path+"/.chern/impressions/{}/contents".format(impression))
-        for dirpath, dirnames, filenames in file_list:
-            for f in filenames:
-                csys.copy(self.path+"/{}/{}".format(dirpath, f),
-                          self.path+"/.chern/impressions/{}/contents/{}/{}".format(impression, dirpath, f))
-
-        # Write tree and dependencies to the configuration file
-        dependencies = self.pred_impressions()
-        config_file = metadata.ConfigFile(self.path+"/.chern/impressions/{}/config.json".format(impression))
-        config_file.write_variable("tree", file_list)
-        config_file.write_variable("dependencies", dependencies)
-
-        # Write the basic metadata to the configuration file
-        object_type = {"task":"container", "algorithm":"image"}.get(object_type)
-        config_file.write_variable("object_type", object_type)
-        config_file.write_variable("impressions", impressions)
-
-        path_to_alias = self.config_file.read_variable("path_to_alias", {})
-        impression_to_alias = {}
-        for path, alias in path_to_alias.items():
-            impression = VObject(csys.project_path() + "/" + path).impression()
-            impression_to_alias[impression] = alias
-        config_file.write_variable("impression_to_alias", impression_to_alias)
+        impression = VImpression()
+        impression.create(self)
+        self.config_file.write_variable("impression", impression.uuid)
 
     def impression(self):
-        impression = self.config_file.read_variable("impression", "")
-        return impression
+        """ Get the impression of the current object
+        """
+        uuid = self.config_file.read_variable("impression", "")
+        if (uuid == ""):
+            return None
+        else:
+            return VImpression(uuid)
 
     def readme(self):
         """
@@ -705,5 +680,5 @@ has a link to object {}".format(succ_object, obj) )
         Get the README String.
         I'd like it to support more
         """
-        with open(self.path+"/README.md") as f:
+        with open(self.path+"/.chern/README.md") as f:
             return f.read().strip("\n")

@@ -1,12 +1,33 @@
-""" """
+"""
+    main function
+    The purpose is to start: Chern4
+
+    Functions:
+        cli:
+            default entrance, to start chern command line
+        ipython: [deprecated]
+            start the ipython shell of chern
+        * start_chern_ipython:
+            function for cli:ipython
+        * start_chern_command_line:
+            function for default cli
+
+        machine:
+            start or stop the chernmachine
+
+        config:
+            set the configurations: inavailable yet
+        prologue:
+            print the prologue
+"""
 import click
 import os
-import Chern
 from Chern.kernel import VProject
 from Chern.kernel.ChernDaemon import start as daemon_start
 from Chern.kernel.ChernDaemon import stop as daemon_stop
 from Chern.utils import csys
 from Chern.kernel.ChernDatabase import ChernDatabase
+from Chern.interface.ChernShell import ChernShell
 
 @click.group(invoke_without_command=True)
 @click.pass_context
@@ -17,9 +38,10 @@ def cli(ctx):
         start_first_time()
     if ctx.invoked_subcommand is None:
         try:
-            start_chern_ipython()
-        except:
-            print("Fail to start ipython")
+            start_chern_command_line()
+        except Exception as e:
+            print(e)
+            print("Chern shell ended")
 
 @cli.command()
 def config():
@@ -35,14 +57,24 @@ def ipython():
         print("Fail to start ipython")
 
 @cli.command()
+def chern_command_line():
+    """ Start Chern command line with cmd """
+    try:
+        start_chern_command_line()
+        print("End here")
+    except:
+        print("Fail to start Chern command line")
+
+@cli.command()
 def init():
     """ Add the current directory to project """
     try:
+        print("Init")
         VProject.init_project()
-        start_chern_ipython()
+        start_chern_command_line()
     except Exception as e:
         print(e)
-        print("Fail to start ipython")
+        print("Chern Shell Ended")
 
 @cli.command()
 @click.argument("path", type=str)
@@ -50,7 +82,7 @@ def use(path):
     """ Use a directory as the project"""
     try:
         VProject.use_project(path)
-        start_chern_ipython()
+        start_chern_command_line()
     except:
         print("Fail to start ipython")
 
@@ -74,6 +106,14 @@ def start_chern_ipython():
     del ip.magics_manager.magics["line"]["rm"]
     del ip.magics_manager.magics["line"]["cp"]
     del ip.magics_manager.magics["line"]["mkdir"]
+
+def start_chern_command_line():
+    print("Welcome to the CHERN Shell environment")
+    print("Please type: 'helpme' to get more information")
+    chern_shell = ChernShell()
+    chern_shell.init()
+    chern_shell.cmdloop()
+
 
 def is_first_time():
     if not os.path.exists(csys.local_config_dir()):
@@ -100,7 +140,7 @@ def prologue():
 Chern: A data analysis management toolkit
 Author: Mingrui Zhao
         2013 - 2017       @ Center of High Energy Physics, Tsinghua University
-        2017 - 2018(now)  @ Department of Nuclear Physics, China Institute of Atomic Energy
+        2017 - 2021(now)  @ Department of Nuclear Physics, China Institute of Atomic Energy
 Email: mingrui.zhao@mail.labz0.org
 
 I started the project when I was a undergraduate student in Tsinghua University and working for LHCb collaboration.
@@ -110,10 +150,12 @@ The unusual spelling "Chern" is a transliteration in the old Gwoyeu Romatzyh (GR
 Nowadays, when written in the form of ``Chern'', it usually refer to ``Shiing-Shen Chern'',
 the great Chinese-American mathematician who made fundamental contributions to differential geometry and topology.
 The well-known ``Chern classes'', ``Chern–Gauss–Bonnet theorem'' and many others are named after him.
-At the same time, my girlfriend has the same surname in Chinese with S.S.Chern.
 This is the origin of the software name.
 """)
+# At the same time, my girlfriend has the same surname in Chinese with S.S.Chern.
+# she is my ex now.
 
+# I think the following things are deprecated
 @click.group()
 def cli_sh():
     """ Chern command line command

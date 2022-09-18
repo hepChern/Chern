@@ -55,9 +55,10 @@ def create_configfile(project_path, uuid):
     config_file.write_variable("chern_version", "4.0.0")
     config_file.write_variable("project_uuid", uuid)
 
-
-
-
+def create_hostsfile(project_path):
+    config_file = metadata.ConfigFile(project_path+"/.chern/hosts.json")
+    config_file.write_variable("hosts", ["local"])
+    config_file.write_variable("urls", {"local":"127.0.0.1:3315"})
 
 ######################################
 # Functions:
@@ -161,6 +162,7 @@ def new_project(project_name):
         raise Exception("Project exist")
     uuid = csys.generate_uuid()
     create_configfile(project_path, uuid)
+    create_hostsfile(project_path)
     create_readme(project_path)
     global_config_file = metadata.ConfigFile(csys.local_config_path())
     projects_path = global_config_file.read_variable("projects_path")

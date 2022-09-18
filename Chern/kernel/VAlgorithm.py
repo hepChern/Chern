@@ -18,7 +18,6 @@ from Chern.utils import metadata
 
 from Chern.kernel.ChernCommunicator import ChernCommunicator
 cherndb = ChernDatabase.instance()
-cherncc = ChernCommunicator.instance()
 
 class VAlgorithm(VObject):
     """ Algorithm class
@@ -31,6 +30,7 @@ class VAlgorithm(VObject):
     def status(self, consult_id = None, detailed = False):
         """
         """
+        cherncc = ChernCommunicator.instance()
         if consult_id:
             consult_table = cherndb.status_consult_table
             # config_file.read_variable("impression_consult_table", {})
@@ -99,6 +99,7 @@ class VAlgorithm(VObject):
         cherndb.add_job(self.impression())
 
     def submit(self, host = "local"):
+        cherncc = ChernCommunicator.instance()
         if self.is_submitted():
             print("Already submitted")
             return
@@ -111,7 +112,7 @@ class VAlgorithm(VObject):
             print("Not submitted yet.")
             return
         path = utils.storage_path() + "/" + self.impression()
-        csys.rmtree(path)
+        csys.rm_tree(path)
         self.submit()
 
     def stdout(self):
@@ -165,9 +166,9 @@ def create_algorithm(path, use_template=False):
     config_file = metadata.ConfigFile(path+"/.chern/config.json")
     config_file.write_variable("object_type", "algorithm")
 
-    with open(path + "/README.md", "w") as readme_file:
+    with open(path + "/.chern/README.md", "w") as readme_file:
         readme_file.write("Please write README for this algorithm")
-    subprocess.call("vim {}/README.md".format(path), shell=True)
+    subprocess.call("vim {}/.chern/README.md".format(path), shell=True)
     if use_template:
         template_name = input("Please input the Dockerfile template type")
         print("Creating template, but hahahaha")

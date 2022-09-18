@@ -10,14 +10,19 @@ from colored import fg, bg, attr
 import subprocess
 import hashlib
 import time
+import tarfile
+
+def generate_uuid():
+    return uuid.uuid4().hex
 
 def abspath(path):
     return os.path.abspath(path)
 
-def project_path():
+def project_path(path=None):
     """ Get the project path by searching for project.json
     """
-    path = os.getcwd()
+    if (path is None):
+        path = os.getcwd()
     while (path != "/"):
         if exists(path+"/.chern/project.json"):
             return path
@@ -98,14 +103,13 @@ def copy(src, dst):
     """
     directory = os.path.dirname(dst)
     mkdir(directory)
-    print(src, dst)
     shutil.copy2(src, dst)
 
 def list_dir(src):
     files = os.listdir(src)
     return files
 
-def rmtree(src):
+def rm_tree(src):
     shutil.rmtree(src)
 
 def copy_tree(src, dst):
@@ -113,6 +117,15 @@ def copy_tree(src, dst):
 
 def exists(path):
     return os.path.exists(path)
+
+def make_archive(filename, dir_name):
+    with tarfile.open(filename+".tar.gz", "w:gz") as tar:
+        tar.add(dir_name,
+        arcname=os.path.basename(dir_name),)
+
+
+def unpack_archive(filename, dir_name):
+    shutil.unpack_archive(filename, dir_name, "zip")
 
 def strip_path_string(path_string):
     """ Remove the "/" in the end of the string
@@ -147,6 +160,11 @@ def walk(top):
             path = os.path.relpath(path, top)
             yield (path, dirs, names)
 
+def tree_excluded(path):
+    file_tree = []
+    for dirpath, dirnames, filenames in walk(path):
+        file_tree.append([dirpath, dirnames, filenames])
+    return file_tree
 
 def special_path_string(path_string):
     """ Replace the path string . -> /

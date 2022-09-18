@@ -8,6 +8,7 @@ from Chern.interface.ChernManager import get_manager
 from Chern.interface.ChernManager import create_object_instance
 import shutil
 from Chern.kernel.VTask import create_task
+from Chern.kernel.VTask import create_data
 from Chern.kernel.VAlgorithm import create_algorithm
 from Chern.kernel.VDirectory import create_directory
 from Chern.kernel.ChernDatabase import ChernDatabase
@@ -19,7 +20,6 @@ import time
 
 manager = get_manager()
 cherndb = ChernDatabase.instance()
-cherncc = ChernCommunicator.instance()
 
 def cd_project(line):
     manager.switch_project(line)
@@ -132,6 +132,7 @@ def ls(line):
     """
     The function ls should not be defined here
     """
+    print("Running")
     manager.current_object().ls()
 
 def short_ls(line):
@@ -159,6 +160,16 @@ def mktask(line):
         print("Not allowed to create task here")
         return
     create_task(line)
+
+def mkdata(line):
+    """ Create a new data task """
+    line = csys.refine_path(line, cherndb.project_path())
+    parent_path = os.path.abspath(line+"/..")
+    object_type = VObject(parent_path).object_type()
+    if object_type != "directory" and object_type != "project":
+        print("Not allowed to create task here")
+        return
+    create_data(line)
 
 def mkdir(line):
     """ Create a new directory """
@@ -231,9 +242,11 @@ def remove_input(alias):
     manager.c.remove_input(alias)
 
 def add_host(host, url):
+    cherncc = ChernCommunicator.instance()
     cherncc.add_host(host, url)
 
 def hosts():
+    cherncc = ChernCommunicator.instance()
     hosts = cherncc.hosts()
     urls = cherncc.urls()
     print("{0:<20}{1:20}".format("HOSTS", "STATUS"))

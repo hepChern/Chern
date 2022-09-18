@@ -31,7 +31,9 @@
 import os
 import subprocess
 import Chern
-from Chern.utils import utils from Chern.utils import git from Chern.utils import csys
+from Chern.utils import utils
+from Chern.utils import git
+from Chern.utils import csys
 from Chern.utils import metadata
 from Chern.kernel.VObject import VObject
 class VDirectory(VObject):

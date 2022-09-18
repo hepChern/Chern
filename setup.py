@@ -21,7 +21,7 @@ setup(
     license="Apache License, Version 2.0",
     url = URL,
     classifiers = [
-        'Development Status :: 3 - Alpha',
+        'Development Status :: 4 - Alpha',
 
         'Intended Audience :: Science/Research',
         'Topic :: Scientific/Engineering :: Physics',
@@ -34,15 +34,15 @@ setup(
     keywords = "Analysis Perservation",
     packages = find_packages(exclude=[]),
     install_requires = [
-        "click", "colored", "python-daemon", "ipython"
+        "click", "colored", "diff-match-patch", "python-daemon", "ipython"
     ],
     include_package_data = True,
     entry_points = {
         'console_scripts': [
             'chernsh = Chern.main:sh',
             'chernsh_ls = Chern.main:chernsh_ls',
-            'chern3 = Chern.main:main',
-            'chen3 = Chern.main:main'
+            'chern4 = Chern.main:main',
+            'chen4 = Chern.main:main'
         ]
     }
 )

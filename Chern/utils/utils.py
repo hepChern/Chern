@@ -8,6 +8,13 @@ import shutil
 import uuid
 from colored import fg, bg, attr
 
+def compress():
+    # Compress a directory with the tar algorithm
+    pass
+
+def recompress():
+    pass
+
 def daemon_path():
     path = os.environ["HOME"] + "/.Chern/daemon"
     mkdir(path)

@@ -11,7 +11,8 @@ class ChernCommunicator(object):
     ins = None
     def __init__(self):
         self.local_config_dir = csys.local_config_dir()
-        self.config_file = metadata.ConfigFile(self.local_config_dir+"/hosts.json")
+        project_path = csys.project_path()
+        self.config_file = metadata.ConfigFile(project_path+"/.chern/hosts.json")
 
     @classmethod
     def instance(cls):
@@ -20,20 +21,10 @@ class ChernCommunicator(object):
         return cls.ins
 
     def submit(self, host, path, impression, readme=None):
-        tarname = "/tmp/{}.tar.gz".format(impression)
-        tar = tarfile.open(tarname, "w:gz")
-        for dirpath, dirnames, filenames in os.walk(os.path.join(path, impression)):
-            for f in filenames:
-                fullpath = os.path.join(dirpath, f)
-                relpath = os.path.relpath(dirpath, os.path.join(path, impression))
-                tar.add(fullpath, arcname=os.path.join(relpath, f))
-        if readme is not None:
-            tar.add(readme, "README.md")
-        tar.close()
-
-        files = { "{}.tar.gz".format(impression) : open(tarname, "rb").read() }
+        tarname = impression.tarfile
+        files = { "{}.tar.gz".format(impression.uuid) : open(tarname, "rb").read() }
         url = self.url(host)
-        requests.post(url, data = {'tarname': "{}.tar.gz".format(impression)}, files = files)
+        requests.post("http://{}/upload".format(url), data = {'tarname': "{}.tar.gz".format(impression.uuid)}, files = files)
 
 
     def add_host(self, host, url):
@@ -57,16 +48,28 @@ class ChernCommunicator(object):
 
     def status(self, host, impression):
         url = self.url(host)
+        print("http://{}/status/{}".format(url, impression.uuid))
         try:
-            r = requests.get("http://{}/status/{}".format(url, impression))
+            r = requests.get("http://{}/status/{}".format(url, impression.uuid))
         except:
             return "unconnected"
         return r.text
 
-    def host_status(self, host):
+    def run_status(self, host, impression):
         url = self.url(host)
         try:
-            r = requests.get("http://{}/server_status".format(url))
+            r = requests.get("http://{}/status/{}".format(url, impression.uuid))
+        except:
+            return "unconnected"
+        return r.text
+
+
+    def host_status(self, host):
+        url = self.url(host)
+        print(url)
+        try:
+            r = requests.get("http://{}/serverstatus".format(url))
+            print(r.text)
         except:
             return "unconnected"
         status = r.text

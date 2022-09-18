@@ -99,14 +99,13 @@ from Chern.utils import csys
 from Chern.kernel.ChernDatabase import ChernDatabase
 from Chern.kernel.ChernCommunicator import ChernCommunicator
 cherndb = ChernDatabase.instance()
-cherncc = ChernCommunicator.instance()
 
 class VTask(VObject):
     def helpme(self, command):
         from Chern.kernel.Helpme import task_helpme
         print(task_helpme.get(command, "No such command, try ``helpme'' alone."))
 
-    def ls(self, show_readme=True, show_predecessors=True, show_sub_objects=True, show_status=False, show_successors=False):
+    def ls(self, show_readme=True, show_predecessors=True, show_sub_objects=True, show_status=True, show_successors=False):
         super(VTask, self).ls(show_readme, show_predecessors, show_sub_objects, show_status, show_successors)
         parameters, values = self.parameters()
         if parameters != []:
@@ -117,18 +116,33 @@ class VTask(VObject):
 
         if show_status:
                 status = self.status()
-                if status == "done":
-                    status_color = "success"
-                elif status == "running":
-                    status_color = "running"
-                else:
+                if status == "new":
                     status_color = "normal"
+                elif status == "impressed":
+                    status_color = "success"
                 print(colorize("**** STATUS:", "title0"),
-                    colorize(status, status_color) )
+                    colorize("["+status+"]", status_color) )
 
 
         # if self.is_submitted() and self.container().error() != "":
         # print(colorize("!!!! ERROR:\n", "title0"), self.container().error())
+        if self.is_impressed():
+            cherncc = ChernCommunicator.instance()
+            hosts = cherncc.hosts()
+            run_status = colorize("**** Running Status: ", "title0")
+            for host in hosts:
+                status = cherncc.run_status(host, self.impression())
+                print(status)
+                if (status == "unsubmitted"):
+                    run_status += colorize("["+host+"|"+"unsubmitted] ", "normal")
+                elif (status == "submitted"):
+                    run_status += colorize("["+host+"|"+"submitted] ", "normal")
+                elif (status == "running"):
+                    run_status += colorize("["+host+"|"+"running] ", "normal")
+                elif (status == "done"):
+                    run_status += colorize("["+host+"|"+"done] ", "success")
+            print(run_status)
+
         if self.is_submitted():
             print(colorize("---- Files:", "title0"))
             files = self.output_files()
@@ -159,9 +173,11 @@ class VTask(VObject):
                         print("")
 
     def output_files(self):
+        cherncc = ChernCommunicator.instance()
         return cherncc.output_files("local", self.impression())
 
     def get_file(self, host, filename):
+        cherncc = ChernCommunicator.instance()
         return cherncc.get_file("local", self.impression(), filename)
 
     def inputs(self):
@@ -179,10 +195,11 @@ class VTask(VObject):
             print("Not submitted yet.")
             return
         path = utils.storage_path() + "/" + self.impression()
-        csys.rmtree(path)
+        csys.rm_tree(path)
         self.submit()
 
     def submit(self, host = "local"):
+        cherncc = ChernCommunicator.instance()
         if self.is_submitted():
             print("Already submitted")
             return
@@ -252,10 +269,11 @@ class VTask(VObject):
         with open(self.container().path+"/stderr") as f:
             return f.read()
 
-    def is_submitted(self):
+    def is_submitted(self, host="local"):
+        cherncc = ChernCommunicator.instance()
         if not self.is_impressed_fast():
             return False
-        return cherncc.status("local", self.impression()) != "impressed"
+        return cherncc.status(host, self.impression()) != "unsubmitted"
 
 
 
@@ -264,11 +282,12 @@ class VTask(VObject):
         return output_md5s.get(self.impression(), "")
 
     def status(self, consult_id = None, detailed = False):
+        """ Consult the status of the object
+            There should be only two status locally: new|impressed
         """
-        """
+        # If it is already asked, just give us the answer
         if consult_id:
             consult_table = cherndb.status_consult_table
-            # config_file.read_variable("impression_consult_table", {})
             cid, status = consult_table.get(self.path, (-1,-1))
             if cid == consult_id:
                 return status
@@ -278,11 +297,14 @@ class VTask(VObject):
                 consult_table[self.path] = (consult_id, "new")
             return "new"
 
-        # hosts = cherncc.hosts()
-        status = cherncc.status("local", self.impression())
+        status = "impressed"
         if consult_id:
             consult_table[self.path] = (consult_id, status)
         return status
+
+    def run_status(self, host = "local"):
+        cherncc = ChernCommunicator.instance()
+        return cherncc.run_status(host, self.impression())
 
     def container(self):
         path = utils.storage_path() + "/" + self.impression()
@@ -435,5 +457,28 @@ def create_task(path):
     config_file.write_variable("object_type", "task")
     task = VObject(path)
 
-    with open(path + "/README.md", "w") as f:
+    with open(path + "/.chern/README.md", "w") as f:
         f.write("Please write README for task {}".format(task.invariant_path()))
+
+def create_data(path):
+    path = utils.strip_path_string(path)
+    parent_path = os.path.abspath(path+"/..")
+    object_type = VObject(parent_path).object_type()
+    if object_type != "project" and object_type != "directory":
+        return
+
+    csys.mkdir(path+"/.chern")
+    config_file = metadata.ConfigFile(path + "/.chern/config.json")
+    config_file.write_variable("object_type", "task")
+    task = VObject(path)
+
+    with open(path + "/.chern/README.md", "w") as f:
+        f.write("Please write README for task {}".format(task.invariant_path()))
+
+    with open(path + "/validation.txt", "w") as f:
+        f.write("""Whenever to fill a new version of the data,
+please edit this file and do the: ``impress''.
+It is suggestive to write the md5 of the data folder to this file.
+md5 =
+""")
+
