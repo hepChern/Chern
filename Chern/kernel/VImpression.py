@@ -4,6 +4,8 @@ from Chern.utils import csys
 from Chern.utils import metadata
 from Chern.utils.pretty import colorize
 from Chern.utils.utils import color_print
+from logging import getLogger
+logger = getLogger("ChernLogger")
 
 class VImpression(object):
     def __init__(self, uuid = None):
@@ -59,12 +61,15 @@ class VImpression(object):
         """
         # FIXME An assumption is that all the predcessor's are impressed, if they are not, we should impress them first
         # Add check to this
-        return self.config_file.read_variable("dependencies", [])
+        dependencies_uuid = self.config_file.read_variable("dependencies", [])
+        dependencies = [VImpression(uuid) for uuid in dependencies_uuid]
+        return dependencies 
 
     def create(self, obj):
         """ Create this impression with a VObject file
         """
-        # Create an impression directory and
+        logger.debug("Creating impression {}".format(self.uuid))
+        # Create an impression directory and copy the files to it
         file_list = csys.tree_excluded(obj.path)
         csys.mkdir(self.path+"/contents".format(self.uuid))
         for dirpath, dirnames, filenames in file_list:
@@ -74,8 +79,9 @@ class VImpression(object):
 
         # Write tree and dependencies to the configuration file
         dependencies = obj.pred_impressions()
+        dependencies_uuid = [dep.uuid for dep in dependencies]
         self.config_file.write_variable("tree", file_list)
-        self.config_file.write_variable("dependencies", dependencies)
+        self.config_file.write_variable("dependencies", dependencies_uuid)
 
 
         # Write the basic metadata to the configuration file

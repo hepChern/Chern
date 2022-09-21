@@ -28,6 +28,8 @@ from Chern.kernel.ChernDaemon import stop as daemon_stop
 from Chern.utils import csys
 from Chern.kernel.ChernDatabase import ChernDatabase
 from Chern.interface.ChernShell import ChernShell
+from logging import getLogger
+import logging
 
 @click.group(invoke_without_command=True)
 @click.pass_context
@@ -108,11 +110,20 @@ def start_chern_ipython():
     del ip.magics_manager.magics["line"]["mkdir"]
 
 def start_chern_command_line():
+    logger = getLogger("ChernLogger")
+    handler = logging.StreamHandler()
+    formatter = logging.Formatter('[%(asctime)s][%(levelname)s] %(message)s')
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+    logger.setLevel(logging.ERROR)
+
+    logger.debug("def start_chern_command_line")
     print("Welcome to the CHERN Shell environment")
     print("Please type: 'helpme' to get more information")
     chern_shell = ChernShell()
     chern_shell.init()
     chern_shell.cmdloop()
+    logger.debug("end start_chern_command_line")
 
 
 def is_first_time():

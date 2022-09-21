@@ -15,6 +15,7 @@ from Chern.kernel.ChernDatabase import ChernDatabase
 from Chern.utils.pretty import color_print
 from Chern.utils.pretty import colorize
 from Chern.kernel.ChernCommunicator import ChernCommunicator
+import subprocess
 
 import time
 
@@ -235,6 +236,12 @@ def add_input(path, alias):
         return
     manager.c.add_input(path, alias)
 
+def add_algorithm(path):
+    if manager.c.object_type() != "task":
+        print("Unable to call add_algorithm if you are not in a task.")
+        return
+    manager.c.add_algorithm(path)
+
 def remove_input(alias):
     if manager.c.object_type() != "task":
         print("Unable to call remove_input if you are not in a task.")
@@ -254,3 +261,6 @@ def hosts():
         status = cherncc.host_status(host)
         color_tag = {"ok":"ok", "unconnected":"warning"}[status]
         print("{0:<20}{1:20}".format(host, colorize(status, color_tag)))
+
+def edit(obj):
+    subprocess.call(["vim", manager.c.path + "/" + obj])

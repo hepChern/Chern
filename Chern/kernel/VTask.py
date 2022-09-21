@@ -83,22 +83,23 @@
 """
 import os
 import uuid
-import imp
-import time
 import subprocess
-import Chern
 from Chern.kernel.VObject import VObject
 from Chern.kernel.VContainer import VContainer
 from Chern.kernel import VAlgorithm
 from Chern.utils import utils
 from Chern.utils import metadata
-from Chern.utils.utils import debug
 from Chern.utils.pretty import colorize
 from Chern.utils import csys
 
+from Chern.kernel.ChernCache import ChernCache
 from Chern.kernel.ChernDatabase import ChernDatabase
 from Chern.kernel.ChernCommunicator import ChernCommunicator
+from logging import getLogger
+
 cherndb = ChernDatabase.instance()
+cherncache = ChernCache.instance()
+logger = getLogger("ChernLogger")
 
 class VTask(VObject):
     def helpme(self, command):
@@ -123,16 +124,12 @@ class VTask(VObject):
                 print(colorize("**** STATUS:", "title0"),
                     colorize("["+status+"]", status_color) )
 
-
-        # if self.is_submitted() and self.container().error() != "":
-        # print(colorize("!!!! ERROR:\n", "title0"), self.container().error())
         if self.is_impressed():
             cherncc = ChernCommunicator.instance()
             hosts = cherncc.hosts()
             run_status = colorize("**** Running Status: ", "title0")
             for host in hosts:
                 status = cherncc.run_status(host, self.impression())
-                print(status)
                 if (status == "unsubmitted"):
                     run_status += colorize("["+host+"|"+"unsubmitted] ", "normal")
                 elif (status == "submitted"):
@@ -171,6 +168,7 @@ class VTask(VObject):
                     print(("algorithm:{:<"+str(max_len+4)+"}").format(f), end="")
                     if (i+1)%nfiles == 0:
                         print("")
+            print("\n")
 
     def output_files(self):
         cherncc = ChernCommunicator.instance()
@@ -286,8 +284,9 @@ class VTask(VObject):
             There should be only two status locally: new|impressed
         """
         # If it is already asked, just give us the answer
+        logger.debug("VTask status: Consulting status of {}".format(self.path))
         if consult_id:
-            consult_table = cherndb.status_consult_table
+            consult_table = cherncache.status_consult_table
             cid, status = consult_table.get(self.path, (-1,-1))
             if cid == consult_id:
                 return status

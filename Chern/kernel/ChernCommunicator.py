@@ -7,6 +7,9 @@ import os
 import requests
 from Chern.utils import csys
 from Chern.utils import metadata
+from logging import getLogger
+logger = getLogger("ChernLogger")
+
 class ChernCommunicator(object):
     ins = None
     def __init__(self):
@@ -48,7 +51,6 @@ class ChernCommunicator(object):
 
     def status(self, host, impression):
         url = self.url(host)
-        print("http://{}/status/{}".format(url, impression.uuid))
         try:
             r = requests.get("http://{}/status/{}".format(url, impression.uuid))
         except:
@@ -65,11 +67,13 @@ class ChernCommunicator(object):
 
 
     def host_status(self, host):
+        logger.debug("ChernCommunicator/host_status")
         url = self.url(host)
-        print(url)
+        logger.debug("url: {}".format(url))
         try:
+            logger.debug("http://{}/serverstatus".format(url))
             r = requests.get("http://{}/serverstatus".format(url))
-            print(r.text)
+            logger.debug(r)
         except:
             return "unconnected"
         status = r.text

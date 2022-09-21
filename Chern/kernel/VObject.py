@@ -93,9 +93,12 @@ from Chern.utils.utils import color_print
 from Chern.kernel.ChernDaemon import status as daemon_status
 from Chern.kernel.VImpression import VImpression
 
-from Chern.kernel.ChernDatabase import ChernDatabase
+from Chern.kernel.ChernCache import ChernCache
 from Chern.kernel.ChernCommunicator import ChernCommunicator
-# cherndb = ChernDatabase.instance()
+import logging
+from logging import getLogger
+cherncache = ChernCache.instance()
+logger = getLogger("ChernLogger")
 
 class VObject(object):
     """ Virtual class of the objects, including VData, VAlgorithm and VDirectory
@@ -106,8 +109,10 @@ class VObject(object):
         All the information is directly read from and write to the disk.
         parameter ``path'' is allowed to be a string begin with empty characters.
         """
+        logger.debug("VObject init: {}".format(path))
         self.path = csys.strip_path_string(path)
         self.config_file = metadata.ConfigFile(self.path+"/.chern/config.json")
+        logger.debug("VObject init done: {}".format(path))
 
 
     def __str__(self):
@@ -157,7 +162,6 @@ class VObject(object):
         return color_tag
 
     def ls(self, show_readme=True, show_predecessors=True, show_sub_objects=True, show_status=False, show_successors=False):
-        cherncc = ChernCommunicator.instance()
         """ Print the subdirectory of the object
         I recommend to print also the README
         and the parameters|inputs|outputs ...
@@ -165,11 +169,14 @@ class VObject(object):
 
         """
         FIXME: Should communicate with ChernCommunicator to get the runner status
-        if not cherndb.is_docker_started():
+        if not cherncache.is_docker_started():
             color_print("!!Warning: docker not started", color="warning")
         if daemon_status() != "started":
             color_print("!!Warning: runner not started, the status is {}".format(daemon_status()), color="warning")
         """
+
+        logger.debug("[DEBUG] VObject ls: {}".format(self.invariant_path()))
+        cherncc = ChernCommunicator.instance()
 
         # Should have a flag whether to show the runner
         hosts = cherncc.hosts()
@@ -588,11 +595,17 @@ has a link to object {}".format(succ_object, obj) )
         return queue
 
     def is_impressed_fast(self):
-        consult_table = None # cherndb.impression_consult_table
-        # FIXME cherndb should be replaced by some function called like cache
+        """ Judge whether the file is impressed, with timestamp
+        """
+        logger.debug("VObject is_impressed_fast")
+        consult_table = cherncache.impression_consult_table
+        # FIXME cherncache should be replaced by some function called like cache
         last_consult_time, is_impressed = consult_table.get(self.path, (-1,-1))
         now = time.time()
         if now - last_consult_time < 1:
+            # If the last consult time is less than 1 second ago, we can use the cache
+            # But honestly, I don't remember why I set it to 1 second
+            logger.debug("Time now: {} Last consult time: {}".format(now, last_consult_time))
             return is_impressed
         modification_time = csys.dir_mtime( csys.project_path(self.path) )
         if modification_time < last_consult_time:
@@ -615,20 +628,27 @@ has a link to object {}".format(succ_object, obj) )
     def is_impressed(self, is_global=False):
         """ Judge whether the file is impressed
         """
+        logger.debug("VObject is_impressed in %s", self.path)
         # Check whether there is an impression already
         impression = self.impression()
+        logger.debug("Impression: %s", impression)
         if impression is None:
             return False
 
+        logger.debug("Check the predecessors is impressed or not")
         # Fast check whether it is impressed
         for pred in self.predecessors():
             if not pred.is_impressed_fast():
                 return False
 
+        logger.debug("Check the dependencies is consistent with the predecessors")
+        self_pred_impressions_uuid = [x.uuid for x in self.pred_impressions()]
+        impr_pred_impressions_uuid = [x.uuid for x in impression.pred_impressions()]
         # Check whether the dependent impressions are the same as the impressed things
-        if self.pred_impressions() != impression.pred_impressions():
+        if self_pred_impressions_uuid != impr_pred_impressions_uuid:
             return False
 
+        logger.debug("Check the file change")
         # Check the file change: first to check the tree
         file_list = csys.tree_excluded(self.path)
         if file_list != impression.tree():
@@ -652,9 +672,11 @@ has a link to object {}".format(succ_object, obj) )
         The object_type is also saved in the json file.
         The tree and the dependencies are sorted via name.
         """
+        logger.debug("VObject impress: %s", self.path)
         object_type = self.object_type()
         if object_type != "task" and object_type != "algorithm":
             return
+        logger.debug("Check whether it is impressed with is_impressed_fast")
         if self.is_impressed_fast():
             print("Already impressed.")
             return
