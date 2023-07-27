@@ -23,52 +23,46 @@ class ChernCommunicator(object):
             cls.ins = ChernCommunicator()
         return cls.ins
 
-    def submit(self, host, path, impression, readme=None):
+    def submit(self, impression, machine="local"):
         tarname = impression.tarfile
-        files = { "{}.tar.gz".format(impression.uuid) : open(tarname, "rb").read() }
-        url = self.url(host)
-        requests.post("http://{}/upload".format(url), data = {'tarname': "{}.tar.gz".format(impression.uuid)}, files = files)
+        files = { "{}.tar.gz".format(impression.uuid) : open(tarname, "rb").read(), "config.json" : open(impression.path+"/config.json", "rb").read() }
+        url = self.serverurl()
+        machine_id = requests.get("http://{}/machine_id/{}".format(url, machine)).text
+        requests.post("http://{}/upload".format(url), data = {'tarname': "{}.tar.gz".format(impression.uuid), 'config':"config.json"}, files = files)
+        # requests.post("http://{}/upload".format(url), data = {'configname': "config.json"}, files = configfiles)
+        # requests.post("http://{}/run/{}/{}".format(url, impression.uuid, machine_id))
 
-
-    def add_host(self, host, url):
+    def add_host(self, url):
         ## FIXME: add host_name and url check
-        hosts = self.config_file.read_variable("hosts", [])
-        urls = self.config_file.read_variable("urls", {})
-        if (host not in urls):
-            hosts.append(host)
-        urls[host] = url
-        self.config_file.write_variable("hosts", hosts)
-        self.config_file.write_variable("urls", urls)
+        self.config_file.write_variable("serverrul", url)
 
-    def urls(self):
-        return self.config_file.read_variable("urls", {})
+    def serverurl(self):
+        return self.config_file.read_variable("serverurl", "localhost:5000") 
 
-    def hosts(self):
-        return self.config_file.read_variable("hosts", [])
-
-    def url(self, host):
-        return self.urls().get(host, None)
-
-    def status(self, host, impression):
-        url = self.url(host)
+    def status(self, impression):
+        url = self.serverurl()
         try:
             r = requests.get("http://{}/status/{}".format(url, impression.uuid))
         except:
             return "unconnected"
         return r.text
 
-    def run_status(self, host, impression):
-        url = self.url(host)
+    def run_status(self, impression):
+        url = self.serverurl()
         try:
             r = requests.get("http://{}/status/{}".format(url, impression.uuid))
         except:
             return "unconnected"
         return r.text
 
+    def register_machine(self, machine, machine_id):
+        url = self.serverurl()
+        r = requests.get("http://{}/register/{}/{}".format(url, machine, machine_id))
 
-    def host_status(self, host):
+
+    def host_status(self):
         logger.debug("ChernCommunicator/host_status")
-        url = self.url(host)
+        url = self.serverurl()
         logger.debug("url: {}".format(url))
         try:
             logger.debug("http://{}/serverstatus".format(url))
@@ -81,12 +75,13 @@ class ChernCommunicator(object):
             return "ok"
         return "unconnected"
 
-    def output_files(self, host, impression):
-        url = self.url(host)
-        r = requests.get("http://{}/outputs/{}".format(url, impression))
+    def output_files(self, impression, machine="local"):
+        url = self.serverurl()
+        machine_id = requests.get("http://{}/machine_id/{}".format(url, machine)).text
+        r = requests.get("http://{}/outputs/{}/{}".format(url, impression, machine_id))
         return r.text.split()
 
-    def get_file(self, host, impression, filename):
-        url = self.url(host)
+    def get_file(self, impression, filename, machine="local"):
+        url = self.serverurl()
         r = requests.get("http://{}/getfile/{}/{}".format(url, impression, filename))
         return r.text
