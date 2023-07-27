@@ -76,7 +76,13 @@ class VAlgorithm(VObject):
             print("{0:<12}   {1:>20}".format(short, status))
     """
 
-    # is_submitted
+    def is_submitted(self):
+        """ Judge whether submitted or not. Return a True or False.
+        [FIXME: incomplete]
+        """
+        if not self.is_impressed_fast():
+            return False
+        return False
 
     """
     def submit(self):
@@ -90,6 +96,7 @@ class VAlgorithm(VObject):
         utils.copy_tree(cwd, path)
         image = self.image()
         image.config_file.write_variable("job_type", "image")
+        cherndb.add_job(self.impression())
     """
 
     def submit(self, machine = "local"):
