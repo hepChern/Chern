@@ -175,10 +175,11 @@ class VObject(object):
             color_print("!!Warning: runner not started, the status is {}".format(daemon_status()), color="warning")
         """
 
-        logger.debug("[DEBUG] VObject ls: {}".format(self.invariant_path()))
+        logger.debug("VObject ls: {}".format(self.invariant_path()))
         cherncc = ChernCommunicator.instance()
 
         # Should have a flag whether to show the runner
+        """
         hosts = cherncc.hosts()
         hosts_status = colorize(">>>> Runners connection : ", "title0")
         for host in hosts:
@@ -187,6 +188,14 @@ class VObject(object):
                 hosts_status += colorize("["+host+"] ", "success")
             elif (status == "unconnected"):
                 hosts_status += colorize("["+host+"] ", "warning")
+        print(hosts_status)
+        """
+        hosts_status = colorize(">>>> Local Server Connection : ", "title0")
+        status = cherncc.host_status()
+        if (status == "ok"):
+            hosts_status += colorize("[connected] ", "success")
+        elif (status == "unconnected"):
+            hosts_status += colorize("[disconnected] ", "warning")
         print(hosts_status)
 
         if show_readme:

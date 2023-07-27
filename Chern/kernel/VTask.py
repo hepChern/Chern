@@ -85,7 +85,7 @@ import os
 import uuid
 import subprocess
 from Chern.kernel.VObject import VObject
-from Chern.kernel.VContainer import VContainer
+# from Chern.kernel.VContainer import VContainer
 from Chern.kernel import VAlgorithm
 from Chern.utils import utils
 from Chern.utils import metadata
@@ -126,6 +126,7 @@ class VTask(VObject):
 
         if self.is_impressed():
             cherncc = ChernCommunicator.instance()
+            """
             hosts = cherncc.hosts()
             run_status = colorize("**** Running Status: ", "title0")
             for host in hosts:
@@ -139,6 +140,7 @@ class VTask(VObject):
                 elif (status == "done"):
                     run_status += colorize("["+host+"|"+"done] ", "success")
             print(run_status)
+            """
 
         if self.is_submitted():
             print(colorize("---- Files:", "title0"))
@@ -174,7 +176,7 @@ class VTask(VObject):
         cherncc = ChernCommunicator.instance()
         return cherncc.output_files("local", self.impression())
 
-    def get_file(self, host, filename):
+    def get_file(self, filename):
         cherncc = ChernCommunicator.instance()
         return cherncc.get_file("local", self.impression(), filename)
 
@@ -188,7 +190,7 @@ class VTask(VObject):
         outputs = filter(lambda x: x.object_type() == "task", self.successors())
         return list(map(lambda x: VTask(x.path), outputs))
 
-    def resubmit(self, host = "local"):
+    def resubmit(self, machine = "local"):
         if not self.is_submitted():
             print("Not submitted yet.")
             return
@@ -196,7 +198,8 @@ class VTask(VObject):
         csys.rm_tree(path)
         self.submit()
 
-    def submit(self, host = "local"):
+    def submit(self, machine = "local"):
+        print("submitting...")
         cherncc = ChernCommunicator.instance()
         if self.is_submitted():
             print("Already submitted")
@@ -204,7 +207,7 @@ class VTask(VObject):
         if not self.is_impressed_fast():
             self.impress()
         print(self.impression())
-        cherncc.submit(host, self.path+"/.chern/impressions", self.impression())
+        cherncc.submit(self.impression(), machine)
 
     def view(self, filename):
         if filename.startswith("local:"):
@@ -222,6 +225,7 @@ class VTask(VObject):
                 return
             csys.copy(path, dst)
 
+    """
     def remove(self, remove_impression):
         impressions = self.config_file.read_variable("impressions", [])
         impression = self.config_file.read_variable("impression")
@@ -258,6 +262,7 @@ class VTask(VObject):
                 short += " ({0})".format(output_md5[:8])
             status = VContainer(path).status()
             print("{0:<12}   {1:>20}".format(short, status))
+    """
 
     def stdout(self):
         with open(self.container().path+"/stdout") as f:
@@ -267,12 +272,11 @@ class VTask(VObject):
         with open(self.container().path+"/stderr") as f:
             return f.read()
 
-    def is_submitted(self, host="local"):
+    def is_submitted(self, machine="local"):
         cherncc = ChernCommunicator.instance()
         if not self.is_impressed_fast():
             return False
-        return cherncc.status(host, self.impression()) != "unsubmitted"
-
+        return cherncc.status(self.impression()) != "unsubmitted"
 
 
     def output_md5(self):
@@ -303,11 +307,13 @@ class VTask(VObject):
 
     def run_status(self, host = "local"):
         cherncc = ChernCommunicator.instance()
-        return cherncc.run_status(host, self.impression())
+        return cherncc.run_status(self.impression())
 
+    """
     def container(self):
         path = utils.storage_path() + "/" + self.impression()
         return VContainer(path)
+    """
 
     def add_source(self, path):
         """

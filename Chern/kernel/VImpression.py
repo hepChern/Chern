@@ -17,6 +17,9 @@ class VImpression(object):
         self.config_file = metadata.ConfigFile(self.path+"/config.json")
         self.tarfile = self.path + "/packed" + self.uuid + ".tar.gz"
 
+    def __str__(self) -> str:
+        return self.uuid
+
     def is_packed(self):
         # We should check whether it is affacted by other things
         return csys.exists(self.path + "/packed" + self.uuid + ".tar.gz")
@@ -80,6 +83,7 @@ class VImpression(object):
         # Write tree and dependencies to the configuration file
         dependencies = obj.pred_impressions()
         dependencies_uuid = [dep.uuid for dep in dependencies]
+        self.config_file.write_variable("object_type", obj.object_type())
         self.config_file.write_variable("tree", file_list)
         self.config_file.write_variable("dependencies", dependencies_uuid)
 
