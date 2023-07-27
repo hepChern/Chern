@@ -6,9 +6,9 @@ import os
 import subprocess
 from Chern.utils import csys
 from Chern.utils import metadata
-from Chern.kernel.VJob import VJob
-from Chern.kernel.VContainer import VContainer
-from Chern.kernel.VImage import VImage
+# from Chern.kernel.VJob import VJob
+# from Chern.kernel.VContainer import VContainer
+# from Chern.kernel.VImage import VImage
 
 class ChernDatabase(object):
     ins = None
@@ -30,6 +30,7 @@ class ChernDatabase(object):
         ps.wait()
         return (ps.poll() == 0)
 
+    """
     def job(self, id):
         storage_path = csys.storage_path()
         if os.path.exists(storage_path+"/"+id):
@@ -61,6 +62,7 @@ class ChernDatabase(object):
             if job.status() == condition:
                 job_list.append(job)
         return job_list
+    """
 
 
     def get_current_project(self):
