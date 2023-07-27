@@ -18,7 +18,6 @@ from Chern.utils.utils import colorize
 from Chern.utils import metadata
 
 from Chern.kernel.ChernCommunicator import ChernCommunicator
-# cherndb = ChernDatabase.instance()
 cherncache = ChernCache.instance()
 
 class VAlgorithm(VObject):
@@ -77,23 +76,7 @@ class VAlgorithm(VObject):
             print("{0:<12}   {1:>20}".format(short, status))
     """
 
-    def is_submitted(self):
-        """ Judge whether submitted or not. Return a True or False.
-        """
-        if not self.is_impressed_fast():
-            return False
-        return cherndb.job(self.impression()) is not None
-
-    def is_submitted(self):
-        return False
-        if not self.is_impressed_fast():
-            return False
-        if cherndb.job(self.impression()) is not None:
-            return True
-        else:
-            return False
-
-
+    # is_submitted
 
     """
     def submit(self):
@@ -107,7 +90,6 @@ class VAlgorithm(VObject):
         utils.copy_tree(cwd, path)
         image = self.image()
         image.config_file.write_variable("job_type", "image")
-        cherndb.add_job(self.impression())
     """
 
     def submit(self, machine = "local"):

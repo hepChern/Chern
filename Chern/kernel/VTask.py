@@ -97,7 +97,6 @@ from Chern.kernel.ChernDatabase import ChernDatabase
 from Chern.kernel.ChernCommunicator import ChernCommunicator
 from logging import getLogger
 
-cherndb = ChernDatabase.instance()
 cherncache = ChernCache.instance()
 logger = getLogger("ChernLogger")
 
@@ -325,30 +324,6 @@ class VTask(VObject):
         self.impress()
         return
 
-        if self.is_impressed_fast() and md5 == self.output_md5():
-            pass
-        else:
-            impression = uuid.uuid4().hex
-            output_md5s = self.config_file.read_variable("output_md5s", {})
-            impressions = self.config_file.read_variable("impressions", [])
-            output_md5s[impression] = md5
-            self.config_file.write_variable("output_md5s", output_md5s)
-            self.config_file.write_variable("output_md5", md5)
-            impressions.append(impression)
-            self.config_file.write_variable("impression", impression)
-            self.config_file.write_variable("impressions", impressions)
-            git.add(self.path)
-            git.commit("Impress: {0}".format(impression))
-
-        job_path = utils.storage_path() + "/" + self.impression()
-        cwd = self.path
-        csys.copy_tree(cwd, job_path)
-        container = VContainer(job_path)
-        container.config_file.write_variable("job_type", "container")
-        container.config_file.write_variable("status", "external")
-        container.set_storage(path)
-        cherndb.add_job(self.impression())
-
     def add_algorithm(self, path):
         """
         Add a algorithm
@@ -390,7 +365,8 @@ class VTask(VObject):
 
         if self.has_alias(alias):
             print("The alias already exists. The original input and alias will be replaced.")
-            original_object = VObject(cherndb.project_path()+"/"+self.alias_to_path(alias))
+            project_path = csys.project_path(self.path)
+            original_object = VObject(project_path+"/"+self.alias_to_path(alias))
             self.remove_arc_from(original_object)
             self.remove_alias(alias)
 
@@ -402,7 +378,8 @@ class VTask(VObject):
         if path == "":
             print("Alias not found")
             return
-        obj = VObject(cherndb.project_path()+"/"+path)
+        project_path = csys.project_path(self.path)
+        obj = VObject(project_path+"/"+path)
         self.remove_arc_from()
         self.remove_alias(alias)
 
@@ -415,7 +392,7 @@ class VTask(VObject):
         self.write_variable("outputs", outputs)
 
     def remove_output(self, alias):
-        """ FIXME: check existance
+        """ FIXME: check existence
         """
         outputs = self.read_variable("outputs", [])
         outputs.append(file_name)
