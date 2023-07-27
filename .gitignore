@@ -1,3 +1,4 @@
+*.~undo-tree~
 test
 trash
 profile/profile_chern/history.sqlite
