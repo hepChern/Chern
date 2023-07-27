@@ -23,8 +23,6 @@
 import click
 import os
 from Chern.kernel import VProject
-from Chern.kernel.ChernDaemon import start as daemon_start
-from Chern.kernel.ChernDaemon import stop as daemon_stop
 from Chern.utils import csys
 from Chern.kernel.ChernDatabase import ChernDatabase
 from Chern.interface.ChernShell import ChernShell
@@ -90,12 +88,6 @@ def use(path):
 
 @cli.command()
 @click.argument("command", type=str)
-def machine(command):
-    """ Start or stop the chern machine"""
-    if command == "start":
-        daemon_start()
-    elif command == "stop":
-        daemon_stop()
 
 def start_chern_ipython():
     profile_path = os.path.abspath(csys.local_config_dir()+"/profile")
@@ -151,7 +143,8 @@ def prologue():
 Chern: A data analysis management toolkit
 Author: Mingrui Zhao
         2013 - 2017       @ Center of High Energy Physics, Tsinghua University
-        2017 - 2021(now)  @ Department of Nuclear Physics, China Institute of Atomic Energy
+        2017 - 2022       @ Department of Nuclear Physics, China Institute of Atomic Energy
+        2023 - 2023(now)  @ China Institute of Atomic Energy & Niels Bohr Institute
 Email: mingrui.zhao@mail.labz0.org
 
 I started the project when I was a undergraduate student in Tsinghua University and working for LHCb collaboration.

@@ -90,11 +90,11 @@ from Chern.utils import csys
 from Chern.utils import metadata
 from Chern.utils.pretty import colorize
 from Chern.utils.utils import color_print
-from Chern.kernel.ChernDaemon import status as daemon_status
-from Chern.kernel.VImpression import VImpression
 
+from Chern.kernel.VImpression import VImpression
 from Chern.kernel.ChernCache import ChernCache
 from Chern.kernel.ChernCommunicator import ChernCommunicator
+
 import logging
 from logging import getLogger
 cherncache = ChernCache.instance()

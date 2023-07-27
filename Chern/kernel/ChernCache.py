@@ -6,9 +6,6 @@ import os
 import subprocess
 from Chern.utils import csys
 from Chern.utils import metadata
-# from Chern.kernel.VJob import VJob
-# from Chern.kernel.VContainer import VContainer
-# from Chern.kernel.VImage import VImage
 
 class ChernCache(object):
     ins = None
