@@ -150,6 +150,13 @@ class ChernShell(cmd.Cmd):
         except Exception as e:
             print(e)
 
+    def do_impression(self, arg):
+        try:
+            impression = manager.current_object().impression()
+            print(impression)
+        except Exception as e:
+            print(e)
+
 
     def jobs(line):
         shell.jobs
