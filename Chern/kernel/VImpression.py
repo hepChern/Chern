@@ -32,7 +32,7 @@ class VImpression(object):
         output_name = self.path + "/packed" + self.uuid
         csys.make_archive(output_name, self.path+"/contents")
 
-    def clear(self):
+    def clean(self):
         """ Clean the impression
         """
         csys.rm_tree(self.path+"/contents")
@@ -96,6 +96,6 @@ class VImpression(object):
         else:
             parents = parent_impression.parents()
             parents.append(parent_impression.uuid)
-            parent_impression.clear()
+            parent_impression.clean()
         self.config_file.write_variable("parents", parents)
         self.pack()
