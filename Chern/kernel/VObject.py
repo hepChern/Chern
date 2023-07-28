@@ -57,8 +57,6 @@
         + move_to:
             Move the object to another directory
 
-        + add: FIXME what is it?
-
         + rm:
             Remove the object
 
@@ -68,16 +66,11 @@
             Make a impression
         + is_impressed:
             Judge whether this object is impressed
-        +
 
         + pack_impression:
         + unpack_impression:
         + is_packed:
             For future transfer purpose
-
-
-
-
 """
 import os
 import shutil
@@ -552,11 +545,6 @@ has a link to object {}".format(succ_object, obj) )
             norm_path = os.path.normpath(new_path +"/"+ self.relative_path(obj.path))
 
         shutil.rmtree(self.path)
-
-    def add(self, src, dst):
-        if not os.path.exists(src):
-            return
-        csys.copy(src, self.path+"/"+dst)
 
     def rm(self):
         """
