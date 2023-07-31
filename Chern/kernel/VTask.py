@@ -93,7 +93,6 @@ from Chern.utils.pretty import colorize
 from Chern.utils import csys
 
 from Chern.kernel.ChernCache import ChernCache
-from Chern.kernel.ChernDatabase import ChernDatabase
 from Chern.kernel.ChernCommunicator import ChernCommunicator
 from logging import getLogger
 
