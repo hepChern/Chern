@@ -1,7 +1,7 @@
 from Chern.kernel.VProject import VProject
 from Chern.kernel.VProject import new_project
-from Chern.kernel.ChernDatabase import ChernDatabase
 import cmd, sys, os
+from Chern.utils import csys
 import Chern.interface.shell as shell
 import click
 from Chern.interface.ChernManager import get_manager
@@ -21,8 +21,6 @@ if current_project_name is None:
     new_project(project_name)
     current_project_name = manager.get_current_project()
 
-cherndb = ChernDatabase.instance()
-
 class ChernShell(cmd.Cmd):
     intro = ''
     prompt = '[Chern]'
@@ -37,7 +35,7 @@ class ChernShell(cmd.Cmd):
 
     def preloop(self):
         current_project_name = manager.get_current_project()
-        self.prompt = "[Chern]["+current_project_name+"]["+os.path.relpath(manager.c.path, cherndb.project_path())+"] "
+        self.prompt = "[Chern]["+current_project_name+"]["+os.path.relpath(manager.c.path, csys.project_path(manager.c.path))+"] "
 
     def do_ls(self, arg):
         try:
@@ -58,7 +56,7 @@ class ChernShell(cmd.Cmd):
             myobject = arg.split()[0]
             shell.cd(myobject)
             current_project_name = manager.get_current_project()
-            self.prompt = "[Chern]["+current_project_name+"]["+os.path.relpath(manager.c.path, cherndb.project_path())+"] "
+            self.prompt = "[Chern]["+current_project_name+"]["+os.path.relpath(manager.c.path, csys.project_path(manager.c.path))+"] "
 
         except Exception as e:
             print(e)
