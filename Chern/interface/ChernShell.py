@@ -128,6 +128,17 @@ class ChernShell(cmd.Cmd):
         except Exception as e:
             print(e)
 
+    def do_addinput(self, arg):
+        try:
+            obj1 = arg.split()[0]
+            obj2 = arg.split()[1]
+            shell.add_input(obj1, obj2)
+
+        except Exception as e:
+            print(e)
+
+
+
     def do_mkdata(self, arg):
         try:
             obj = arg.split()[0]
@@ -144,7 +155,11 @@ class ChernShell(cmd.Cmd):
 
     def do_submit(self, arg):
         try:
-            manager.current_object().submit()
+            if arg == "":
+                manager.current_object().submit()
+            else:
+                obj = arg.split()[0]
+                manager.current_object().submit(obj)
         except Exception as e:
             print(e)
 
