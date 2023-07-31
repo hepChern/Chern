@@ -52,7 +52,7 @@ class VAlgorithm(VObject):
 
 
     def run_status(self, consult_id = None):
-        """
+        """ Asking for the remote status
         """
         cherncc = ChernCommunicator.instance()
         return cherncc.run_status(self.impression())
@@ -151,8 +151,13 @@ class VAlgorithm(VObject):
             print(colorize("**** STATUS:", "title0"),
                 colorize("["+status+"]", status_color) )
 
-            run_status = self.run_status()
-            print(run_status)
+            if status == "impressed":
+                run_status = self.run_status()
+                if (run_status == "unsubmitted"):
+                    status_color = "warning"
+                else:
+                    status_color = "success"
+                print(colorize("**** STATUS:", "title0"), colorize("["+run_status+"]", status_color) )
 
         if self.is_submitted() and self.image().error() != "":
             print(colorize("!!!! ERROR:\n", "title0"), self.image().error())
