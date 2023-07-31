@@ -183,7 +183,7 @@ class VObject(object):
                 hosts_status += colorize("["+host+"] ", "warning")
         print(hosts_status)
         """
-        hosts_status = colorize(">>>> Local Server Connection : ", "title0")
+        hosts_status = colorize(">>>> DITE Connection : ", "title0")
         status = cherncc.host_status()
         if (status == "ok"):
             hosts_status += colorize("[connected] ", "success")
