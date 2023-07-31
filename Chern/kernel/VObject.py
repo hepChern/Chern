@@ -620,7 +620,7 @@ has a link to object {}".format(succ_object, obj) )
         dependencies = []
         for pred in self.predecessors():
             dependencies.append(pred.impression())
-        return sorted(dependencies)
+        return sorted(dependencies,key=lambda x:x.uuid)
 
     def is_impressed(self, is_global=False):
         """ Judge whether the file is impressed
