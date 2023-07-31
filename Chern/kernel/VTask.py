@@ -171,6 +171,8 @@ class VTask(VObject):
             print("\n")
 
     def output_files(self):
+        # FIXME, to get the output files list
+        return ""
         cherncc = ChernCommunicator.instance()
         return cherncc.output_files("local", self.impression())
 
@@ -197,14 +199,12 @@ class VTask(VObject):
         self.submit()
 
     def submit(self, machine = "local"):
-        print("submitting...")
         cherncc = ChernCommunicator.instance()
         if self.is_submitted():
             print("Already submitted")
             return
         if not self.is_impressed_fast():
             self.impress()
-        print(self.impression())
         cherncc.submit(self.impression(), machine)
 
     def view(self, filename):
