@@ -24,7 +24,6 @@ import click
 import os
 from Chern.kernel import VProject
 from Chern.utils import csys
-from Chern.kernel.ChernDatabase import ChernDatabase
 from Chern.interface.ChernShell import ChernShell
 from logging import getLogger
 import logging
@@ -119,13 +118,7 @@ def start_chern_command_line():
 
 
 def is_first_time():
-    if not os.path.exists(csys.local_config_dir()):
-        return True
-    if not os.path.exists(csys.local_config_dir()+"/profile"):
-        return True
-    cherndb = ChernDatabase.instance()
-    if cherndb.projects() == []:
-        return True
+    # FIXME: to find the projects
     return False
 
 def start_first_time():
