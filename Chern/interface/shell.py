@@ -11,7 +11,6 @@ from Chern.kernel.VTask import create_task
 from Chern.kernel.VTask import create_data
 from Chern.kernel.VAlgorithm import create_algorithm
 from Chern.kernel.VDirectory import create_directory
-from Chern.kernel.ChernDatabase import ChernDatabase
 from Chern.utils.pretty import color_print
 from Chern.utils.pretty import colorize
 from Chern.kernel.ChernCommunicator import ChernCommunicator
@@ -20,7 +19,6 @@ import subprocess
 import time
 
 manager = get_manager()
-cherndb = ChernDatabase.instance()
 
 def cd_project(line):
     manager.switch_project(line)
@@ -144,7 +142,7 @@ def short_ls(line):
 
 def mkalgorithm(obj, use_template=False):
     """ Create a new algorithm """
-    line = csys.refine_path(obj, cherndb.project_path())
+    line = csys.refine_path(obj, manager.c.path)
     parent_path = os.path.abspath(line+"/..")
     object_type = VObject(parent_path).object_type()
     if object_type != "directory" and object_type != "project":
@@ -154,7 +152,7 @@ def mkalgorithm(obj, use_template=False):
 
 def mktask(line):
     """ Create a new task """
-    line = csys.refine_path(line, cherndb.project_path())
+    line = csys.refine_path(line, manager.c.path)
     parent_path = os.path.abspath(line+"/..")
     object_type = VObject(parent_path).object_type()
     if object_type != "directory" and object_type != "project":
