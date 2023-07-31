@@ -29,8 +29,8 @@ class ChernCommunicator(object):
         url = self.serverurl()
         machine_id = requests.get("http://{}/machine_id/{}".format(url, machine)).text
         requests.post("http://{}/upload".format(url), data = {'tarname': "{}.tar.gz".format(impression.uuid), 'config':"config.json"}, files = files)
-        # requests.post("http://{}/upload".format(url), data = {'configname': "config.json"}, files = configfiles)
-        # requests.post("http://{}/run/{}/{}".format(url, impression.uuid, machine_id))
+        ## FIXME: here we simply assume that the upload is always correct
+        requests.get("http://{}/run/{}/{}".format(url, impression.uuid, machine_id))
 
     def add_host(self, url):
         ## FIXME: add host_name and url check
