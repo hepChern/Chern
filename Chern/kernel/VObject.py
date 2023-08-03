@@ -429,6 +429,11 @@ has a link to object {}".format(succ_object, obj) )
         alias_to_path = self.config_file.read_variable("alias_to_path", {})
         return alias_to_path.get(alias, "")
 
+    def alias_to_impression(self, alias):
+        path = self.alias_to_path(alias)
+        obj = VObject(os.path.join(csys.project_path(self.path), path))
+        return obj.impression()
+
     def has_alias(self, alias):
         alias_to_path = self.config_file.read_variable("alias_to_path", {})
         return alias in alias_to_path.keys()
