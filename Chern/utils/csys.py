@@ -150,6 +150,7 @@ def walk(top):
     names = []
     for f in d:
         if f == ".chern": continue
+        if f.endswith("~undo-tree~"): continue
         if os.path.isdir(f):
             dirs.append(f)
         else:
