@@ -55,7 +55,7 @@ class VAlgorithm(VObject):
         """ Asking for the remote status
         """
         cherncc = ChernCommunicator.instance()
-        return cherncc.run_status(self.impression())
+        return cherncc.status(self.impression())
         
     """
     def jobs(self):
