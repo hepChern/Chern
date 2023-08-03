@@ -8,6 +8,7 @@ from logging import getLogger
 logger = getLogger("ChernLogger")
 
 class VImpression(object):
+    uuid = None
     def __init__(self, uuid = None):
         if uuid is None:
             self.uuid = csys.generate_uuid()
@@ -86,6 +87,14 @@ class VImpression(object):
         self.config_file.write_variable("object_type", obj.object_type())
         self.config_file.write_variable("tree", file_list)
         self.config_file.write_variable("dependencies", dependencies_uuid)
+
+        if obj.object_type() == "task":
+            alias_to_imp = {}
+            alias_to_path = obj.config_file.read_variable("alias_to_path", {})
+            for alias, path in alias_to_path.items():
+                print(alias, path)
+                alias_to_imp[alias] = obj.alias_to_impression(alias).uuid
+            self.config_file.write_variable("alias_to_impression", alias_to_imp)
 
 
         # Write the basic metadata to the configuration file
