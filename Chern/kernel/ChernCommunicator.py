@@ -24,6 +24,7 @@ class ChernCommunicator(object):
         return cls.ins
 
     def submit(self, impression, machine="local"):
+        ## I should find a way to connect all the submission together to create a larger workflow
         tarname = impression.tarfile
         files = { "{}.tar.gz".format(impression.uuid) : open(tarname, "rb").read(), "config.json" : open(impression.path+"/config.json", "rb").read() }
         url = self.serverurl()
@@ -32,6 +33,12 @@ class ChernCommunicator(object):
         ## FIXME: here we simply assume that the upload is always correct
         requests.get("http://{}/run/{}/{}".format(url, impression.uuid, machine_id))
 
+    def resubmit(self, impression, machine="local"):
+        # Well, I don't know how to do it.
+        # Because we need to check which part has the problem, etc. 
+        # For testing purpose on a small project, we should first remove every thing in the impression and workflow directory and then to redo the submit
+        pass
+
     def add_host(self, url):
         ## FIXME: add host_name and url check
         self.config_file.write_variable("serverrul", url)
@@ -39,6 +46,7 @@ class ChernCommunicator(object):
     def serverurl(self):
         return self.config_file.read_variable("serverurl", "localhost:5000") 
 
+    # This is to check the status of the impression on any machine 
     def status(self, impression):
         url = self.serverurl()
         try:
@@ -47,10 +55,10 @@ class ChernCommunicator(object):
             return "unconnected"
         return r.text
 
-    def run_status(self, impression):
+    def run_status(self, impression, machine="local"):
         url = self.serverurl()
         try:
-            r = requests.get("http://{}/status/{}".format(url, impression.uuid))
+            r = requests.get("http://{}/runstatus/{}/{}".format(url, impression.uuid, machine))
         except:
             return "unconnected"
         return r.text
