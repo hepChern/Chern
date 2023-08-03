@@ -194,6 +194,8 @@ class VTask(VObject):
         if not self.is_submitted():
             print("Not submitted yet.")
             return
+        cherncc.resubmit(self.impression(), machine)
+
         path = utils.storage_path() + "/" + self.impression()
         csys.rm_tree(path)
         self.submit()
@@ -305,7 +307,7 @@ class VTask(VObject):
 
     def run_status(self, host = "local"):
         cherncc = ChernCommunicator.instance()
-        return cherncc.run_status(self.impression())
+        return cherncc.status(self.impression())
 
     """
     def container(self):
