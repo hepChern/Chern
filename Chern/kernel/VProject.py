@@ -8,6 +8,7 @@ from Chern.utils.utils import debug
 from Chern.utils import utils
 from Chern.utils import metadata
 from Chern.utils import csys
+from Chern.kernel.ChernCommunicator import ChernCommunicator
 import os
 import subprocess
 class VProject(VObject):
@@ -16,15 +17,32 @@ class VProject(VObject):
         from Chern.kernel.Helpme import project_helpme
         print(project_helpme.get(command, "No such command, try ``helpme'' alone."))
 
-    def submit(self):
+    def get_impressions(self):
+        impressions = []
+        sub_objects = self.sub_objects()
+        for sub_object in sub_objects:
+            if sub_object.object_type() == "task" or sub_object.object_type() == "algorithm":
+                impressions.append(sub_object.impression().uuid)
+            else:
+                impressions.extend(sub_object.get_impressions())
+        return impressions
+
+    def deposit(self, machine = "local"):
         sub_objects = self.sub_objects()
         for sub_object in sub_objects:
             if sub_object.object_type() == "task":
-                Chern.kernel.VTask.VTask(sub_object.path).submit()
+                Chern.kernel.VTask.VTask(sub_object.path).deposit()
             elif sub_object.object_type() == "algorithm":
-                Chern.kernel.VAlgorithm.VAlgorithm(sub_object.path).submit()
+                Chern.kernel.VAlgorithm.VAlgorithm(sub_object.path).deposit()
             else:
-                Chern.kernel.VDirectory.VDirectory(sub_object.path).submit()
+                Chern.kernel.VDirectory.VDirectory(sub_object.path).deposit()
+
+    def submit(self):
+        cherncc = ChernCommunicator.instance()
+        self.deposit()
+        impressions = self.get_impressions()
+        print(impressions)
+        cherncc.execute(impressions)
 
     def status(self):
         sub_objects = self.sub_objects()

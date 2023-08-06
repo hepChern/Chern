@@ -150,15 +150,17 @@ def walk(top):
     names = []
     for f in d:
         if f == ".chern": continue
+        if f.startswith("."): continue
         if f.endswith("~undo-tree~"): continue
-        if os.path.isdir(f):
+        if os.path.isdir(os.path.join(top, f)):
             dirs.append(f)
         else:
             names.append(f)
     yield ".", dirs, names
     for f in dirs:
-        for path, dirs, names in os.walk(f):
-            path = os.path.relpath(path, top)
+        for path, dirs, names in os.walk(os.path.join(top, f)):
+            # path = os.path.relpath(path, top)
+            if f.startswith("."): continue
             yield (path, dirs, names)
 
 def tree_excluded(path):

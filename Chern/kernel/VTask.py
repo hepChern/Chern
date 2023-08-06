@@ -114,46 +114,38 @@ class VTask(VObject):
             print(values[parameter])
 
         if show_status:
-                status = self.status()
-                if status == "new":
-                    status_color = "normal"
-                elif status == "impressed":
-                    status_color = "success"
-                print(colorize("**** STATUS:", "title0"),
-                    colorize("["+status+"]", status_color) )
+            status = self.status()
+            if status == "new":
+                status_color = "normal"
+            elif status == "impressed":
+                status_color = "success"
 
-        if self.is_impressed():
-            cherncc = ChernCommunicator.instance()
-            """
-            hosts = cherncc.hosts()
-            run_status = colorize("**** Running Status: ", "title0")
-            for host in hosts:
-                status = cherncc.run_status(host, self.impression())
-                if (status == "unsubmitted"):
-                    run_status += colorize("["+host+"|"+"unsubmitted] ", "normal")
-                elif (status == "submitted"):
-                    run_status += colorize("["+host+"|"+"submitted] ", "normal")
-                elif (status == "running"):
-                    run_status += colorize("["+host+"|"+"running] ", "normal")
-                elif (status == "done"):
-                    run_status += colorize("["+host+"|"+"done] ", "success")
-            print(run_status)
-            """
+            status_str = colorize("["+status+"]", status_color)
+
+            if status == "impressed":
+                run_status = self.run_status()
+                if (run_status == "unsubmitted"):
+                    status_color = "warning"
+                else:
+                    status_color = "success"
+                status_str += colorize("["+run_status+"]", status_color) 
+            print(colorize("**** STATUS:", "title0"), status_str)
+
 
         if self.is_submitted():
             print(colorize("---- Files:", "title0"))
             files = self.output_files()
-            if files == []: return
-            files.sort()
-            max_len = max([len(s) for s in files])
-            columns = os.get_terminal_size().columns
-            nfiles = columns // (max_len+4+7)
-            for i, f in enumerate(files):
-                if not f.startswith(".") and f != "README.md":
-                    print(("local:{:<"+str(max_len+4)+"}").format(f), end="")
-                    if (i+1)%nfiles == 0:
-                        print("")
-            print("")
+            if files != []:
+                files.sort()
+                max_len = max([len(s) for s in files])
+                columns = os.get_terminal_size().columns
+                nfiles = columns // (max_len+4+7)
+                for i, f in enumerate(files):
+                    if not f.startswith(".") and f != "README.md":
+                        print(("local:{:<"+str(max_len+4)+"}").format(f), end="")
+                        if (i+1)%nfiles == 0:
+                            print("")
+                print("")
 
         if self.algorithm() is not None:
             print(colorize("---- Algorithm files:", "title0"))
@@ -164,15 +156,23 @@ class VTask(VObject):
             columns = os.get_terminal_size().columns
             nfiles = columns // (max_len+4+11)
             for i, f in enumerate(files):
-                if not f.startswith(".") and f != "README.md":
-                    print(("algorithm:{:<"+str(max_len+4)+"}").format(f), end="")
-                    if (i+1)%nfiles == 0:
-                        print("")
-            print("\n")
+                if f.startswith("."): continue
+                if f == "README.md": continue
+                if f == "chern.yaml": continue
+                print(("algorithm:{:<"+str(max_len+4)+"}").format(f), end="")
+                if (i+1)%nfiles == 0: print("")
+            print(colorize("---- Commands:", "title0"))
+            for command in self.algorithm().commands():
+                parameters, values = self.parameters()
+                for parameter in parameters:
+                    parname = "${" + parameter + "}"
+                    command = command.replace(parname, values[parameter])
+                print(command)
+
 
     def output_files(self):
         # FIXME, to get the output files list
-        return ""
+        return []
         cherncc = ChernCommunicator.instance()
         return cherncc.output_files("local", self.impression())
 
@@ -199,15 +199,6 @@ class VTask(VObject):
         path = utils.storage_path() + "/" + self.impression()
         csys.rm_tree(path)
         self.submit()
-
-    def submit(self, machine = "local"):
-        cherncc = ChernCommunicator.instance()
-        if self.is_submitted():
-            print("Already submitted")
-            return
-        if not self.is_impressed_fast():
-            self.impress()
-        cherncc.submit(self.impression(), machine)
 
     def view(self, filename):
         if filename.startswith("local:"):
@@ -273,6 +264,13 @@ class VTask(VObject):
             return f.read()
 
     def is_submitted(self, machine="local"):
+        """ Judge whether submitted or not. Return a True or False.
+        [FIXME: incomplete]
+        """
+        if not self.is_impressed_fast():
+            return False
+        return False
+
         cherncc = ChernCommunicator.instance()
         if not self.is_impressed_fast():
             return False
@@ -344,7 +342,7 @@ class VTask(VObject):
         if algorithm is None:
             print("Nothing to remove")
         else:
-            self.remove_arc_from(algorithm.path)
+            self.remove_arc_from(algorithm)
 
     def algorithm(self):
         """
@@ -403,7 +401,7 @@ class VTask(VObject):
         """
         Read the parameters file
         """
-        parameters_file = metadata.ConfigFile(self.path+"/parameters.json")
+        parameters_file = metadata.YamlFile(os.path.join(self.path, "chern.yaml"))
         parameters = parameters_file.read_variable("parameters", {})
         return sorted(parameters.keys()), parameters
 
@@ -411,7 +409,7 @@ class VTask(VObject):
         """
         Add a parameter to the parameters file
         """
-        parameters_file = metadata.ConfigFile(self.path+"/parameters.json")
+        parameters_file = metadata.YamlFile(os.path.join(self.path, "chern.yaml"))
         parameters = parameters_file.read_variable("parameters", {})
         parameters[parameter] = value
         parameters_file.write_variable("parameters", parameters)
@@ -420,7 +418,7 @@ class VTask(VObject):
         """
         Remove a parameter to the parameters file
         """
-        parameters_file = metadata.ConfigFile(self.path+"/parameters.json")
+        parameters_file = metadata.YamlFile(os.path.join(self.path, "chern.yaml"))
         parameters = parameters_file.read_variable("parameters", {})
         if parameter not in parameters.keys():
             print("Parameter not found")

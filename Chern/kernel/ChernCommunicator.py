@@ -33,6 +33,31 @@ class ChernCommunicator(object):
         ## FIXME: here we simply assume that the upload is always correct
         requests.get("http://{}/run/{}/{}".format(url, impression.uuid, machine_id))
 
+    def deposit(self, impression, machine="local"):
+        ## I should find a way to connect all the submission together to create a larger workflow
+        tarname = impression.tarfile
+        files = { "{}.tar.gz".format(impression.uuid) : open(tarname, "rb").read(), "config.json" : open(impression.path+"/config.json", "rb").read() }
+        url = self.serverurl()
+        machine_id = requests.get("http://{}/machine_id/{}".format(url, machine)).text
+        requests.post("http://{}/upload".format(url), data = {'tarname': "{}.tar.gz".format(impression.uuid), 'config':"config.json"}, files = files)
+        ## FIXME: here we simply assume that the upload is always correct
+
+    def execute(self, impressions, machine="local"):
+        files = { "impressions" : " ".join(impressions) }
+        url = self.serverurl()
+        machine_id = requests.get("http://{}/machine_id/{}".format(url, machine)).text
+        requests.post("http://{}/execute".format(url), data = {'machine': machine_id} , files = files)
+
+    # This is to check the status of the impression on any machine 
+    def is_deposited(self, impression):
+        url = self.serverurl()
+        try:
+            r = requests.get("http://{}/deposited/{}".format(url, impression.uuid))
+        except:
+            return "FALSE"
+        return r.text
+
+
     def resubmit(self, impression, machine="local"):
         # Well, I don't know how to do it.
         # Because we need to check which part has the problem, etc. 

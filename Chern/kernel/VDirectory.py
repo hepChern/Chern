@@ -36,6 +36,7 @@ from Chern.utils import git
 from Chern.utils import csys
 from Chern.utils import metadata
 from Chern.kernel.VObject import VObject
+from Chern.kernel.ChernCommunicator import ChernCommunicator
 class VDirectory(VObject):
     """
     Nothing more to do for this VDirectory.
@@ -74,16 +75,32 @@ class VDirectory(VObject):
 
         return "finished"
 
-    def submit(self):
+    def get_impressions(self):
+        impressions = []
+        sub_objects = self.sub_objects()
+        for sub_object in sub_objects:
+            if sub_object.object_type() == "task" or sub_object.object_type() == "algorithm":
+                impressions.append(sub_object.impression().uuid)
+            else:
+                impressions.extend(sub_object.get_impressions())
+        return impressions
+
+    def deposit(self, machine = "local"):
         sub_objects = self.sub_objects()
         for sub_object in sub_objects:
             if sub_object.object_type() == "task":
-                Chern.kernel.VTask.VTask(sub_object.path).submit()
+                Chern.kernel.VTask.VTask(sub_object.path).deposit()
             elif sub_object.object_type() == "algorithm":
-                Chern.kernel.VAlgorithm.VAlgorithm(sub_object.path).submit()
+                Chern.kernel.VAlgorithm.VAlgorithm(sub_object.path).deposit()
             else:
-                Chern.kernel.VDirectory.VDirectory(sub_object.path).submit()
+                Chern.kernel.VDirectory.VDirectory(sub_object.path).deposit()
 
+    def submit(self):
+        cherncc = ChernCommunicator.instance()
+        self.deposit()
+        impressions = self.get_impressions()
+        print(impressions)
+        cherncc.execute(impressions)
 
 def create_directory(path, inloop=False):
     path = utils.strip_path_string(path)

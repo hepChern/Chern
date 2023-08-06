@@ -99,14 +99,6 @@ class VAlgorithm(VObject):
         cherndb.add_job(self.impression())
     """
 
-    def submit(self, machine = "local"):
-        cherncc = ChernCommunicator.instance()
-        if self.is_submitted():
-            print("Already submitted")
-            return
-        if not self.is_impressed_fast():
-            self.impress()
-        cherncc.submit(self.impression(), machine)
 
     def resubmit(self):
         if not self.is_submitted():
@@ -148,8 +140,8 @@ class VAlgorithm(VObject):
                 status_color = "normal"
             elif status == "impressed":
                 status_color = "success"
-            print(colorize("**** STATUS:", "title0"),
-                colorize("["+status+"]", status_color) )
+
+            status_str = colorize("["+status+"]", status_color)
 
             if status == "impressed":
                 run_status = self.run_status()
@@ -157,7 +149,8 @@ class VAlgorithm(VObject):
                     status_color = "warning"
                 else:
                     status_color = "success"
-                print(colorize("**** STATUS:", "title0"), colorize("["+run_status+"]", status_color) )
+                status_str += colorize("["+run_status+"]", status_color) 
+            print(colorize("**** STATUS:", "title0"), status_str)
 
         if self.is_submitted() and self.image().error() != "":
             print(colorize("!!!! ERROR:\n", "title0"), self.image().error())
@@ -167,6 +160,10 @@ class VAlgorithm(VObject):
         for f in files:
             if not f.startswith(".") and f != "README.md":
                 print(f)
+
+    def commands(self):
+        yaml_file = metadata.YamlFile(os.path.join(self.path, "chern.yaml"))
+        return yaml_file.read_variable("commands", [])
 
 
 def create_algorithm(path, use_template=False):

@@ -698,6 +698,42 @@ has a link to object {}".format(succ_object, obj) )
         else:
             return VImpression(uuid)
 
+    def is_submitted(self, machine="local"):
+        """ Judge whether submitted or not. Return a True or False.
+        [FIXME: incomplete]
+        """
+        if not self.is_impressed_fast():
+            return False
+        return False
+
+        cherncc = ChernCommunicator.instance()
+        if not self.is_impressed_fast():
+            return False
+        return cherncc.status(self.impression()) != "unsubmitted"
+
+    def submit(self, machine = "local"):
+        cherncc = ChernCommunicator.instance()
+        self.deposit(machine)
+        cherncc.execute([self.impression().uuid], machine)
+
+    def deposit(self, machine = "local"):
+        cherncc = ChernCommunicator.instance()
+        if self.is_deposited():
+            print("Already deposited")
+            return
+        if not self.is_impressed_fast():
+            self.impress()
+        for obj in self.predecessors():
+            obj.deposit(machine)
+        cherncc.deposit(self.impression(), machine)
+
+    def is_deposited(self):
+        if not self.is_impressed_fast():
+            return False
+        cherncc = ChernCommunicator.instance()
+        return cherncc.is_deposited(self.impression()) == "TRUE"
+
+
     def readme(self):
         """
         FIXME

@@ -137,6 +137,22 @@ class ChernShell(cmd.Cmd):
         except Exception as e:
             print(e)
 
+    def do_addparameter(self, arg):
+        try:
+            obj1 = arg.split()[0]
+            obj2 = arg.split()[1]
+            shell.add_parameter(obj1, obj2)
+
+        except Exception as e:
+            print(e)
+
+    def do_rmparameter(self, arg):
+        try:
+            obj = arg.split()[0]
+            shell.rm_parameter(obj)
+
+        except Exception as e:
+            print(e)
 
 
     def do_mkdata(self, arg):

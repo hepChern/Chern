@@ -240,6 +240,19 @@ def add_algorithm(path):
         return
     manager.c.add_algorithm(path)
 
+def add_parameter(par, value):
+    if manager.c.object_type() != "task":
+        print("Unable to call add_input if you are not in a task.")
+        return
+    manager.c.add_parameter(par, value)
+
+def rm_parameter(par):
+    if manager.c.object_type() != "task":
+        print("Unable to call add_input if you are not in a task.")
+        return
+    manager.c.remove_parameter(par)
+
+
 def remove_input(alias):
     if manager.c.object_type() != "task":
         print("Unable to call remove_input if you are not in a task.")
