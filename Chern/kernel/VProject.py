@@ -75,8 +75,9 @@ def create_configfile(project_path, uuid):
 
 def create_hostsfile(project_path):
     config_file = metadata.ConfigFile(project_path+"/.chern/hosts.json")
-    config_file.write_variable("hosts", ["local"])
-    config_file.write_variable("urls", {"local":"127.0.0.1:3315"})
+    config_file.write_variable("serverurl", "127.0.0.1:3315")
+    # config_file.write_variable("hosts", ["local"])
+    # config_file.write_variable("urls", {"local":"127.0.0.1:3315"})
 
 ######################################
 # Functions:
