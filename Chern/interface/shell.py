@@ -13,6 +13,7 @@ from Chern.kernel.VAlgorithm import create_algorithm
 from Chern.kernel.VDirectory import create_directory
 from Chern.utils.pretty import color_print
 from Chern.utils.pretty import colorize
+from Chern.utils import metadata
 from Chern.kernel.ChernCommunicator import ChernCommunicator
 import subprocess
 
@@ -273,5 +274,8 @@ def hosts():
         color_tag = {"ok":"ok", "unconnected":"warning"}[status]
         print("{0:<20}{1:20}".format(host, colorize(status, color_tag)))
 
-def edit(obj):
-    subprocess.call(["vim", manager.c.path + "/" + obj])
+def edit_script(obj):
+    path = os.path.join(os.environ["HOME"], ".chern", "config.yaml")
+    yaml_file = metadata.YamlFile(path)
+    editor = yaml_file.read_variable("editor", "vi")
+    subprocess.call([editor, manager.c.path + "/" + obj])
