@@ -163,6 +163,19 @@ class ChernShell(cmd.Cmd):
         except Exception as e:
             print(e)
 
+    def do_comment(self, arg):
+        try:
+            manager.current_object().comment(arg)
+        except Exception as e:
+            print(e)
+
+    def do_edit_readme(self, arg):
+        try:
+            manager.current_object().edit_readme()
+        except Exception as e:
+            print(e)
+
+
     def do_helpme(self, arg):
         try:
             manager.current_object().helpme(arg)
@@ -186,16 +199,23 @@ class ChernShell(cmd.Cmd):
         except Exception as e:
             print(e)
 
+    def do_cat(self, arg):
+        try:
+            manager.current_object().cat(arg)
+        except Exception as e:
+            print(e)
 
     def jobs(line):
         shell.jobs
 
+    """
     def do_edit(self, arg):
         try:
             obj = arg.split()[0]
             shell.edit(obj)
         except Exception as e:
             print(e)
+    """
 
     def emptyline(self):
         pass

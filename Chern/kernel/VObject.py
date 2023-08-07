@@ -742,3 +742,21 @@ has a link to object {}".format(succ_object, obj) )
         """
         with open(self.path+"/.chern/README.md") as f:
             return f.read().strip("\n")
+
+    def comment(self, line):
+        with open(self.path+"/.chern/README.md", "a") as f:
+            f.write(line + "\n")
+
+    def cat(self, file_name):
+        path = os.path.join(self.path, file_name)
+        with open(path) as f:
+            print(f.read().strip(""))
+
+    def edit_readme(self):
+        yaml_file = metadata.YamlFile(os.path.join(os.environ["HOME"], ".chern", "config.yaml"))
+        print("???")
+        editor = yaml_file.read_variable("editor", "vi")
+        print(editor)
+        file_name = os.path.join(self.path, ".chern/README.md")
+        subprocess.call("{} {}".format(editor, file_name), shell=True)
+
