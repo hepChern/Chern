@@ -124,13 +124,14 @@ class VTask(VObject):
 
             if status == "impressed":
                 run_status = self.run_status()
-                if (run_status == "unsubmitted"):
-                    status_color = "warning"
-                elif (run_status == "failed"):
-                    status_color = "warning"
-                else:
-                    status_color = "success"
-                status_str += colorize("["+run_status+"]", status_color) 
+                if run_status != "unconnected": 
+                    if (run_status == "unsubmitted"):
+                        status_color = "warning"
+                    elif (run_status == "failed"):
+                        status_color = "warning"
+                    else:
+                        status_color = "success"
+                    status_str += colorize("["+run_status+"]", status_color) 
             print(colorize("**** STATUS:", "title0"), status_str)
 
 

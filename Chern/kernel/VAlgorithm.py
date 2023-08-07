@@ -14,7 +14,7 @@ from Chern.utils import utils
 from Chern.utils import csys
 from Chern.utils.utils import color_print
 from Chern.utils import git
-from Chern.utils.utils import colorize
+from Chern.utils.pretty import colorize
 from Chern.utils import metadata
 
 from Chern.kernel.ChernCommunicator import ChernCommunicator
@@ -145,13 +145,14 @@ class VAlgorithm(VObject):
 
             if status == "impressed":
                 run_status = self.run_status()
-                if (run_status == "unsubmitted"):
-                    status_color = "warning"
-                elif (run_status == "failed"):
-                    status_color = "warning"
-                else:
-                    status_color = "success"
-                status_str += colorize("["+run_status+"]", status_color) 
+                if run_status != "unconnected":
+                    if (run_status == "unsubmitted"):
+                        status_color = "warning"
+                    elif (run_status == "failed"):
+                        status_color = "warning"
+                    else:
+                        status_color = "success"
+                        status_str += colorize("["+run_status+"]", status_color) 
             print(colorize("**** STATUS:", "title0"), status_str)
 
         if self.is_submitted() and self.image().error() != "":
