@@ -208,14 +208,12 @@ class ChernShell(cmd.Cmd):
     def jobs(line):
         shell.jobs
 
-    """
-    def do_edit(self, arg):
+    def do_edit_script(self, arg):
         try:
             obj = arg.split()[0]
-            shell.edit(obj)
+            shell.edit_script(obj)
         except Exception as e:
             print(e)
-    """
 
     def emptyline(self):
         pass
