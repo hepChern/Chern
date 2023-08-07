@@ -147,6 +147,8 @@ class VAlgorithm(VObject):
                 run_status = self.run_status()
                 if (run_status == "unsubmitted"):
                     status_color = "warning"
+                elif (run_status == "failed"):
+                    status_color = "warning"
                 else:
                     status_color = "success"
                 status_str += colorize("["+run_status+"]", status_color) 
