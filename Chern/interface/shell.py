@@ -67,7 +67,7 @@ def cd(line):
 
         # Check available
         if os.path.relpath(line, csys.project_path()).startswith(".."):
-            print("Can not go to a place not in the project")
+            print("[ERROR] Unable to navigate to a location that is not within the project.")
             return
         if not os.path.exists(line):
             print("Directory not exists")
