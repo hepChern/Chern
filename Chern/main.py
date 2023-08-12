@@ -48,14 +48,6 @@ def config():
     print("Configuration is not supported yet")
 
 @cli.command()
-def ipython():
-    """ Start IPython """
-    try:
-        start_chern_ipython()
-    except:
-        print("Fail to start ipython")
-
-@cli.command()
 def chern_command_line():
     """ Start Chern command line with cmd """
     try:
