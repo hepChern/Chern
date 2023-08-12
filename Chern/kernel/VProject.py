@@ -63,9 +63,7 @@ class VProject(VObject):
 def create_readme(project_path):
     open(project_path+"/.chern/project.json", "w").close()
     with open(project_path + "/.chern/README.md", "w") as f:
-        f.write("Please write README for this project")
-    # FIXME: should add a test whether vim is available
-    subprocess.call("vim {}/.chern/README.md".format(project_path), shell=True)
+        f.write("")
 
 def create_configfile(project_path, uuid):
     config_file = metadata.ConfigFile(project_path+"/.chern/config.json")
@@ -107,9 +105,14 @@ def init_project():
 
     project_path = pwd
     uuid = csys.generate_uuid()
-    create_readme(project_path, uuid)
+    os.mkdir(project_path+"/.chern")
+    create_readme(project_path)
+    create_configfile(project_path, uuid)
+    create_hostsfile(project_path)
     global_config_file = metadata.ConfigFile(csys.local_config_path())
-    projects_path = global_config_file.read_variable("projects_path", {})
+    projects_path = global_config_file.read_variable("projects_path")
+    if projects_path is None:
+        projects_path = {}
     projects_path[project_name] = project_path
     global_config_file.write_variable("projects_path", projects_path)
     global_config_file.write_variable("current_project", project_name)
@@ -119,6 +122,7 @@ def use_project(path):
     """ Use an exsiting project
     """
     path = os.path.abspath(path)
+    print(path)
     project_name = path[path.rfind("/")+1:]
     print("The project name is ``{}'', would you like to change it? [y/n]".format(project_name))
     change = input()
@@ -137,20 +141,17 @@ def use_project(path):
         check_project_failed(project_name, forbidden_names)
 
     project_path = path
-    uuid = csys.generate_uuid()
-    config_file = utils.ConfigFile(project_path+"/.chern/config.json")
+    config_file = metadata.ConfigFile(project_path+"/.chern/config.json")
     object_type = config_file.read_variable("object_type", "")
     if object_type != "project":
-        print("What!!?")
+        print("The path is not a project")
         return
+    print("The project type is ", object_type)
     cwd = os.getcwd()
     os.chdir(path)
-    project = VObject(path)
-    print(path)
     global_config_file = metadata.ConfigFile(csys.local_config_path())
     projects_path = global_config_file.read_variable("projects_path", {})
     projects_path[project_name] = project_path
-    print("Written")
     global_config_file.write_variable("projects_path", projects_path)
     global_config_file.write_variable("current_project", project_name)
     os.chdir(project_path)
@@ -179,10 +180,11 @@ def new_project(project_name):
         os.mkdir(project_path)
     else:
         raise Exception("Project exist")
+    os.mkdir(project_path+"/.chern")
     uuid = csys.generate_uuid()
+    create_readme(project_path)
     create_configfile(project_path, uuid)
     create_hostsfile(project_path)
-    create_readme(project_path)
     global_config_file = metadata.ConfigFile(csys.local_config_path())
     projects_path = global_config_file.read_variable("projects_path")
     if projects_path is None:
