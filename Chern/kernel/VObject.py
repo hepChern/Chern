@@ -634,7 +634,7 @@ has a link to object {}".format(succ_object, obj) )
         # Check whether there is an impression already
         impression = self.impression()
         logger.debug("Impression: %s", impression)
-        if impression is None:
+        if impression is None or impression.is_zombie():
             return False
 
         logger.debug("Check the predecessors is impressed or not")
@@ -685,6 +685,7 @@ has a link to object {}".format(succ_object, obj) )
         for pred in self.predecessors():
             if not pred.is_impressed_fast():
                 pred.impress()
+        print("Impressing {} ...".format(self))
         impression = VImpression()
         impression.create(self)
         self.config_file.write_variable("impression", impression.uuid)

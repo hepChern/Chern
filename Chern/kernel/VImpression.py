@@ -21,6 +21,9 @@ class VImpression(object):
     def __str__(self) -> str:
         return self.uuid
 
+    def is_zombie(self):
+        return not csys.exists(self.path)
+
     def is_packed(self):
         # We should check whether it is affacted by other things
         return csys.exists(self.path + "/packed" + self.uuid + ".tar.gz")
@@ -67,7 +70,7 @@ class VImpression(object):
         # Add check to this
         dependencies_uuid = self.config_file.read_variable("dependencies", [])
         dependencies = [VImpression(uuid) for uuid in dependencies_uuid]
-        return dependencies 
+        return dependencies
 
     def create(self, obj):
         """ Create this impression with a VObject file
@@ -92,7 +95,6 @@ class VImpression(object):
             alias_to_imp = {}
             alias_to_path = obj.config_file.read_variable("alias_to_path", {})
             for alias, path in alias_to_path.items():
-                print(alias, path)
                 alias_to_imp[alias] = obj.alias_to_impression(alias).uuid
             self.config_file.write_variable("alias_to_impression", alias_to_imp)
 
@@ -105,6 +107,7 @@ class VImpression(object):
         else:
             parents = parent_impression.parents()
             parents.append(parent_impression.uuid)
-            parent_impression.clean()
+            if (parent_impression.is_zombie()):
+                parent_impression.clean()
         self.config_file.write_variable("parents", parents)
         self.pack()
