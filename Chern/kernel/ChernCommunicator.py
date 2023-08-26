@@ -48,7 +48,7 @@ class ChernCommunicator(object):
         machine_id = requests.get("http://{}/machine_id/{}".format(url, machine)).text
         requests.post("http://{}/execute".format(url), data = {'machine': machine_id} , files = files)
 
-    # This is to check the status of the impression on any machine 
+    # This is to check the status of the impression on any machine
     def is_deposited(self, impression):
         url = self.serverurl()
         try:
@@ -57,10 +57,18 @@ class ChernCommunicator(object):
             return "FALSE"
         return r.text
 
+    def workflow(self, impression, machine="local"):
+        url = self.serverurl()
+        try:
+            r = requests.get("http://{}/workflow/{}".format(url, impression.uuid))
+        except:
+            return "unconnected"
+        return r.text.split()
+
 
     def resubmit(self, impression, machine="local"):
         # Well, I don't know how to do it.
-        # Because we need to check which part has the problem, etc. 
+        # Because we need to check which part has the problem, etc.
         # For testing purpose on a small project, we should first remove every thing in the impression and workflow directory and then to redo the submit
         pass
 
@@ -69,9 +77,9 @@ class ChernCommunicator(object):
         self.config_file.write_variable("serverrul", url)
 
     def serverurl(self):
-        return self.config_file.read_variable("serverurl", "localhost:5000") 
+        return self.config_file.read_variable("serverurl", "localhost:5000")
 
-    # This is to check the status of the impression on any machine 
+    # This is to check the status of the impression on any machine
     def status(self, impression):
         url = self.serverurl()
         try:
@@ -92,6 +100,10 @@ class ChernCommunicator(object):
         url = self.serverurl()
         r = requests.get("http://{}/register/{}/{}".format(url, machine, machine_id))
 
+    def collect(self, impression):
+        url = self.serverurl()
+        r = requests.get("http://{}/collect/{}".format(url, impression.uuid))
+        return r.text
 
     def host_status(self):
         logger.debug("ChernCommunicator/host_status")
@@ -114,7 +126,7 @@ class ChernCommunicator(object):
         r = requests.get("http://{}/outputs/{}/{}".format(url, impression, machine_id))
         return r.text.split()
 
-    def get_file(self, impression, filename, machine="local"):
+    def get_file(self, impression, filename):
         url = self.serverurl()
-        r = requests.get("http://{}/getfile/{}/{}".format(url, impression, filename))
-        return r.text
+        path = requests.get("http://{}/getfile/{}/{}".format(url, impression, filename)).text
+        return path
