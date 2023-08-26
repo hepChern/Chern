@@ -124,14 +124,14 @@ class VTask(VObject):
 
             if status == "impressed":
                 run_status = self.run_status()
-                if run_status != "unconnected": 
+                if run_status != "unconnected":
                     if (run_status == "unsubmitted"):
                         status_color = "warning"
                     elif (run_status == "failed"):
                         status_color = "warning"
                     else:
                         status_color = "success"
-                    status_str += colorize("["+run_status+"]", status_color) 
+                    status_str += colorize("["+run_status+"]", status_color)
             print(colorize("**** STATUS:", "title0"), status_str)
 
 
@@ -284,6 +284,55 @@ class VTask(VObject):
         output_md5s = self.config_file.read_variable("output_md5s", {})
         return output_md5s.get(self.impression(), "")
 
+    def print_status(self):
+        print("Status of task: {}".format(self.invariant_path()))
+        if self.status() == "impressed":
+            print("Impression: [{}]".format(colorize(self.impression().uuid, "success")))
+        else:
+            print("Impression: [{}]".format(colorize("New", "warning")))
+            return
+        cherncc = ChernCommunicator.instance()
+        host_status = cherncc.host_status()
+        if host_status == "ok":
+            print("DIET: [{}]".format(colorize("connected", "success")))
+        else:
+            print("DIET: [{}]".format(colorize("unconnected", "warning")))
+            return
+
+        deposited = cherncc.is_deposited(self.impression())
+        if deposited == "FALISE":
+            print("Impression not deposited in DIET")
+            return
+
+        workflow_check = cherncc.workflow(self.impression())
+        if workflow_check == "UNDEFINED":
+            print("Workflow not defined")
+            return
+
+        print(colorize("**** WORKFLOW:", "title0"))
+        runner = workflow_check[0]
+        workflow = workflow_check[1]
+        print("Workflow: [{}][{}]".format(colorize(runner,"success"), colorize(workflow, "success")))
+
+        files = cherncc.output_files(self.impression())
+        print("Output files (collected on DIET):")
+        for f in files:
+            print("    {}".format(f))
+
+        return
+
+        workflow_status = cherncc.workflow_status()
+        run_status = self.run_status()
+        if run_status != "unconnected":
+            if (run_status == "unsubmitted"):
+                status_color = "warning"
+            elif (run_status == "failed"):
+                status_color = "warning"
+            else:
+                status_color = "success"
+            status_str = colorize("["+run_status+"]", status_color)
+        print(colorize("**** STATUS:", "title0"), status_str)
+
     def status(self, consult_id = None, detailed = False):
         """ Consult the status of the object
             There should be only two status locally: new|impressed
@@ -305,6 +354,18 @@ class VTask(VObject):
         if consult_id:
             consult_table[self.path] = (consult_id, status)
         return status
+
+    def collect(self):
+        cherncc = ChernCommunicator.instance()
+        cherncc.collect(self.impression())
+
+    def display(self, filename):
+        cherncc = ChernCommunicator.instance()
+        output_file_path = cherncc.get_file(self.impression(), filename)
+        if output_file_path == "NOTFOUND":
+            print("File {} not found".format(filename))
+            return
+        subprocess.call("open {}".format(output_file_path), shell=True)
 
     def run_status(self, host = "local"):
         cherncc = ChernCommunicator.instance()
