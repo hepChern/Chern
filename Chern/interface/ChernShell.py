@@ -42,6 +42,25 @@ class ChernShell(cmd.Cmd):
         except Exception as e:
             print(e)
 
+    def do_status(self, arg):
+        try:
+            manager.current_object().print_status()
+        except Exception as e:
+            print(e)
+
+    def do_collect(self, arg):
+        try:
+            manager.current_object().collect()
+        except Exception as e:
+            print(e)
+
+    def do_display(self, arg):
+        try:
+            filename = arg.split()[0]
+            manager.current_object().display(filename)
+        except Exception as e:
+            print(e)
+
     def do_cd_project(self, arg):
         """ switch project
         """
@@ -100,6 +119,14 @@ class ChernShell(cmd.Cmd):
     def do_impress(self, arg):
         try:
             manager.current_object().impress()
+        except Exception as e:
+            print(e)
+
+    def do_mkdir(self, arg):
+        try:
+            obj = arg.split()[0]
+            shell.mkdir(obj)
+
         except Exception as e:
             print(e)
 
