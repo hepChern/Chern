@@ -163,7 +163,7 @@ def mktask(line):
 
 def mkdata(line):
     """ Create a new data task """
-    line = csys.refine_path(line, cherndb.project_path())
+    line = csys.refine_path(line, manager.c.path)
     parent_path = os.path.abspath(line+"/..")
     object_type = VObject(parent_path).object_type()
     if object_type != "directory" and object_type != "project":
@@ -173,7 +173,7 @@ def mkdata(line):
 
 def mkdir(line):
     """ Create a new directory """
-    line = csys.refine_path(line, cherndb.project_path())
+    line = csys.refine_path(line, manager.c.path)
     parent_path = os.path.abspath(line+"/..")
     object_type = VObject(parent_path).object_type()
     if object_type != "directory" and object_type != "project":
