@@ -720,7 +720,7 @@ has a link to object {}".format(succ_object, obj) )
     def deposit(self, machine = "local"):
         cherncc = ChernCommunicator.instance()
         if self.is_deposited():
-            print("Already deposited")
+            print("Object {} is already deposited".format(self.invariant_path()))
             return
         if not self.is_impressed_fast():
             self.impress()
@@ -755,9 +755,7 @@ has a link to object {}".format(succ_object, obj) )
 
     def edit_readme(self):
         yaml_file = metadata.YamlFile(os.path.join(os.environ["HOME"], ".chern", "config.yaml"))
-        print("???")
         editor = yaml_file.read_variable("editor", "vi")
-        print(editor)
         file_name = os.path.join(self.path, ".chern/README.md")
         subprocess.call("{} {}".format(editor, file_name), shell=True)
 
