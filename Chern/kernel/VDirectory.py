@@ -113,7 +113,6 @@ def create_directory(path, inloop=False):
     config_file = metadata.ConfigFile(path + "/.chern/config.json")
     config_file.write_variable("object_type", "directory")
     directory = VObject(path)
-    with open(path + "/README.md", "w") as f:
-        f.write("Please write README for directory {}".format(
-            directory.invariant_path() ) )
-    directory.edit_readme()
+
+    with open(path + "/.chern/README.md", "w") as f:
+        f.write("Please write README for the directory {}".format(directory.invariant_path()))
