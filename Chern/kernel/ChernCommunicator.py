@@ -65,6 +65,13 @@ class ChernCommunicator(object):
             return "unconnected"
         return r.text.split()
 
+    def sample_status(self, impression):
+        url = self.serverurl()
+        try:
+            r = requests.get("http://{}/samplestatus/{}".format(url, impression.uuid))
+        except:
+            return "unconnected"
+        return r.text
 
     def resubmit(self, impression, machine="local"):
         # Well, I don't know how to do it.
@@ -122,7 +129,10 @@ class ChernCommunicator(object):
 
     def output_files(self, impression, machine="local"):
         url = self.serverurl()
-        machine_id = requests.get("http://{}/machine_id/{}".format(url, machine)).text
+        if machine == "none":
+            machine_id = "none"
+        else:
+            machine_id = requests.get("http://{}/machine_id/{}".format(url, machine)).text
         r = requests.get("http://{}/outputs/{}/{}".format(url, impression, machine_id))
         return r.text.split()
 
@@ -130,3 +140,18 @@ class ChernCommunicator(object):
         url = self.serverurl()
         path = requests.get("http://{}/getfile/{}/{}".format(url, impression, filename)).text
         return path
+
+    def input(self, impression, path):
+        tmpdir = "/tmp"
+        tarname = tmpdir + "/" + impression.uuid + ".tar.gz"
+        tar = tarfile.open(tarname, "w:gz")
+        tar.add(path, arcname="rawdata")
+        tar.close()
+        files = { "{}.tar.gz".format(impression.uuid) : open(tarname, "rb").read() }
+        url = self.serverurl()
+        machine_id = requests.get("http://{}/machine_id/{}".format(url, "local")).text
+        requests.post("http://{}/upload".format(url), data = {'tarname': "{}.tar.gz".format(impression.uuid)}, files = files)
+
+    def set_sample_uuid(self, impression, sample_uuid):
+        url = self.serverurl()
+        requests.get("http://{}/setsampleuuid/{}/{}".format(url, impression.uuid, sample_uuid))

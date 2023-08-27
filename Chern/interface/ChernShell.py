@@ -61,6 +61,13 @@ class ChernShell(cmd.Cmd):
         except Exception as e:
             print(e)
 
+    def do_input(self, arg):
+        try:
+            input_path = arg.split()[0]
+            manager.current_object().input(input_path)
+        except Exception as e:
+            print(e)
+
     def do_cd_project(self, arg):
         """ switch project
         """
