@@ -113,6 +113,9 @@ class VTask(VObject):
             print(parameter, end=" = ")
             print(values[parameter])
 
+        if self.environment() == "rawdata":
+            print("Input data: {}".format(self.input_md5()))
+
         if show_status:
             status = self.status()
             if status == "new":
@@ -182,6 +185,30 @@ class VTask(VObject):
     def get_file(self, filename):
         cherncc = ChernCommunicator.instance()
         return cherncc.get_file("local", self.impression(), filename)
+
+    def input_md5(self):
+        parameters_file = metadata.YamlFile(os.path.join(self.path, "chern.yaml"))
+        return parameters_file.read_variable("uuid", "")
+
+    def set_input_md5(self, path):
+        md5 = csys.dir_md5(path)
+        parameters_file = metadata.YamlFile(os.path.join(self.path, "chern.yaml"))
+        parameters_file.write_variable("uuid", md5)
+        return md5
+
+    def input(self, path):
+        """ Add input data to the task.
+            The input data should be a task.
+        """
+        if self.environment() != "rawdata":
+            print("Unable to add input to this task")
+            return
+        input_md5 = self.set_input_md5(path)
+        self.impress()
+        self.deposit()
+        cherncc = ChernCommunicator.instance()
+        cherncc.input(self.impression(), path)
+        cherncc.set_sample_uuid(self.impression(), input_md5)
 
     def inputs(self):
         """ Input data. """
@@ -300,38 +327,36 @@ class VTask(VObject):
             return
 
         deposited = cherncc.is_deposited(self.impression())
-        if deposited == "FALISE":
+        if deposited == "FALSE":
             print("Impression not deposited in DIET")
             return
+
+        environment = self.environment()
+        if environment == "rawdata":
+            run_status = self.run_status()
+            print("Sample status: [{}]".format(colorize(run_status, "success")))
+            files = cherncc.output_files(self.impression(), "none")
+            print("Sample files (collected on DIET):")
+            for f in files:
+                print("    {}".format(f))
+            return
+
 
         workflow_check = cherncc.workflow(self.impression())
         if workflow_check == "UNDEFINED":
             print("Workflow not defined")
             return
 
-        print(colorize("**** WORKFLOW:", "title0"))
-        runner = workflow_check[0]
-        workflow = workflow_check[1]
-        print("Workflow: [{}][{}]".format(colorize(runner,"success"), colorize(workflow, "success")))
+        if environment != "rawdata":
+            print(colorize("**** WORKFLOW:", "title0"))
+            runner = workflow_check[0]
+            workflow = workflow_check[1]
+            print("Workflow: [{}][{}]".format(colorize(runner,"success"), colorize(workflow, "success")))
 
-        files = cherncc.output_files(self.impression())
-        print("Output files (collected on DIET):")
-        for f in files:
-            print("    {}".format(f))
-
-        return
-
-        workflow_status = cherncc.workflow_status()
-        run_status = self.run_status()
-        if run_status != "unconnected":
-            if (run_status == "unsubmitted"):
-                status_color = "warning"
-            elif (run_status == "failed"):
-                status_color = "warning"
-            else:
-                status_color = "success"
-            status_str = colorize("["+run_status+"]", status_color)
-        print(colorize("**** STATUS:", "title0"), status_str)
+            files = cherncc.output_files(self.impression(), runner)
+            print("Output files (collected on DIET):")
+            for f in files:
+                print("    {}".format(f))
 
     def status(self, consult_id = None, detailed = False):
         """ Consult the status of the object
@@ -369,6 +394,14 @@ class VTask(VObject):
 
     def run_status(self, host = "local"):
         cherncc = ChernCommunicator.instance()
+        environment = self.environment()
+        if environment == "rawdata":
+            md5 = self.input_md5()
+            dite_md5 = cherncc.sample_status(self.impression())
+            if dite_md5 == md5:
+                return "finished"
+            else:
+                return "unsubmitted"
         return cherncc.status(self.impression())
 
     """
@@ -461,6 +494,14 @@ class VTask(VObject):
         outputs.append(file_name)
         self.write_variable("outputs", outputs)
 
+    def environment(self):
+        """
+        Read the environment file
+        """
+        parameters_file = metadata.YamlFile(os.path.join(self.path, "chern.yaml"))
+        environment = parameters_file.read_variable("environment", "")
+        return environment
+
     def parameters(self):
         """
         Read the parameters file
@@ -520,10 +561,6 @@ def create_data(path):
     with open(path + "/.chern/README.md", "w") as f:
         f.write("Please write README for task {}".format(task.invariant_path()))
 
-    with open(path + "/validation.txt", "w") as f:
-        f.write("""Whenever to fill a new version of the data,
-please edit this file and do the: ``impress''.
-It is suggestive to write the md5 of the data folder to this file.
-md5 =
-""")
-
+    yaml_file = metadata.YamlFile(os.path.join(path, "chern.yaml"))
+    yaml_file.write_variable("environment", "rawdata")
+    yaml_file.write_variable("uuid", "")
