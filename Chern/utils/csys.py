@@ -41,35 +41,23 @@ def dir_mtime(path):
         mtime = max(mtime, dir_mtime(os.path.join(path, sub_dir)))
     return mtime
 
-def dir_md5(path):
-    config_file = ConfigFile(os.environ["HOME"] + "/.Chern/cache.py")
-    consult_table = config_file.read_variable("consult_table",{})
-    last_consult_time, md5 = consult_table.get(path, (-1,-1))
-    modification_time = dir_mtime(path)
-    if modification_time < last_consult_time:
-        return md5
+def md5sum(filename, block_size=65536):
+    md5 = hashlib.md5()
+    with open(filename, 'rb') as file:
+        for block in iter(lambda: file.read(block_size), b''):
+            md5.update(block)
+    return md5.hexdigest()
 
-    ps = subprocess.Popen("find -s {} -type f -exec md5sum {{}} \;".format(path),
-                          shell=True, stdout=subprocess.PIPE)
-    out = ""
-    while ps.poll() is None:
-        stdout = ps.stdout
-        if stdout is None:
-            continue
-        line = stdout.readline().decode()
-            # line = line.strip()
-        if line:
-            out += line
-    out = out.split()
-    print(out)
-    md5s = out[::2]
-    names = [os.path.relpath(name, path) for name in out[1::2]]
-    string = "".join(md5s + names)
-    md5 = hashlib.md5(string.encode('utf-8')).hexdigest()
+def dir_md5(directory_path):
+    md5_hash = hashlib.md5()
 
-    consult_table[path] = (time.time(), md5)
-    config_file.write_variable("consult_table", consult_table)
-    return md5
+    for root, dirs, files in os.walk(directory_path):
+        for file in files:
+            file_path = os.path.join(root, file)
+            file_hash = md5sum(file_path)
+            md5_hash.update(file_hash.encode('utf-8'))
+
+    return md5_hash.hexdigest()
 
 def daemon_path():
     path = os.environ["HOME"] + "/.Chern/daemon"
