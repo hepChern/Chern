@@ -56,7 +56,7 @@ class VAlgorithm(VObject):
         """
         cherncc = ChernCommunicator.instance()
         return cherncc.status(self.impression())
-        
+
     """
     def jobs(self):
         impressions = self.config_file.read_variable("impressions", [])
@@ -152,7 +152,7 @@ class VAlgorithm(VObject):
                         status_color = "warning"
                     else:
                         status_color = "success"
-                        status_str += colorize("["+run_status+"]", status_color) 
+                        status_str += colorize("["+run_status+"]", status_color)
             print(colorize("**** STATUS:", "title0"), status_str)
 
         if self.is_submitted() and self.image().error() != "":
@@ -167,6 +167,14 @@ class VAlgorithm(VObject):
     def commands(self):
         yaml_file = metadata.YamlFile(os.path.join(self.path, "chern.yaml"))
         return yaml_file.read_variable("commands", [])
+
+    def importfile(self, filename):
+        """
+        Import the file to this task directory
+        """
+        csys.copy(filename, self.path)
+
+
 
 
 def create_algorithm(path, use_template=False):
