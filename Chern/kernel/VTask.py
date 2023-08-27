@@ -531,6 +531,12 @@ class VTask(VObject):
         parameters.pop(parameter)
         parameters_file.write_variable("parameters", parameters)
 
+    def importfile(self, filename):
+        """
+        Import the file to this task directory
+        """
+        csys.copy(filename, self.path)
+
 def create_task(path):
     path = utils.strip_path_string(path)
     parent_path = os.path.abspath(path+"/..")
