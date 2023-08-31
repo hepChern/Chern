@@ -82,6 +82,7 @@ class VDirectory(VObject):
             if sub_object.object_type() == "task" or sub_object.object_type() == "algorithm":
                 impressions.append(sub_object.impression().uuid)
             else:
+                sub_object = Chern.kernel.VDirectory.VDirectory(sub_object.path)
                 impressions.extend(sub_object.get_impressions())
         return impressions
 
@@ -95,12 +96,49 @@ class VDirectory(VObject):
             else:
                 Chern.kernel.VDirectory.VDirectory(sub_object.path).deposit()
 
-    def submit(self):
+    def submit(self, machine = "local"):
         cherncc = ChernCommunicator.instance()
-        self.deposit()
+        self.deposit(machine)
         impressions = self.get_impressions()
-        print(impressions)
-        cherncc.execute(impressions)
+        cherncc.execute(impressions, machine)
+
+    def print_status(self):
+        return
+        # FIXME: This function is not used now
+        print("Status of directory: {}".format(self.invariant_path()))
+        cherncc = ChernCommunicator.instance()
+        host_status = cherncc.host_status()
+        if host_status == "ok":
+            print("    Host: [{}]".format(colorize("Online", "success")))
+
+        for sub_object in self.sub_objects():
+            if sub_object.object_type() == "task" or sub_object.object_type() == "algorithm":
+                print("    Task: {}".format(sub_object.invariant_path()))
+                task = Chern.kernel.VTask.VTask(sub_object.path)
+                if task.status() == "impressed":
+                    print("Impression: [{}]".format(colorize(task.impression().uuid, "success")))
+                else:
+                    print("Impression: [{}]".format(colorize("New", "normal")))
+                    continue
+            if host_status == "ok":
+                if sub_object.object_type() == "task":
+                    status = Chern.kernel.VTask.VTask(sub_object.path).status()
+                elif sub_object.object_type() == "algorithm":
+                    status = Chern.kernel.VAlgorithm.VAlgorithm(sub_object.path).status()
+                else:
+                    status = Chern.kernel.VDirectory.VDirectory(sub_object.path).status()
+                print("    Status: [{}]".format(colorize(status, "success")))
+
+
+    def clean_impressions(self):
+        sub_objects = self.sub_objects()
+        for sub_object in sub_objects:
+            if sub_object.object_type() == "task":
+                Chern.kernel.VTask.VTask(sub_object.path).clean_impressions()
+            elif sub_object.object_type() == "algorithm":
+                Chern.kernel.VAlgorithm.VAlgorithm(sub_object.path).clean_impressions()
+            else:
+                Chern.kernel.VDirectory.VDirectory(sub_object.path).clean_impressions()
 
 def create_directory(path, inloop=False):
     path = utils.strip_path_string(path)

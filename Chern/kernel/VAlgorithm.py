@@ -174,6 +174,12 @@ class VAlgorithm(VObject):
         """
         csys.copy(filename, self.path)
 
+    def environment(self):
+        """ Get the environment
+        """
+        yaml_file = metadata.YamlFile(os.path.join(self.path, "chern.yaml"))
+        return yaml_file.read_variable("environment", {})
+
 
 
 

@@ -674,6 +674,7 @@ has a link to object {}".format(succ_object, obj) )
         The object_type is also saved in the json file.
         The tree and the dependencies are sorted via name.
         """
+        print("Impressing: {}".format(self.path))
         logger.debug("VObject impress: %s", self.path)
         object_type = self.object_type()
         if object_type != "task" and object_type != "algorithm":
@@ -685,10 +686,19 @@ has a link to object {}".format(succ_object, obj) )
         for pred in self.predecessors():
             if not pred.is_impressed_fast():
                 pred.impress()
-        print("Impressing {} ...".format(self))
         impression = VImpression()
         impression.create(self)
         self.config_file.write_variable("impression", impression.uuid)
+        # update the impression_consult_table, since the impression is changed
+        consult_table = cherncache.impression_consult_table
+        consult_table[self.path] = (-1, -1)
+
+    def runners(self):
+        """ Print the available runners
+        """
+        cherncc = ChernCommunicator.instance()
+        for runner in cherncc.runners():
+            print(runner)
 
     def impression(self):
         """ Get the impression of the current object
@@ -720,7 +730,6 @@ has a link to object {}".format(succ_object, obj) )
     def deposit(self, machine = "local"):
         cherncc = ChernCommunicator.instance()
         if self.is_deposited():
-            print("Object {} is already deposited".format(self.invariant_path()))
             return
         if not self.is_impressed_fast():
             self.impress()
@@ -758,4 +767,3 @@ has a link to object {}".format(succ_object, obj) )
         editor = yaml_file.read_variable("editor", "vi")
         file_name = os.path.join(self.path, ".chern/README.md")
         subprocess.call("{} {}".format(editor, file_name), shell=True)
-

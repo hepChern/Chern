@@ -57,6 +57,22 @@ class ChernCommunicator(object):
             return "FALSE"
         return r.text
 
+    def kill(self, impression):
+        url = self.serverurl()
+        try:
+            r = requests.get("http://{}/kill/{}".format(url, impression.uuid))
+        except:
+            return "unconnected"
+        return r.text
+
+    def runners(self):
+        url = self.serverurl()
+        try:
+            r = requests.get("http://{}/runners".format(url))
+        except:
+            return "unconnected"
+        return r.text.split()
+
     def workflow(self, impression, machine="local"):
         url = self.serverurl()
         try:

@@ -91,13 +91,14 @@ class VImpression(object):
         self.config_file.write_variable("tree", file_list)
         self.config_file.write_variable("dependencies", dependencies_uuid)
 
+        self.config_file.write_variable("current_path", obj.invariant_path())
+
         if obj.object_type() == "task":
             alias_to_imp = {}
             alias_to_path = obj.config_file.read_variable("alias_to_path", {})
             for alias, path in alias_to_path.items():
                 alias_to_imp[alias] = obj.alias_to_impression(alias).uuid
             self.config_file.write_variable("alias_to_impression", alias_to_imp)
-
 
         # Write the basic metadata to the configuration file
         # self.config_file.write_variable("object_type", obj.object_type)

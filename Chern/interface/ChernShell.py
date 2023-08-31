@@ -75,6 +75,24 @@ class ChernShell(cmd.Cmd):
         except Exception as e:
             print(e)
 
+    def do_kill(self, arg):
+        try:
+            manager.current_object().kill()
+        except Exception as e:
+            print(e)
+
+    def do_auto_download(self, arg):
+        try:
+            auto_download = arg.split()[0]
+            if auto_download == "on":
+                manager.current_object().set_auto_download(True)
+            elif auto_download == "off":
+                manager.current_object().set_auto_download(False)
+            else:
+                print("please input on or off")
+        except Exception as e:
+            print(e)
+
     def do_cd_project(self, arg):
         """ switch project
         """
@@ -252,6 +270,19 @@ class ChernShell(cmd.Cmd):
         try:
             obj = arg.split()[0]
             shell.edit_script(obj)
+        except Exception as e:
+            print(e)
+
+    def do_clean_impressions(self, arg):
+        try:
+            print("cleaning impression")
+            manager.current_object().clean_impressions()
+        except Exception as e:
+            print(e)
+
+    def do_runners(self, arg):
+        try:
+            manager.current_object().runners()
         except Exception as e:
             print(e)
 

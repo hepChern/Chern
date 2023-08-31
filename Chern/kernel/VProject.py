@@ -37,12 +37,38 @@ class VProject(VObject):
             else:
                 Chern.kernel.VDirectory.VDirectory(sub_object.path).deposit()
 
-    def submit(self):
+    def submit(self, machine = "local"):
         cherncc = ChernCommunicator.instance()
-        self.deposit()
+        self.deposit(machine)
+        print("Submit the project")
         impressions = self.get_impressions()
-        print(impressions)
-        cherncc.execute(impressions)
+        cherncc.execute(impressions, machine)
+
+    def get_impressions(self):
+        impressions = []
+        sub_objects = self.sub_objects()
+        for sub_object in sub_objects:
+            if sub_object.object_type() == "task" or sub_object.object_type() == "algorithm":
+                impressions.append(sub_object.impression().uuid)
+            else:
+                sub_object = Chern.kernel.VDirectory.VDirectory(sub_object.path)
+                impressions.extend(sub_object.get_impressions())
+        return impressions
+
+    def clean_impressions(self):
+        print("Clean all the impressions")
+        clean_confirmed = input("Are you sure to clean all the impressions? [y/n]")
+        if clean_confirmed != "y":
+            return
+        sub_objects = self.sub_objects()
+        for sub_object in sub_objects:
+            if sub_object.object_type() == "task":
+                Chern.kernel.VTask.VTask(sub_object.path).clean_impressions()
+            elif sub_object.object_type() == "algorithm":
+                Chern.kernel.VAlgorithm.VAlgorithm(sub_object.path).clean_impressions()
+            else:
+                Chern.kernel.VDirectory.VDirectory(sub_object.path).clean_impressions()
+        csys.rm_tree(self.path+"/.chern/impressions")
 
     def status(self):
         sub_objects = self.sub_objects()

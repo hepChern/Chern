@@ -116,6 +116,16 @@ class VTask(VObject):
         if self.environment() == "rawdata":
             print("Input data: {}".format(self.input_md5()))
 
+        print(colorize("---- Environment:", "title0"), self.environment())
+        print(colorize("---- Memory limit:", "title0"), self.memory_limit())
+        if self.validated():
+            print(colorize("---- Validated:", "title0"), colorize("True", "success"))
+        else:
+            print(colorize("---- Validated:", "title0"), colorize("False", "warning"))
+
+        print(colorize("---- Auto download:", "title0"), self.auto_download())
+        print(colorize("---- Default runner:", "title0"), self.default_runner())
+
         if show_status:
             status = self.status()
             if status == "new":
@@ -161,12 +171,17 @@ class VTask(VObject):
             max_len = max([len(s) for s in files])
             columns = os.get_terminal_size().columns
             nfiles = columns // (max_len+4+11)
+            count = 0
             for i, f in enumerate(files):
+                count += 1
                 if f.startswith("."): continue
                 if f == "README.md": continue
                 if f == "chern.yaml": continue
                 print(("algorithm:{:<"+str(max_len+4)+"}").format(f), end="")
-                if (i+1)%nfiles == 0: print("")
+                if count%nfiles == 0:
+                    print("")
+            if count%nfiles != 0:
+                print("")
             print(colorize("---- Commands:", "title0"))
             for command in self.algorithm().commands():
                 parameters, values = self.parameters()
@@ -502,6 +517,14 @@ class VTask(VObject):
         environment = parameters_file.read_variable("environment", "")
         return environment
 
+    def memory_limit(self):
+        """
+        Read the memory limit file
+        """
+        parameters_file = metadata.YamlFile(os.path.join(self.path, "chern.yaml"))
+        memory_limit = parameters_file.read_variable("kubernetes_memory_limit", "")
+        return memory_limit
+
     def parameters(self):
         """
         Read the parameters file
@@ -531,11 +554,68 @@ class VTask(VObject):
         parameters.pop(parameter)
         parameters_file.write_variable("parameters", parameters)
 
+    def env_validated(self):
+        """
+        Check whether the environment is validated or not
+        """
+        if self.environment() == "rawdata":
+            return True
+        if self.algorithm() is not None:
+            if self.environment() == self.algorithm().environment():
+                return True
+        return False
+
+    def validated(self):
+        """
+        Check whether the task is validated or not
+        """
+        if self.environment() == "rawdata":
+            return True
+        if self.algorithm() is not None:
+            if self.environment() == self.algorithm().environment():
+                return False
+        return True
+
     def importfile(self, filename):
         """
         Import the file to this task directory
         """
         csys.copy(filename, self.path)
+
+    def kill(self):
+        """
+        Kill the task
+        """
+        cherncc = ChernCommunicator.instance()
+        cherncc.kill(self.impression())
+
+    def auto_download(self):
+        """
+        Return whether the task is auto_download or not
+        """
+        config_file = metadata.ConfigFile(self.path+"/.chern/config.json")
+        return config_file.read_variable("auto_download", True)
+
+    def set_auto_download(self, auto_download):
+        """
+        Set the auto_download
+        """
+        config_file = metadata.ConfigFile(self.path+"/.chern/config.json")
+        config_file.write_variable("auto_download", auto_download)
+
+    def set_default_runner(self, runner):
+        """
+        Set the default runner
+        """
+        config_file = metadata.ConfigFile(self.path+"/.chern/config.json")
+        config_file.write_variable("default_runner", runner)
+
+    def default_runner(self):
+        """
+        Return the default runner
+        """
+        config_file = metadata.ConfigFile(self.path+"/.chern/config.json")
+        return config_file.read_variable("default_runner", "local")
 
 def create_task(path):
     path = utils.strip_path_string(path)
@@ -547,7 +627,14 @@ def create_task(path):
     csys.mkdir(path+"/.chern")
     config_file = metadata.ConfigFile(path + "/.chern/config.json")
     config_file.write_variable("object_type", "task")
+    config_file.write_variable("auto_download", True)
+    config_file.write_variable("default_runner", "local")
     task = VObject(path)
+
+    # Create the default chern.yaml file
+    yaml_file = metadata.YamlFile(os.path.join(path, "chern.yaml"))
+    yaml_file.write_variable("environment", "reanahub/reana-env-root6:6.18.04")
+    yaml_file.write_variable("kubernetes_memory_limit", "256Mi")
 
     with open(path + "/.chern/README.md", "w") as f:
         f.write("Please write README for task {}".format(task.invariant_path()))
