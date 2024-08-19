@@ -33,7 +33,7 @@ setup(
     keywords = "Analysis Perservation",
     packages = find_packages(exclude=[]),
     install_requires = [
-        "click", "colored", "diff-match-patch", "python-daemon", "ipython", "PyYAML>=5.1,<6.0"
+        "click", "colored", "diff-match-patch", "python-daemon", "ipython", "PyYAML>=5.1,<6.0", "requests"
     ],
     include_package_data = True,
     entry_points = {
