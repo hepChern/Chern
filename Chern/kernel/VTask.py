@@ -401,11 +401,15 @@ class VTask(VObject):
 
     def display(self, filename):
         cherncc = ChernCommunicator.instance()
-        output_file_path = cherncc.get_file(self.impression(), filename)
+        # Open the browser to display the file
+        cherncc.display(self.impression(), filename)
+
+    def export(self, filename, output_file):
+        cherncc = ChernCommunicator.instance()
+        output_file_path = cherncc.export(self.impression(), filename, output_file)
         if output_file_path == "NOTFOUND":
             print("File {} not found".format(filename))
             return
-        subprocess.call("open {}".format(output_file_path), shell=True)
 
     def run_status(self, host = "local"):
         cherncc = ChernCommunicator.instance()
