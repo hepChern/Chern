@@ -4,6 +4,7 @@ Chern class for communicate to local and remote server.
 
 import tarfile
 import os
+import subprocess
 import requests
 from Chern.utils import csys
 from Chern.utils import metadata
@@ -127,6 +128,25 @@ class ChernCommunicator(object):
         url = self.serverurl()
         r = requests.get("http://{}/collect/{}".format(url, impression.uuid))
         return r.text
+
+    def display(self, impression, filename, machine="local"):
+        # Open the browser to display the file
+        url = self.serverurl()
+        # The browser is 'open'
+        subprocess.call(["open", "http://{}/export/{}/{}".format(url, impression.uuid, filename)])
+
+
+
+
+
+    def export(self, impression, filename, output, machine="local"):
+        url = self.serverurl()
+        machine_id = requests.get("http://{}/machine_id/{}".format(url, machine)).text
+        r = requests.get("http://{}/export/{}/{}".format(url, impression.uuid, filename))
+        # What we get is the file, save the file to the output
+        with open(output, "wb") as f:
+            f.write(r.content)
+
 
     def host_status(self):
         logger.debug("ChernCommunicator/host_status")
