@@ -70,7 +70,7 @@ class ChernCommunicator(object):
         try:
             r = requests.get("http://{}/runners".format(url))
         except:
-            return "unconnected"
+            return ["unconnected to DITE"]
         return r.text.split()
 
     def workflow(self, impression, machine="local"):
@@ -78,7 +78,7 @@ class ChernCommunicator(object):
         try:
             r = requests.get("http://{}/workflow/{}".format(url, impression.uuid))
         except:
-            return "unconnected"
+            return ["unconnected to DITE"]
         return r.text.split()
 
     def sample_status(self, impression):
@@ -86,7 +86,7 @@ class ChernCommunicator(object):
         try:
             r = requests.get("http://{}/samplestatus/{}".format(url, impression.uuid))
         except:
-            return "unconnected"
+            return "unconnected to DITE"
         return r.text
 
     def resubmit(self, impression, machine="local"):
