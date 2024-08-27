@@ -275,6 +275,14 @@ class ChernShell(cmd.Cmd):
         except Exception as e:
             print(e)
 
+    def do_export(self, arg):
+        try:
+            filename = arg.split()[0]
+            output_path = arg.split()[1]
+            manager.current_object().export(filename, output_path)
+        except Exception as e:
+            print(e)
+
     def emptyline(self):
         pass
 
