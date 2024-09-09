@@ -147,7 +147,7 @@ def walk(top):
     yield ".", dirs, names
     for f in dirs:
         for path, dirs, names in os.walk(os.path.join(top, f)):
-            # path = os.path.relpath(path, top)
+            path = os.path.relpath(path, top)
             if f.startswith("."): continue
             yield (path, dirs, names)
 
