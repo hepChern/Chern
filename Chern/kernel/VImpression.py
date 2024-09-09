@@ -75,12 +75,14 @@ class VImpression(object):
     def create(self, obj):
         """ Create this impression with a VObject file
         """
-        logger.debug("Creating impression {}".format(self.uuid))
+        print("Creating impression {}".format(self.uuid))
         # Create an impression directory and copy the files to it
         file_list = csys.tree_excluded(obj.path)
         csys.mkdir(self.path+"/contents".format(self.uuid))
         for dirpath, dirnames, filenames in file_list:
+            print(dirpath, dirnames, filenames)
             for f in filenames:
+                # print("Copying {} to {}".format(obj.path+"/{}/{}".format(dirpath, f), self.path+"/contents/{}/{}".format(dirpath, f)))
                 csys.copy(obj.path+"/{}/{}".format(dirpath, f),
                           self.path+"/contents/{}/{}".format(dirpath, f))
 
