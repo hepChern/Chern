@@ -230,8 +230,8 @@ def status():
         print("{1:<20} {0:<20} ".format(colorize(status, color_tag), manager.c.relative_path(obj.path)) )
 
 def add_input(path, alias):
-    if manager.c.object_type() != "task":
-        print("Unable to call add_input if you are not in a task.")
+    if manager.c.object_type() != "task" and manager.c.object_type() != "algorithm":
+        print("Unable to call add_input if you are not in a task or algorithm.")
         return
     manager.c.add_input(path, alias)
 

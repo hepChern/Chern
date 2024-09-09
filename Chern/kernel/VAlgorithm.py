@@ -168,17 +168,54 @@ class VAlgorithm(VObject):
         yaml_file = metadata.YamlFile(os.path.join(self.path, "chern.yaml"))
         return yaml_file.read_variable("commands", [])
 
-    def importfile(self, filename):
+    def importfile(self, file):
         """
         Import the file to this task directory
         """
-        csys.copy(filename, self.path)
+        if not os.path.exists(file):
+            print("File does not exist.")
+            return
+        filename = os.path.basename(file)
+        if os.path.exists(self.path + "/" + filename):
+            print("File already exists.")
+            return
+        csys.copy_tree(file, self.path + "/" + filename)
 
     def environment(self):
         """ Get the environment
         """
         yaml_file = metadata.YamlFile(os.path.join(self.path, "chern.yaml"))
         return yaml_file.read_variable("environment", {})
+
+    def add_input(self, path, alias):
+        """ FIXME: judge the input type
+        """
+        obj = VObject(path)
+        if obj.object_type() != "algorithm":
+            print("You are adding {} type object as input. The input is required to be an algorithm.".format(obj.object_type()))
+            return
+
+        if self.has_alias(alias):
+            print("The alias already exists. The original input and alias will be replaced.")
+            project_path = csys.project_path(self.path)
+            original_object = VObject(project_path+"/"+self.alias_to_path(alias))
+            self.remove_arc_from(original_object)
+            self.remove_alias(alias)
+
+        self.add_arc_from(obj)
+        self.set_alias(alias, obj.invariant_path())
+
+    def remove_input(self, alias):
+        path = self.alias_to_path(alias)
+        if path == "":
+            print("Alias not found")
+            return
+        project_path = csys.project_path(self.path)
+        obj = VObject(project_path+"/"+path)
+        self.remove_arc_from()
+        self.remove_alias(alias)
+
+
 
 
 
