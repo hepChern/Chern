@@ -10,111 +10,49 @@ from colored import fg, attr
 import hashlib
 import tarfile
 
+
+# Utility Functions
 def generate_uuid():
+    """ Generate a uuid
+    """
     return uuid.uuid4().hex
 
+
+def colorize(string, color):
+    """ Make the string have color
+    """
+    if color == "warning":
+        return "\033[31m" + string + "\033[m"
+    if color == "debug":
+        return "\033[31m" + string + "\033[m"
+    elif color == "comment":
+        return fg("blue") + string + attr("reset")
+    elif color == "title0":
+        return fg("red")+attr("bold")+string+attr("reset")
+    return string
+
+
+def color_print(string, color):
+    """ Print the string with color
+    """
+    print(colorize(string, color))
+
+
+def debug(*arg):
+    """ Print debug string
+    """
+    print(colorize("debug >> ", "debug"), end="")
+    for s in arg:
+        print(colorize(s.__str__(), "debug"), end=" ")
+    print("*")
+
+
+# Path and Directory Functions
 def abspath(path):
+    """ Get the absolute path of the path
+    """
     return os.path.abspath(path)
 
-def project_path(path=None):
-    """ Get the project path by searching for project.json
-    """
-    if (path is None):
-        path = os.getcwd()
-    if not os.path.exists(path):
-        return None
-    while (path != "/"):
-        if exists(path+"/.chern/project.json"):
-            return abspath(path)
-        path = abspath(path+"/..")
-    return None
-    # raise NotInChernRepoError("Not in a Chern repository.")
-
-def dir_mtime(path):
-    mtime = os.path.getmtime(path)
-    if path.endswith(".chern"):
-        mtime = -1
-    if not os.path.isdir(path):
-        return mtime
-    for sub_dir in os.listdir(path):
-        if sub_dir == ".git":
-            continue
-        mtime = max(mtime, dir_mtime(os.path.join(path, sub_dir)))
-    return mtime
-
-def md5sum(filename, block_size=65536):
-    md5 = hashlib.md5()
-    with open(filename, 'rb') as file:
-        for block in iter(lambda: file.read(block_size), b''):
-            md5.update(block)
-    return md5.hexdigest()
-
-def dir_md5(directory_path):
-    md5_hash = hashlib.md5()
-
-    for root, dirs, files in os.walk(directory_path):
-        for file in files:
-            file_path = os.path.join(root, file)
-            file_hash = md5sum(file_path)
-            md5_hash.update(file_hash.encode('utf-8'))
-
-    return md5_hash.hexdigest()
-
-def daemon_path():
-    path = os.environ["HOME"] + "/.Chern/daemon"
-    mkdir(path)
-    return path
-
-def profile_path():
-    # FIXME
-    return ""
-
-def storage_path():
-    # FIXME
-    path = os.environ["HOME"] + "/.Chern/Storage"
-    mkdir(path)
-    return path
-
-def local_config_path():
-    return os.environ["HOME"] + "/.Chern/config.json"
-
-def local_config_dir():
-    return os.environ["HOME"] + "/.Chern"
-
-def mkdir(directory):
-    """ Safely make directory
-    """
-    if not os.path.exists(directory):
-        os.makedirs(directory)
-
-def copy(src, dst):
-    """ Saftly copy file
-    """
-    directory = os.path.dirname(dst)
-    mkdir(directory)
-    shutil.copy2(src, dst)
-
-def list_dir(src):
-    files = os.listdir(src)
-    return files
-
-def rm_tree(src):
-    shutil.rmtree(src)
-
-def copy_tree(src, dst):
-    shutil.copytree(src, dst)
-
-def exists(path):
-    return os.path.exists(path)
-
-def make_archive(filename, dir_name):
-    with tarfile.open(filename+".tar.gz", "w:gz") as tar:
-        tar.add(dir_name,
-        arcname=os.path.basename(dir_name),)
-
-
-def unpack_archive(filename, dir_name):
-    shutil.unpack_archive(filename, dir_name, "tar")
 
 def strip_path_string(path_string):
     """ Remove the "/" in the end of the string
@@ -125,38 +63,6 @@ def strip_path_string(path_string):
     path_string = path_string.rstrip("/")
     return path_string
 
-def refine_path(path, home):
-    if path.startswith("~") or path.startswith("/"):
-        path = home + path[1:]
-    else:
-        path = os.path.abspath(path)
-    return path
-
-def walk(top):
-    d = list_dir(top)
-    dirs = []
-    files = []
-    names = []
-    for f in d:
-        if f == ".chern": continue
-        if f.startswith("."): continue
-        if f.endswith("~undo-tree~"): continue
-        if os.path.isdir(os.path.join(top, f)):
-            dirs.append(f)
-        else:
-            names.append(f)
-    yield ".", dirs, names
-    for f in dirs:
-        for path, dirs, names in os.walk(os.path.join(top, f)):
-            path = os.path.relpath(path, top)
-            if f.startswith("."): continue
-            yield (path, dirs, names)
-
-def tree_excluded(path):
-    file_tree = []
-    for dirpath, dirnames, filenames in walk(path):
-        file_tree.append([dirpath, dirnames, filenames])
-    return file_tree
 
 def special_path_string(path_string):
     """ Replace the path string . -> /
@@ -171,29 +77,157 @@ def special_path_string(path_string):
         return path_string
     return path_string.replace(".", "/")
 
-def colorize(string, color):
-    """ Make the string have color
-    """
-    if color == "warning":
-        return "\033[31m" + string + "\033[m"
-    if color == "debug":
-        return "\033[31m" + string + "\033[m"
-    elif color == "comment":
-        return fg("blue")+ string +attr("reset")
-    elif color == "title0":
-        return fg("red")+attr("bold")+string+attr("reset")
-    return string
 
-def color_print(string, color):
-    print(colorize(string, color))
-
-def debug(*arg):
-    """ Print debug string
+def refine_path(path, home):
+    """ Refine the path
     """
-    print(colorize("debug >> ", "debug"), end="")
-    for s in arg:
-        print(colorize(s.__str__(), "debug"), end=" ")
-    print("*")
+    if path.startswith("~") or path.startswith("/"):
+        path = home + path[1:]
+    else:
+        path = os.path.abspath(path)
+    return path
+
+
+def exists(path):
+    """ Check if the path exists
+    """
+    return os.path.exists(path)
+
+
+def mkdir(directory):
+    """ Safely make directory
+    """
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+
+
+def list_dir(src):
+    """ List the files in the directory
+    """
+    files = os.listdir(src)
+    return files
+
+
+def walk(top):
+    """ Walk the directory
+    """
+    d = list_dir(top)
+    dirs = []
+    names = []
+    for f in d:
+        if f == ".chern":
+            continue
+        if f.startswith("."):
+            continue
+        if f.endswith("~undo-tree~"):
+            continue
+        if os.path.isdir(os.path.join(top, f)):
+            dirs.append(f)
+        else:
+            names.append(f)
+    yield ".", dirs, names
+    for f in dirs:
+        for path, dirs, names in os.walk(os.path.join(top, f)):
+            path = os.path.relpath(path, top)
+            if f.startswith("."):
+                continue
+            yield (path, dirs, names)
+
+
+def tree_excluded(path):
+    """ Get the file tree
+    """
+    file_tree = []
+    for dirpath, dirnames, filenames in walk(path):
+        file_tree.append([dirpath, dirnames, filenames])
+    return file_tree
+
+
+def project_path(path=None):
+    """ Get the project path by searching for project.json
+    """
+    if (path is None):
+        path = os.getcwd()
+    if not os.path.exists(path):
+        return None
+    while (path != "/"):
+        if exists(path+"/.chern/project.json"):
+            return abspath(path)
+        path = abspath(path+"/..")
+    return None
+
+
+def dir_mtime(path):
+    """ Get the latest modified time of the directory
+    """
+    mtime = os.path.getmtime(path)
+    if path.endswith(".chern"):
+        mtime = -1
+    if not os.path.isdir(path):
+        return mtime
+    for sub_dir in os.listdir(path):
+        if sub_dir == ".git":
+            continue
+        mtime = max(mtime, dir_mtime(os.path.join(path, sub_dir)))
+    return mtime
+
+
+def daemon_path():
+    """ Get the daemon path
+    """
+    path = os.environ["HOME"] + "/.Chern/daemon"
+    mkdir(path)
+    return path
+
+
+def local_config_path():
+    """ Get the local config path
+    """
+    return os.environ["HOME"] + "/.Chern/config.json"
+
+
+def local_config_dir():
+    """ Get the local config directory
+    """
+    return os.environ["HOME"] + "/.Chern"
+
+
+# File Operations
+def copy(src, dst):
+    """ Safely copy file
+    """
+    directory = os.path.dirname(dst)
+    mkdir(directory)
+    shutil.copy2(src, dst)
+
+
+def rm_tree(src):
+    """ Remove the directory
+    """
+    shutil.rmtree(src)
+
+
+def copy_tree(src, dst):
+    """ Copy the directory
+    """
+    shutil.copytree(src, dst)
+
+
+def make_archive(filename, dir_name):
+    """ Make the tar.gz file
+    """
+    with tarfile.open(filename+".tar.gz", "w:gz") as tar:
+        tar.add(
+            dir_name,
+            arcname=os.path.basename(dir_name)
+        )
+
+
+def unpack_archive(filename, dir_name):
+    """ Unpack the tar.gz file
+    """
+    shutil.unpack_archive(filename, dir_name, "tar")
+
 
 def remove_cache(file_path):
     """ Remove the python cache file *.pyc *.pyo *.__pycache
@@ -209,10 +243,35 @@ def remove_cache(file_path):
     if index == -1:
         try:
             shutil.rmtree("__pycache__")
-        except:
+        except OSError:
             pass
     else:
         try:
             shutil.rmtree(file_path[:index] + "/__pycache__")
-        except:
+        except OSError:
             pass
+
+
+# Checksum Functions
+def md5sum(filename, block_size=65536):
+    """ Get the md5sum of the file
+    """
+    md5 = hashlib.md5()
+    with open(filename, 'rb') as file:
+        for block in iter(lambda: file.read(block_size), b''):
+            md5.update(block)
+    return md5.hexdigest()
+
+
+def dir_md5(directory_path):
+    """ Get the md5sum of the directory
+    """
+    md5_hash = hashlib.md5()
+
+    for root, dirs, files in os.walk(directory_path):
+        for file in files:
+            file_path = os.path.join(root, file)
+            file_hash = md5sum(file_path)
+            md5_hash.update(file_hash.encode('utf-8'))
+
+    return md5_hash.hexdigest()
