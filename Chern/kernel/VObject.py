@@ -4,7 +4,8 @@
     #Methods:
         + __init__:
             It should be initialized with a absolute path. The initialization gets variable "path" and "config_file".
-            It is quite light-weight to create a VObject. A VObject can be abandoned after using and create another when needed.
+            It is quite light-weight to create a VObject. 
+            A VObject can be abandoned after using and create another when needed.
 
         + __str__, __repr__:
             For print
@@ -77,23 +78,23 @@ import shutil
 import time
 import subprocess
 import Chern
-import uuid
 import filecmp
 from Chern.utils import csys
 from Chern.utils import metadata
 from Chern.utils.pretty import colorize
-from Chern.utils.utils import color_print
+
+from arc_management import ArcManagement
 
 from Chern.kernel.VImpression import VImpression
 from Chern.kernel.ChernCache import ChernCache
 from Chern.kernel.ChernCommunicator import ChernCommunicator
 
-import logging
 from logging import getLogger
 cherncache = ChernCache.instance()
 logger = getLogger("ChernLogger")
 
-class VObject(object):
+
+class VObject(ArcManagement):
     """ Virtual class of the objects, including VData, VAlgorithm and VDirectory
     """
 
@@ -106,7 +107,6 @@ class VObject(object):
         self.path = csys.strip_path_string(path)
         self.config_file = metadata.ConfigFile(self.path+"/.chern/config.json")
         logger.debug("VObject init done: {}".format(path))
-
 
     def __str__(self):
         """ Define the behavior of print(vobject)
@@ -232,62 +232,7 @@ class VObject(object):
                 obj_type = "("+succ_object.object_type()+")"
                 print("{2} {0:<12} {3:>10}: @/{1:<20}".format(obj_type, succ_path, order, alias))
 
-    def add_arc_from(self, obj):
-        """ Add an link from the object contains in `path' to this object.
-         o  --*--> (o) ----> o.
-        (o) --*-->  o         .
-        """
-        succ_str = obj.config_file.read_variable("successors", [])
-        succ_str.append(self.invariant_path())
-        obj.config_file.write_variable("successors", succ_str)
-
-        pred_str = self.config_file.read_variable("predecessors", [])
-        pred_str.append(obj.invariant_path())
-        self.config_file.write_variable("predecessors", pred_str)
-
-    def remove_arc_from(self, obj, single=False):
-        """ Remove link from the path
-        If ``single'' is set to be True, we will only remove the arc in this object.
-         o  --X--> (o) ----> o. Remove this arc.
-        (o) --X-->  o         . If single set to False, this arc is removed.
-        """
-        if not single:
-            config_file = obj.config_file
-            succ_str = config_file.read_variable("successors", [])
-            succ_str.remove(self.invariant_path())
-            config_file.write_variable("successors", succ_str)
-
-        pred_str = self.config_file.read_variable("predecessors", [])
-        pred_str.remove(obj.invariant_path())
-        self.config_file.write_variable("predecessors", pred_str)
-
-    def add_arc_to(self, obj):
-        """ Add a link from this object to the path object
-         o  -----> (o) --*-->  o .
-                    o  --*--> (o).
-        """
-        pred_str = obj.config_file.read_variable("predecessors", [])
-        pred_str.append(self.invariant_path())
-        obj.config_file.write_variable("predecessors", pred_str)
-
-        succ_str = self.config_file.read_variable("successors", [])
-        succ_str.append(obj.invariant_path())
-        self.config_file.write_variable("successors", succ_str)
-
-    def remove_arc_to(self, obj, single=False):
-        """ remove the path to the path
-         o  -----> (o) --X-->  o .  Remove this arc.
-                    o  --X--> (o).  If single set to False, this arc is removed.
-        """
-        if not single:
-            config_file = obj.config_file
-            pred_str = config_file.read_variable("predecessors", [])
-            pred_str.remove(self.invariant_path())
-            config_file.write_variable("predecessors", pred_str)
-
-        succ_str = self.config_file.read_variable("successors", [])
-        succ_str.remove(obj.invariant_path())
-        self.config_file.write_variable("successors", succ_str)
+    
 
     def successors(self):
         """ The successors of the current object
@@ -369,13 +314,11 @@ has a link to object {}".format(succ_object, obj) )
                     if choice == "Y":
                         obj.remove_alias(obj.path_to_alias(path))
 
-
-
     def copy_to(self, new_path):
         """ Copy the current objects and its containings to a new path.
         """
         queue = self.sub_objects_recursively()
-
+    
         # Make sure the related objects are all impressed
         for obj in queue:
             if obj.object_type() != "task" and obj.object_type() != "algorithm":
@@ -717,11 +660,6 @@ has a link to object {}".format(succ_object, obj) )
             return False
         return False
 
-        cherncc = ChernCommunicator.instance()
-        if not self.is_impressed_fast():
-            return False
-        return cherncc.status(self.impression()) != "unsubmitted"
-
     def submit(self, machine = "local"):
         cherncc = ChernCommunicator.instance()
         self.deposit(machine)
@@ -742,7 +680,6 @@ has a link to object {}".format(succ_object, obj) )
             return False
         cherncc = ChernCommunicator.instance()
         return cherncc.is_deposited(self.impression()) == "TRUE"
-
 
     def readme(self):
         """
