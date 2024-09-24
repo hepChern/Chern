@@ -77,13 +77,13 @@ import os
 import shutil
 import time
 import subprocess
-import Chern
 import filecmp
 from Chern.utils import csys
 from Chern.utils import metadata
-from Chern.utils.pretty import colorize
 
-from arc_management import ArcManagement
+from .vobj_arc_management import ArcManagement
+from .vobj_core import Core
+from .vobj_alias_management import AliasManagement
 
 from Chern.kernel.VImpression import VImpression
 from Chern.kernel.ChernCache import ChernCache
@@ -94,10 +94,11 @@ cherncache = ChernCache.instance()
 logger = getLogger("ChernLogger")
 
 
-class VObject(ArcManagement):
+class VObject(Core, ArcManagement, AliasManagement):
     """ Virtual class of the objects, including VData, VAlgorithm and VDirectory
     """
 
+    # Initialization and Representation
     def __init__(self, path):
         """ Initialize a instance of the object.
         All the information is directly read from and write to the disk.
@@ -118,6 +119,7 @@ class VObject(ArcManagement):
         """
         return self.invariant_path()
 
+    # Path handling, type and status
     def invariant_path(self):
         """ The path relative to the project root.
         It is invariant when the project is moved.
@@ -154,254 +156,7 @@ class VObject(ArcManagement):
             color_tag = "normal"
         return color_tag
 
-    def ls(self, show_readme=True, show_predecessors=True, show_sub_objects=True, show_status=False, show_successors=False):
-        """ Print the subdirectory of the object
-        I recommend to print also the README
-        and the parameters|inputs|outputs ...
-        """
-
-        """
-        FIXME: Should communicate with ChernCommunicator to get the runner status
-        if not cherncache.is_docker_started():
-            color_print("!!Warning: docker not started", color="warning")
-        if daemon_status() != "started":
-            color_print("!!Warning: runner not started, the status is {}".format(daemon_status()), color="warning")
-        """
-
-        logger.debug("VObject ls: {}".format(self.invariant_path()))
-        cherncc = ChernCommunicator.instance()
-
-        # Should have a flag whether to show the runner
-        """
-        hosts = cherncc.hosts()
-        hosts_status = colorize(">>>> Runners connection : ", "title0")
-        for host in hosts:
-            status = cherncc.host_status(host)
-            if (status == "ok"):
-                hosts_status += colorize("["+host+"] ", "success")
-            elif (status == "unconnected"):
-                hosts_status += colorize("["+host+"] ", "warning")
-        print(hosts_status)
-        """
-        hosts_status = colorize(">>>> DITE: ", "title0")
-        status = cherncc.host_status()
-        if (status == "ok"):
-            hosts_status += colorize("[connected] ", "success")
-        elif (status == "unconnected"):
-            hosts_status += colorize("[unconnected] ", "warning")
-        print(hosts_status)
-
-        if show_readme:
-            print(colorize("README:", "comment"))
-            print(colorize(self.readme(), "comment"))
-
-        sub_objects = self.sub_objects()
-        sub_objects.sort(key=lambda x:(x.object_type(),x.path))
-        if sub_objects and show_sub_objects:
-            print(colorize(">>>> Subobjects:", "title0"))
-
-        if show_sub_objects:
-            for index, sub_object in enumerate(sub_objects):
-                sub_path = self.relative_path(sub_object.path)
-                if show_status:
-                    status = Chern.interface.ChernManager.create_object_instance(sub_object.path).status()
-                    color_tag = self.color_tag(status)
-                    print("{2} {0:<12} {1:>20} ({3})".format("("+sub_object.object_type()+")", sub_path, "[{}]".format(index), colorize(status, color_tag)))
-                else:
-                    print("{2} {0:<12} {1:>20}".format("("+sub_object.object_type()+")", sub_path, "[{}]".format(index)))
-
-        total = len(sub_objects)
-        predecessors = self.predecessors()
-        if predecessors and show_predecessors:
-            print(colorize("o--> Predecessors:", "title0"))
-            for index, pred_object in enumerate(predecessors):
-                alias = self.path_to_alias(pred_object.invariant_path())
-                order = "[{}]".format(total+index)
-                pred_path = pred_object.invariant_path()
-                obj_type = "("+pred_object.object_type()+")"
-                print("{2} {0:<12} {3:>10}: @/{1:<20}".format(obj_type, pred_path, order, alias))
-
-        total += len(predecessors)
-        successors = self.successors()
-        if successors and show_successors:
-            print(colorize("-->o Successors:", "title0"))
-            for index, succ_object in enumerate(successors):
-                alias = self.path_to_alias(succ_object.invariant_path())
-                order = "[{}]".format(total+index)
-                succ_path = succ_object.invariant_path()
-                obj_type = "("+succ_object.object_type()+")"
-                print("{2} {0:<12} {3:>10}: @/{1:<20}".format(obj_type, succ_path, order, alias))
-
     
-
-    def successors(self):
-        """ The successors of the current object
-        Return a list of [object]
-        """
-        succ_str = self.config_file.read_variable("successors", [])
-        successors = []
-        project_path = csys.project_path(self.path)
-        for path in succ_str:
-            successors.append(VObject(project_path+"/"+path))
-        return successors
-
-    def predecessors(self):
-        """ The predecessosr of the current object
-        Return a list of [object]
-        """
-        pred_str = self.config_file.read_variable("predecessors", [])
-        predecessors = []
-        project_path = csys.project_path(self.path)
-        for path in pred_str:
-            predecessors.append(VObject(project_path+"/"+path))
-        return predecessors
-
-    def has_successor(self, obj):
-        """ Judge whether the object has the specific successor
-        """
-        succ_str = self.config_file.read_variable("successors", [])
-        return obj.invariant_path() in succ_str
-
-    def has_predecessor(self, obj):
-        """ Judge whether the object has the specific predecessor
-        """
-        pred_str = self.config_file.read_variable("predecessors", [])
-        return obj.invariant_path() in pred_str
-
-    def doctor(self):
-        """ Try to exam and fix the repository.
-        """
-        queue = self.sub_objects_recursively()
-        for obj in queue:
-            if obj.object_type() != "task" and obj.object_type() != "algorithm":
-                continue
-
-            for pred_object in obj.predecessors():
-                if pred_object.is_zombie() or not pred_object.has_successor(obj):
-                    print("The predecessor \n\t {} \n\t does not exists or do not \
-has a link to object {}".format(pred_object, obj) )
-                    choice = input("Would you like to remove the input or the algorithm? [Y/N]")
-                    if choice == "Y":
-                        obj.remove_arc_from(pred_object, single=True)
-                        obj.remove_alias(obj.path_to_alias(pred_object.path))
-                        obj.impress()
-
-            for succ_object in obj.successors():
-                if succ_object.is_zombie() or not succ_object.has_predecessor(obj):
-                    print("The succecessor \n\t {} \n\t does not exists or do not \
-has a link to object {}".format(succ_object, obj) )
-                    choice = input("Would you like to remove the output? [Y/N]")
-                    if choice == "Y":
-                        obj.remove_arc_to(succ_object, single=True)
-
-            for pred_object in obj.predecessors():
-                if obj.path_to_alias(pred_object.invariant_path()) == "" and pred_object.object_type() != "algorithm":
-                    print("The input {} of {} does not have alias, it will be removed".format(pred_object, obj))
-                    choice = input("Would you like to remove the input or the algorithm? [Y/N]")
-                    if choice == "Y":
-                        obj.remove_arc_from(pred_object)
-                        obj.impress()
-
-
-            alias_to_path = obj.config_file.read_variable("alias_to_path", {})
-            path_to_alias = obj.config_file.read_variable("path_to_alias", {})
-            for path in path_to_alias.keys():
-                project_path = csys.project_path(self.path)
-                pred_obj = VObject(project_path+"/"+path)
-                if not obj.has_predecessor(pred_obj):
-                    print("There seems being a zombie alias to {} in {}".format(pred_obj, obj))
-                    choice = input("Would you like to remove it? [Y/N]")
-                    if choice == "Y":
-                        obj.remove_alias(obj.path_to_alias(path))
-
-    def copy_to(self, new_path):
-        """ Copy the current objects and its containings to a new path.
-        """
-        queue = self.sub_objects_recursively()
-    
-        # Make sure the related objects are all impressed
-        for obj in queue:
-            if obj.object_type() != "task" and obj.object_type() != "algorithm":
-                continue
-            if not obj.is_impressed_fast():
-                obj.impress()
-        shutil.copytree(self.path, new_path)
-
-        for obj in queue:
-            # Calculate the absolute path of the new directory
-            norm_path = os.path.normpath( os.path.join(new_path, self.relative_path(obj.path)) )
-            new_object = VObject(norm_path)
-            new_object.clean_flow()
-            new_object.clean_impressions()
-
-        for obj in queue:
-            # Calculate the absolute path of the new directory
-            norm_path = os.path.normpath( os.path.join(new_path +"/"+ self.relative_path(obj.path)) )
-            new_object = VObject(norm_path)
-            for pred_object in obj.predecessors():
-                # if in the outside directory
-                if self.relative_path(pred_object.path).startswith(".."):
-                    pass
-                else:
-                    # if in the same tree
-                    relative_path = self.relative_path(pred_object.path)
-                    new_object.add_arc_from(VObject(new_path+"/"+relative_path))
-                    alias1 = obj.path_to_alias(pred_object.invariant_path())
-                    norm_path = os.path.normpath(new_path +"/"+ relative_path)
-                    new_object.set_alias(alias1, VObject(norm_path).invariant_path())
-
-            for succ_object in obj.successors():
-                if self.relative_path(succ_object.path).startswith(".."):
-                    pass
-
-        # Deal with the impression
-        for obj in queue:
-            # Calculate the absolute path of the new directory
-            if obj.object_type() == "directory":
-                norm_path = os.path.normpath(new_path +"/"+ self.relative_path(obj.path))
-                continue
-            norm_path = os.path.normpath(new_path +"/"+ self.relative_path(obj.path))
-            new_object = VObject(norm_path)
-            new_object.impress()
-
-    def path_to_alias(self, path):
-        path_to_alias = self.config_file.read_variable("path_to_alias", {})
-        return path_to_alias.get(path, "")
-
-    def alias_to_path(self, alias):
-        alias_to_path = self.config_file.read_variable("alias_to_path", {})
-        return alias_to_path.get(alias, "")
-
-    def alias_to_impression(self, alias):
-        path = self.alias_to_path(alias)
-        obj = VObject(os.path.join(csys.project_path(self.path), path))
-        return obj.impression()
-
-    def has_alias(self, alias):
-        alias_to_path = self.config_file.read_variable("alias_to_path", {})
-        return alias in alias_to_path.keys()
-
-    def remove_alias(self, alias):
-        if alias == "":
-            return
-        alias_to_path = self.config_file.read_variable("alias_to_path", {})
-        path_to_alias = self.config_file.read_variable("path_to_alias", {})
-        path = alias_to_path[alias]
-        path_to_alias.pop(path)
-        alias_to_path.pop(alias)
-        self.config_file.write_variable("alias_to_path", alias_to_path)
-        self.config_file.write_variable("path_to_alias", path_to_alias)
-
-    def set_alias(self, alias, path):
-        if alias == "":
-            return
-        path_to_alias = self.config_file.read_variable("path_to_alias", {})
-        alias_to_path = self.config_file.read_variable("alias_to_path", {})
-        path_to_alias[path] = alias
-        alias_to_path[alias] = path
-        self.config_file.write_variable("path_to_alias", path_to_alias)
-        self.config_file.write_variable("alias_to_path", alias_to_path)
-
     def clean_impressions(self):
         """ Clean the impressions of the object,
         this is used only when it is copied to a new place and needed to remove impression information.

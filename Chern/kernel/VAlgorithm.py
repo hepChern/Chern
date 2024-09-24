@@ -13,7 +13,6 @@ from Chern.kernel.ChernCache import ChernCache
 from Chern.utils import utils
 from Chern.utils import csys
 from Chern.utils.utils import color_print
-from Chern.utils import git
 from Chern.utils.pretty import colorize
 from Chern.utils import metadata
 
