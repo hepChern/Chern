@@ -38,10 +38,14 @@ def cli(ctx):
         start_first_time()
     if ctx.invoked_subcommand is None:
         try:
-            config_file = metadata.ConfigFile(csys.local_config_dir()+"/config.json")
+            config_file = metadata.ConfigFile(
+                csys.local_config_dir() + "/config.json"
+            )
             current_project = config_file.read_variable("current_project", "")
             print("Current project: ", current_project)
-            if current_project == None or current_project == "" or current_project not in config_file.read_variable("projects_path").keys():
+            if (current_project is None or current_project == "" or 
+                current_project not in config_file.read_variable("projects_path").keys()):
+            
                 print("No project is selected as the current project")
                 print("Please use ``chern workon PROJECT''' to select a project")
                 print("Please use ``chern projects'' to list all the projects")
@@ -61,8 +65,8 @@ def chern_command_line():
     """ Start Chern command line with cmd """
     try:
         start_chern_command_line()
-    except:
-        print("Fail to start Chern command line")
+    except Exception as e:
+        print("Fail to start Chern command line:", e)
 
 @cli.command()
 def init():
@@ -81,8 +85,8 @@ def use(path):
     try:
         VProject.use_project(path)
         start_chern_command_line()
-    except:
-        print("Fail to start ipython")
+    except Exception as e:
+        print("Fail to start ipython:", e)
 
 @cli.command()
 def projects():
@@ -96,8 +100,8 @@ def projects():
                 print("*", project, ":", projects[project])
             else:
                 print(project, ":", projects[project])
-    except:
-        print("Fail to list all the projects")
+    except Exception as e:
+        print("Fail to list all the projects:", e)
 
 @cli.command()
 @click.argument("project", type=str)
@@ -106,7 +110,6 @@ def workon(project):
     try:
         config_file = metadata.ConfigFile(csys.local_config_dir()+"/config.json")
         projects = config_file.read_variable("projects_path")
-        current_project = config_file.read_variable("current_project")
         if project in projects.keys():
             config_file.write_variable("current_project", project)
             print("Switch to project: ", project)
@@ -173,22 +176,22 @@ def main():
 def prologue():
     """ A prologue from the author """
     print("""
-Chern: A data analysis management toolkit
-Author: Mingrui Zhao
-        2013 - 2017       @ Center of High Energy Physics, Tsinghua University
-        2017 - 2022       @ Department of Nuclear Physics, China Institute of Atomic Energy
-        2023 - 2023(now)  @ China Institute of Atomic Energy & Niels Bohr Institute
-Email: mingrui.zhao@mail.labz0.org
-
-I started the project when I was a undergraduate student in Tsinghua University and working for LHCb collaboration.
-And the software in LHCb is usually named after the Great name, such as ``Gauss'' and ``Davinci''.
-The term ``Chern''(陈) is a common surname in China and it is usually written as ``Chen'' in English now.
-The unusual spelling "Chern" is a transliteration in the old Gwoyeu Romatzyh (GR) romanization used in the early twentieth century China.
-Nowadays, when written in the form of ``Chern'', it usually refer to ``Shiing-Shen Chern'',
-the great Chinese-American mathematician who made fundamental contributions to differential geometry and topology.
-The well-known ``Chern classes'', ``Chern–Gauss–Bonnet theorem'' and many others are named after him.
-This is the origin of the software name.
-""")
+    Chern: A data analysis management toolkit
+    Author: Mingrui Zhao
+            2013 - 2017       @ Center of High Energy Physics, Tsinghua University
+            2017 - 2022       @ Department of Nuclear Physics, China Institute of Atomic Energy
+            2023 - 2023(now)  @ China Institute of Atomic Energy & Niels Bohr Institute
+    Email: mingrui.zhao@mail.labz0.org
+    
+    I started the project when I was a undergraduate student in Tsinghua University and working for LHCb collaboration.
+    And the software in LHCb is usually named after the Great name, such as ``Gauss'' and ``Davinci''.
+    The term ``Chern''(陈) is a common surname in China and it is usually written as ``Chen'' in English now.
+    The unusual spelling "Chern" is a transliteration in the old Gwoyeu Romatzyh (GR) romanization used in the early twentieth century China.
+    Nowadays, when written in the form of ``Chern'', it usually refer to ``Shiing-Shen Chern'',
+    the great Chinese-American mathematician who made fundamental contributions to differential geometry and topology.
+    The well-known ``Chern classes'', ``Chern–Gauss–Bonnet theorem'' and many others are named after him.
+    This is the origin of the software name.
+    """)
 # At the same time, my girlfriend has the same surname in Chinese with S.S.Chern.
 # she is my ex now.
 
