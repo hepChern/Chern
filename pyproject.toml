@@ -1,0 +1,44 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "Chern"
+version = "4.0.0"  # Or dynamically load from the package
+description = "A data analysis management toolkit for high energy physics"
+readme = "README.md"
+license = {text = "Apache License, Version 2.0"}
+authors = [
+    { name = "Mingrui Zhao", email = "mingrui.zhao@mail.labz0.org" }
+]
+keywords = ["analysis", "preservation", "high-energy physics", "data analysis"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Physics",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: Implementation :: CPython"
+]
+dependencies = [
+    "click",
+    "colored",
+    "diff-match-patch",
+    "python-daemon",
+    "ipython",
+    "PyYAML>=5.1,<6.0",
+    "requests"
+]
+
+[project.urls]
+Homepage = "https://github.com/zhaomr13/Chern"
+
+[tool.setuptools.packages]
+find = {}
+
+[tool.setuptools]
+include-package-data = true
+
+[project.scripts]
+chern4 = "Chern.main:main"
+chern = "Chern.main:main"
