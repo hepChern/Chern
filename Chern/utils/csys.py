@@ -6,10 +6,8 @@ define some classes and functions used throughout the project
 import os
 import shutil
 import uuid
-from colored import fg, bg, attr
-import subprocess
+from colored import fg, attr
 import hashlib
-import time
 import tarfile
 
 def generate_uuid():
@@ -23,11 +21,14 @@ def project_path(path=None):
     """
     if (path is None):
         path = os.getcwd()
+    if not os.path.exists(path):
+        return None
     while (path != "/"):
         if exists(path+"/.chern/project.json"):
-            return path
+            return abspath(path)
         path = abspath(path+"/..")
-    raise NotInChernRepoError("Not in a Chern repository.")
+    return None
+    # raise NotInChernRepoError("Not in a Chern repository.")
 
 def dir_mtime(path):
     mtime = os.path.getmtime(path)
@@ -113,7 +114,7 @@ def make_archive(filename, dir_name):
 
 
 def unpack_archive(filename, dir_name):
-    shutil.unpack_archive(filename, dir_name, "zip")
+    shutil.unpack_archive(filename, dir_name, "tar")
 
 def strip_path_string(path_string):
     """ Remove the "/" in the end of the string
