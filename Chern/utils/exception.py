@@ -1,6 +1,0 @@
-"""
-
-"""
-class NotInChernRepoError(Exception):
-    pass
-
