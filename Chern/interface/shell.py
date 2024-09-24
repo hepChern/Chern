@@ -1,5 +1,4 @@
 import os
-from Chern.utils import git
 from Chern.utils import csys
 from Chern.kernel.VObject import VObject
 from Chern.utils import utils
