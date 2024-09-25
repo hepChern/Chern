@@ -1,5 +1,6 @@
 """ Helper class for impress operation
 """
+from os.path import join
 from Chern.utils import csys
 from Chern.utils import metadata
 from Chern.utils.pretty import colorize
@@ -18,7 +19,7 @@ class VImpression(object):
         self.config_file = metadata.ConfigFile(self.path+"/config.json")
         self.tarfile = self.path + "/packed" + self.uuid + ".tar.gz"
 
-    def __str__(self) -> str:
+    def __str__(self):
         return self.uuid
 
     def is_zombie(self):
@@ -26,7 +27,9 @@ class VImpression(object):
 
     def is_packed(self):
         # We should check whether it is affacted by other things
-        return csys.exists(self.path + "/packed" + self.uuid + ".tar.gz")
+        return csys.exists(
+                join(self.path, "/packed", self.uuid, ".tar.gz")
+                )
 
     def pack(self):
         """ Pack the impression
@@ -80,7 +83,6 @@ class VImpression(object):
         file_list = csys.tree_excluded(obj.path)
         csys.mkdir(self.path+"/contents".format(self.uuid))
         for dirpath, dirnames, filenames in file_list:
-            print(dirpath, dirnames, filenames)
             for f in filenames:
                 # print("Copying {} to {}".format(obj.path+"/{}/{}".format(dirpath, f), self.path+"/contents/{}/{}".format(dirpath, f)))
                 csys.copy(obj.path+"/{}/{}".format(dirpath, f),
