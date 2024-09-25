@@ -29,114 +29,17 @@ from Chern.interface.ChernShell import ChernShell
 from logging import getLogger
 import logging
 
-@click.group(invoke_without_command=True)
-@click.pass_context
-def cli(ctx):
-    """ Chern command only is equal to `Chern ipython`
-    """
-    if is_first_time():
-        start_first_time()
-    if ctx.invoked_subcommand is None:
-        try:
-            config_file = metadata.ConfigFile(
-                csys.local_config_dir() + "/config.json"
-            )
-            current_project = config_file.read_variable("current_project", "")
-            print("Current project: ", current_project)
-            if (current_project is None or current_project == "" or 
-                current_project not in config_file.read_variable("projects_path").keys()):
-            
-                print("No project is selected as the current project")
-                print("Please use ``chern workon PROJECT''' to select a project")
-                print("Please use ``chern projects'' to list all the projects")
-            else:
-                start_chern_command_line()
-        except Exception as e:
-            print(e)
-            print("Chern shell ended")
 
-@cli.command()
-def config():
-    """ Configue the software"""
-    print("Configuration is not supported yet")
+def is_first_time():
+    """ Check if it is the first time to use the software """
+    return not os.path.exists(csys.local_config_dir())
 
-@cli.command()
-def chern_command_line():
-    """ Start Chern command line with cmd """
-    try:
-        start_chern_command_line()
-    except Exception as e:
-        print("Fail to start Chern command line:", e)
 
-@cli.command()
-def init():
-    """ Add the current directory to project """
-    try:
-        VProject.init_project()
-        start_chern_command_line()
-    except Exception as e:
-        print(e)
-        print("Chern Shell Ended")
-
-@cli.command()
-@click.argument("path", type=str)
-def use(path):
-    """ Use a directory as the project"""
-    try:
-        VProject.use_project(path)
-        start_chern_command_line()
-    except Exception as e:
-        print("Fail to start ipython:", e)
-
-@cli.command()
-def projects():
-    """ List all the projects """
-    try:
-        config_file = metadata.ConfigFile(csys.local_config_dir()+"/config.json")
-        projects = config_file.read_variable("projects_path")
-        current_project = config_file.read_variable("current_project")
-        for project in projects.keys():
-            if project == current_project:
-                print("*", project, ":", projects[project])
-            else:
-                print(project, ":", projects[project])
-    except Exception as e:
-        print("Fail to list all the projects:", e)
-
-@cli.command()
-@click.argument("project", type=str)
-def workon(project):
-    """ Switch to the project ``PROJECT' """
-    try:
-        config_file = metadata.ConfigFile(csys.local_config_dir()+"/config.json")
-        projects = config_file.read_variable("projects_path")
-        if project in projects.keys():
-            config_file.write_variable("current_project", project)
-            print("Switch to project: ", project)
-        else:
-            print("Project ``{}'' not found".format(project))
-    except:
-        print("Fail to switch to the project")
-
-@cli.command()
-@click.argument("project", type=str)
-def remove(project):
-    """ Remove the project ``PROJECT' """
-    try:
-        config_file = metadata.ConfigFile(csys.local_config_dir()+"/config.json")
-        projects = config_file.read_variable("projects_path")
-        current_project = config_file.read_variable("current_project")
-        if project == current_project:
-            config_file.write_variable("current_project", "")
-
-        if project in projects:
-            projects.pop(project)
-            config_file.write_variable("projects_path", projects)
-            print("Remove project: ", project)
-        else:
-            print("Project ``{}'' not found".format(project))
-    except:
-        print("Fail to remove the project")
+def start_first_time():
+    """ Start the first time """
+    print("Starting the first time")
+    print("Creating the config directory $HOME/.Chern")
+    csys.mkdir(csys.local_config_dir())
 
 
 def start_chern_command_line():
@@ -156,21 +59,124 @@ def start_chern_command_line():
     logger.debug("end start_chern_command_line")
 
 
-def is_first_time():
-    """ Check if it is the first time to use the software """
-    if not os.path.exists(csys.local_config_dir()):
-        return True
-    else:
-        return False
+@click.group(invoke_without_command=True)
+@click.pass_context
+def cli(ctx):
+    """ Chern command only is equal to `Chern ipython`
+    """
+    if is_first_time():
+        start_first_time()
+    if ctx.invoked_subcommand is None:
+        try:
+            config_file = metadata.ConfigFile(
+                csys.local_config_dir() + "/config.json"
+            )
+            current_project = config_file.read_variable("current_project", "")
+            print("Current project: ", current_project)
+            if (
+                current_project is None or current_project == "" or
+                current_project not in config_file.read_variable("projects_path").keys()
+            ):
 
-def start_first_time():
-    """ Start the first time """
-    print("Starting the first time")
-    print("Creating the config directory $HOME/.Chern")
-    csys.mkdir(csys.local_config_dir())
+                print("No project is selected as the current project")
+                print("Please use ``chern workon PROJECT''' to select a project")
+                print("Please use ``chern projects'' to list all the projects")
+            else:
+                start_chern_command_line()
+        except Exception as e:
+            print(e)
+            print("Chern shell ended")
 
-def main():
-    cli()
+
+@cli.command()
+def config():
+    """ Configure the software"""
+    print("Configuration is not supported yet")
+
+
+@cli.command()
+def chern_command_line():
+    """ Start Chern command line with cmd """
+    try:
+        start_chern_command_line()
+    except Exception as e:
+        print("Fail to start Chern command line:", e)
+
+
+@cli.command()
+def init():
+    """ Add the current directory to project """
+    try:
+        VProject.init_project()
+        start_chern_command_line()
+    except Exception as e:
+        print(e)
+        print("Chern Shell Ended")
+
+
+@cli.command()
+@click.argument("path", type=str)
+def use(path):
+    """ Use a directory as the project"""
+    try:
+        VProject.use_project(path)
+        start_chern_command_line()
+    except Exception as e:
+        print("Fail to start ipython:", e)
+
+
+@cli.command()
+def projects():
+    """ List all the projects """
+    try:
+        config_file = metadata.ConfigFile(csys.local_config_dir()+"/config.json")
+        projects = config_file.read_variable("projects_path")
+        current_project = config_file.read_variable("current_project")
+        for project in projects.keys():
+            if project == current_project:
+                print("*", project, ":", projects[project])
+            else:
+                print(project, ":", projects[project])
+    except Exception as e:
+        print("Fail to list all the projects:", e)
+
+
+@cli.command()
+@click.argument("project", type=str)
+def workon(project):
+    """ Switch to the project ``PROJECT' """
+    try:
+        config_file = metadata.ConfigFile(csys.local_config_dir()+"/config.json")
+        projects = config_file.read_variable("projects_path")
+        if project in projects.keys():
+            config_file.write_variable("current_project", project)
+            print("Switch to project: ", project)
+        else:
+            print("Project ``{}'' not found".format(project))
+    except Exception as e:
+        print("Fail to switch to the project:", e)
+
+
+@cli.command()
+@click.argument("project", type=str)
+def remove(project):
+    """ Remove the project ``PROJECT' """
+    try:
+        config_file = metadata.ConfigFile(csys.local_config_dir()+"/config.json")
+        projects = config_file.read_variable("projects_path")
+        current_project = config_file.read_variable("current_project")
+        if project == current_project:
+            config_file.write_variable("current_project", "")
+
+        if project in projects:
+            projects.pop(project)
+            config_file.write_variable("projects_path", projects)
+            print("Remove project: ", project)
+        else:
+            print("Project ``{}'' not found".format(project))
+    except Exception as e:
+        print("Fail to remove the project")
+
 
 @cli.command()
 def prologue():
@@ -180,9 +186,9 @@ def prologue():
     Author: Mingrui Zhao
             2013 - 2017       @ Center of High Energy Physics, Tsinghua University
             2017 - 2022       @ Department of Nuclear Physics, China Institute of Atomic Energy
-            2023 - 2023(now)  @ China Institute of Atomic Energy & Niels Bohr Institute
+            2023 - 2024       @ China Institute of Atomic Energy & Niels Bohr Institute
     Email: mingrui.zhao@mail.labz0.org
-    
+
     I started the project when I was a undergraduate student in Tsinghua University and working for LHCb collaboration.
     And the software in LHCb is usually named after the Great name, such as ``Gauss'' and ``Davinci''.
     The term ``Chern''(陈) is a common surname in China and it is usually written as ``Chen'' in English now.
@@ -192,19 +198,19 @@ def prologue():
     The well-known ``Chern classes'', ``Chern–Gauss–Bonnet theorem'' and many others are named after him.
     This is the origin of the software name.
     """)
-# At the same time, my girlfriend has the same surname in Chinese with S.S.Chern.
-# she is my ex now.
 
-# I think the following things are deprecated
+
 @click.group()
 def cli_sh():
     """ Chern command line command
     """
 
+
 @cli_sh.command()
 def ls():
     from Chern.interface import shell
     shell.ls("")
+
 
 @cli_sh.command()
 @click.argument("path", type=str)
@@ -212,10 +218,12 @@ def mkdir(path):
     from Chern.interface import shell
     shell.mkdir(path)
 
+
 @cli_sh.command()
 def ls_projects():
     from Chern.interface import shell
     shell.ls_projects("")
+
 
 @cli_sh.command()
 @click.argument("project", type=str)
@@ -228,3 +236,7 @@ def cd_project(project):
 
 def sh():
     cli_sh()
+
+
+def main():
+    cli()
