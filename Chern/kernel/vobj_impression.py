@@ -1,7 +1,7 @@
 import filecmp
 from Chern.kernel.ChernCache import ChernCache
 from Chern.kernel.VImpression import VImpression
-from time import time
+import time
 from Chern.utils import csys
 
 from logging import getLogger
@@ -85,7 +85,7 @@ class ImpressionManagement:
 
     def clean_impressions(self):
         """ Clean the impressions of the object,
-        this is used only when it is copied to a new place and 
+        this is used only when it is copied to a new place and
         needed to remove impression information.
         """
         self.config_file.write_variable("impressions", [])
@@ -95,7 +95,7 @@ class ImpressionManagement:
 
     def clean_flow(self):
         """ Clean all the alias, predecessors and successors,
-        this is used only when it is copied to a new place 
+        this is used only when it is copied to a new place
         and needed to remove impression information.
         """
         self.config_file.write_variable("alias_to_path", {})
@@ -108,7 +108,7 @@ class ImpressionManagement:
         """
         logger.debug("VObject is_impressed_fast")
         consult_table = cherncache.impression_consult_table
-        # FIXME cherncache should be replaced 
+        # FIXME cherncache should be replaced
         # by some function called like cache
         (last_consult_time, is_impressed) = consult_table.get(
             self.path, (-1, -1)
@@ -131,7 +131,7 @@ class ImpressionManagement:
     def pred_impressions(self):
         """ Get the impression dependencies
         """
-        # FIXME An assumption is that all the predcessor's are impressed, 
+        # FIXME An assumption is that all the predcessor's are impressed,
         # if they are not, we should impress them first
         # Add check to this
         dependencies = []
