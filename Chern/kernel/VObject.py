@@ -4,7 +4,7 @@
     #Methods:
         + __init__:
             It should be initialized with a absolute path. The initialization gets variable "path" and "config_file".
-            It is quite light-weight to create a VObject. 
+            It is quite light-weight to create a VObject.
             A VObject can be abandoned after using and create another when needed.
 
         + __str__, __repr__:
@@ -156,7 +156,7 @@ class VObject(Core, ArcManagement, AliasManagement):
             color_tag = "normal"
         return color_tag
 
-    
+
     def clean_impressions(self):
         """ Clean the impressions of the object,
         this is used only when it is copied to a new place and needed to remove impression information.
