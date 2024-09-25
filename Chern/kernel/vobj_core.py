@@ -288,4 +288,3 @@ class Core:
                     succ_object.remove_alias(alias)
 
         shutil.rmtree(self.path)
-

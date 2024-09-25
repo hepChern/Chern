@@ -58,7 +58,7 @@ class ArcManagement:
         
         Example:
             o  -----> (o) --*-->  o
-                    o  --*--> (o)
+                       o  --*--> (o)
         
         Args:
             obj: The object to link to.
@@ -80,7 +80,7 @@ class ArcManagement:
         
         Example:
             o  -----> (o) --X-->  o  (Remove this arc)
-                    o  --X--> (o)
+                       o  --X--> (o)
         
         Args:
             obj: The object to unlink from.
