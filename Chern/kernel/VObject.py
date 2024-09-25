@@ -95,14 +95,16 @@ logger = getLogger("ChernLogger")
 
 
 class VObject(Core, ArcManagement, AliasManagement):
-    """ Virtual class of the objects, including VData, VAlgorithm and VDirectory
+    """ Virtual class of the objects,
+    including VData, VAlgorithm and VDirectory
     """
 
     # Initialization and Representation
     def __init__(self, path):
         """ Initialize a instance of the object.
         All the information is directly read from and write to the disk.
-        parameter ``path'' is allowed to be a string begin with empty characters.
+        parameter ``path'' is allowed to be a string
+        begin with empty characters.
         """
         logger.debug("VObject init: {}".format(path))
         self.path = csys.strip_path_string(path)
@@ -156,10 +158,10 @@ class VObject(Core, ArcManagement, AliasManagement):
             color_tag = "normal"
         return color_tag
 
-
     def clean_impressions(self):
         """ Clean the impressions of the object,
-        this is used only when it is copied to a new place and needed to remove impression information.
+        this is used only when it is copied to a new place and 
+        needed to remove impression information.
         """
         self.config_file.write_variable("impressions", [])
         self.config_file.write_variable("impression", "")
