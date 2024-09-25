@@ -22,6 +22,7 @@
 """
 import click
 import os
+from os.path import join
 from Chern.kernel import VProject
 from Chern.utils import csys
 from Chern.utils import metadata
@@ -75,7 +76,9 @@ def cli(ctx):
             print("Current project: ", current_project)
             if (
                 current_project is None or current_project == "" or
-                current_project not in config_file.read_variable("projects_path").keys()
+                current_project not in config_file.read_variable(
+                    "projects_path"
+                ).keys()
             ):
 
                 print("No project is selected as the current project")
@@ -146,7 +149,9 @@ def projects():
 def workon(project):
     """ Switch to the project ``PROJECT' """
     try:
-        config_file = metadata.ConfigFile(csys.local_config_dir()+"/config.json")
+        config_file = metadata.ConfigFile(
+            join(csys.local_config_dir(), "config.json")
+        )
         projects = config_file.read_variable("projects_path")
         if project in projects.keys():
             config_file.write_variable("current_project", project)
@@ -162,7 +167,9 @@ def workon(project):
 def remove(project):
     """ Remove the project ``PROJECT' """
     try:
-        config_file = metadata.ConfigFile(csys.local_config_dir()+"/config.json")
+        config_file = metadata.ConfigFile(
+            join(csys.local_config_dir, "config.json")
+        )
         projects = config_file.read_variable("projects_path")
         current_project = config_file.read_variable("current_project")
         if project == current_project:
@@ -184,18 +191,29 @@ def prologue():
     print("""
     Chern: A data analysis management toolkit
     Author: Mingrui Zhao
-            2013 - 2017       @ Center of High Energy Physics, Tsinghua University
-            2017 - 2022       @ Department of Nuclear Physics, China Institute of Atomic Energy
-            2023 - 2024       @ China Institute of Atomic Energy & Niels Bohr Institute
+            2013 - 2017       
+          @ Center of High Energy Physics, Tsinghua University
+            2017 - 2022       
+          @ Department of Nuclear Physics, China Institute of Atomic Energy
+            2023 - 2024       
+          @ China Institute of Atomic Energy & Niels Bohr Institute
     Email: mingrui.zhao@mail.labz0.org
 
-    I started the project when I was a undergraduate student in Tsinghua University and working for LHCb collaboration.
-    And the software in LHCb is usually named after the Great name, such as ``Gauss'' and ``Davinci''.
-    The term ``Chern''(陈) is a common surname in China and it is usually written as ``Chen'' in English now.
-    The unusual spelling "Chern" is a transliteration in the old Gwoyeu Romatzyh (GR) romanization used in the early twentieth century China.
-    Nowadays, when written in the form of ``Chern'', it usually refer to ``Shiing-Shen Chern'',
-    the great Chinese-American mathematician who made fundamental contributions to differential geometry and topology.
-    The well-known ``Chern classes'', ``Chern–Gauss–Bonnet theorem'' and many others are named after him.
+    I started the project when I was a undergraduate student
+          in Tsinghua University and working for LHCb collaboration.
+    And the software in LHCb is usually named after the Great name,
+          such as ``Gauss'' and ``Davinci''.
+    The term ``Chern''(陈) is a common surname in China
+           and it is usually written as ``Chen'' in English now.
+    The unusual spelling "Chern" is a transliteration
+          in the old Gwoyeu Romatzyh (GR) romanization
+          used in the early twentieth century China.
+    Nowadays, when written in the form of ``Chern'',
+          it usually refer to ``Shiing-Shen Chern'',
+    the great Chinese-American mathematician who made
+          fundamental contributions to differential geometry and topology.
+    The well-known ``Chern classes'', ``Chern–Gauss–Bonnet theorem''
+          and many others are named after him.
     This is the origin of the software name.
     """)
 
