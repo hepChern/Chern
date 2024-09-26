@@ -58,10 +58,6 @@
         + add_source
             Make a new task, with raw data.
 
-        + add_output
-            ABANDONED
-        + remove_output
-            ABANDONED
         ===================
         Inherited from VObject
         + __init__
@@ -82,7 +78,6 @@
 
 """
 import os
-import uuid
 import subprocess
 from Chern.kernel.VObject import VObject
 # from Chern.kernel.VContainer import VContainer
@@ -95,11 +90,15 @@ from Chern.utils import csys
 from Chern.kernel.ChernCache import ChernCache
 from Chern.kernel.ChernCommunicator import ChernCommunicator
 from logging import getLogger
+from os.path import join
+
+from .vtask_input import InputManager
 
 cherncache = ChernCache.instance()
 logger = getLogger("ChernLogger")
 
-class VTask(VObject):
+
+class VTask(VObject, InputManager):
     def helpme(self, command):
         from Chern.kernel.Helpme import task_helpme
         print(task_helpme.get(command, "No such command, try ``helpme'' alone."))
@@ -147,7 +146,6 @@ class VTask(VObject):
                     status_str += colorize("["+run_status+"]", status_color)
             print(colorize("**** STATUS:", "title0"), status_str)
 
-
         if self.is_submitted():
             print(colorize("---- Files:", "title0"))
             files = self.output_files()
@@ -178,9 +176,9 @@ class VTask(VObject):
                 if f == "README.md": continue
                 if f == "chern.yaml": continue
                 print(("algorithm:{:<"+str(max_len+4)+"}").format(f), end="")
-                if count%nfiles == 0:
+                if count % nfiles == 0:
                     print("")
-            if count%nfiles != 0:
+            if count % nfiles != 0:
                 print("")
             print(colorize("---- Commands:", "title0"))
             for command in self.algorithm().commands():
@@ -189,7 +187,6 @@ class VTask(VObject):
                     parname = "${" + parameter + "}"
                     command = command.replace(parname, values[parameter])
                 print(command)
-
 
     def output_files(self):
         # FIXME, to get the output files list
@@ -202,12 +199,12 @@ class VTask(VObject):
         return cherncc.get_file("local", self.impression(), filename)
 
     def input_md5(self):
-        parameters_file = metadata.YamlFile(os.path.join(self.path, "chern.yaml"))
+        parameters_file = metadata.YamlFile(join(self.path, "chern.yaml"))
         return parameters_file.read_variable("uuid", "")
 
     def set_input_md5(self, path):
         md5 = csys.dir_md5(path)
-        parameters_file = metadata.YamlFile(os.path.join(self.path, "chern.yaml"))
+        parameters_file = metadata.YamlFile(join(self.path, "chern.yaml"))
         parameters_file.write_variable("uuid", md5)
         return md5
 
@@ -261,45 +258,6 @@ class VTask(VObject):
                 return
             csys.copy(path, dst)
 
-    """
-    def remove(self, remove_impression):
-        impressions = self.config_file.read_variable("impressions", [])
-        impression = self.config_file.read_variable("impression")
-        if remove_impression == impression[:8]:
-            print("The most recent job is not allowed to remove")
-            return
-        for im in impressions:
-            path = utils.storage_path() + "/" + im
-            if not os.path.exists(path):
-                continue
-            if remove_impression == im[:8]:
-                print("Try to remove the job")
-                container = VContainer(path)
-                container.remove()
-                return
-
-    def jobs(self):
-        impressions = self.config_file.read_variable("impressions", [])
-        output_md5s = self.config_file.read_variable("output_md5s", {})
-        if impressions == []:
-            return
-        impression = self.config_file.read_variable("impression")
-        for im in impressions:
-            path = utils.storage_path() + "/" + im
-            if not os.path.exists(path):
-                continue
-            if impression == im:
-                short = "*"
-            else:
-                short = " "
-            short += im[:8]
-            output_md5 = output_md5s.get(im, "")
-            if output_md5 != "":
-                short += " ({0})".format(output_md5[:8])
-            status = VContainer(path).status()
-            print("{0:<12}   {1:>20}".format(short, status))
-    """
-
     def stdout(self):
         with open(self.container().path+"/stdout") as f:
             return f.read()
@@ -320,7 +278,6 @@ class VTask(VObject):
         if not self.is_impressed_fast():
             return False
         return cherncc.status(self.impression()) != "unsubmitted"
-
 
     def output_md5(self):
         output_md5s = self.config_file.read_variable("output_md5s", {})
@@ -356,7 +313,6 @@ class VTask(VObject):
                 print("    {}".format(f))
             return
 
-
         workflow_check = cherncc.workflow(self.impression())
         if workflow_check == "UNDEFINED":
             print("Workflow not defined")
@@ -373,7 +329,7 @@ class VTask(VObject):
             for f in files:
                 print("    {}".format(f))
 
-    def status(self, consult_id = None, detailed = False):
+    def status(self, consult_id=None, detailed=False):
         """ Consult the status of the object
             There should be only two status locally: new|impressed
         """
@@ -423,101 +379,11 @@ class VTask(VObject):
                 return "unsubmitted"
         return cherncc.status(self.impression())
 
-    """
-    def container(self):
-        path = utils.storage_path() + "/" + self.impression()
-        return VContainer(path)
-    """
-
-    def add_source(self, path):
-        """
-        After add source, the status of the task should be done
-        """
-        md5 = csys.dir_md5(path)
-        data_file = metadata.ConfigFile(os.path.join(self.path, "data.json"))
-        data_file.write_variable("md5", md5)
-        self.impress()
-        return
-
-    def add_algorithm(self, path):
-        """
-        Add a algorithm
-        """
-        algorithm = self.algorithm()
-        if algorithm is not None:
-            print("Already have algorithm, will replace it")
-            self.remove_algorithm()
-        self.add_arc_from(VObject(path))
-
-
-    def remove_algorithm(self):
-        """
-        Remove the algorithm
-        """
-        algorithm = self.algorithm()
-        if algorithm is None:
-            print("Nothing to remove")
-        else:
-            self.remove_arc_from(algorithm)
-
-    def algorithm(self):
-        """
-        Return the algorithm
-        """
-        predecessors = self.predecessors()
-        for pred_object in predecessors:
-            if pred_object.object_type() == "algorithm":
-                return VAlgorithm.VAlgorithm(pred_object.path)
-        return None
-
-    def add_input(self, path, alias):
-        """ FIXME: judge the input type
-        """
-        obj = VObject(path)
-        if obj.object_type() != "task":
-            print("You are adding {} type object as input. The input is required to be a task.".format(obj.object_type()))
-            return
-
-        if self.has_alias(alias):
-            print("The alias already exists. The original input and alias will be replaced.")
-            project_path = csys.project_path(self.path)
-            original_object = VObject(project_path+"/"+self.alias_to_path(alias))
-            self.remove_arc_from(original_object)
-            self.remove_alias(alias)
-
-        self.add_arc_from(obj)
-        self.set_alias(alias, obj.invariant_path())
-
-    def remove_input(self, alias):
-        path = self.alias_to_path(alias)
-        if path == "":
-            print("Alias not found")
-            return
-        project_path = csys.project_path(self.path)
-        obj = VObject(project_path+"/"+path)
-        self.remove_arc_from()
-        self.remove_alias(alias)
-
-
-    def add_output(self, file_name):
-        """ FIXME: The output is now binding with the task
-        """
-        outputs = self.read_variable("outputs", [])
-        outputs.append(file_name)
-        self.write_variable("outputs", outputs)
-
-    def remove_output(self, alias):
-        """ FIXME: check existence
-        """
-        outputs = self.read_variable("outputs", [])
-        outputs.append(file_name)
-        self.write_variable("outputs", outputs)
-
     def environment(self):
         """
         Read the environment file
         """
-        parameters_file = metadata.YamlFile(os.path.join(self.path, "chern.yaml"))
+        parameters_file = metadata.YamlFile(join(self.path, "chern.yaml"))
         environment = parameters_file.read_variable("environment", "")
         return environment
 
@@ -525,7 +391,7 @@ class VTask(VObject):
         """
         Read the memory limit file
         """
-        parameters_file = metadata.YamlFile(os.path.join(self.path, "chern.yaml"))
+        parameters_file = metadata.YamlFile(join(self.path, "chern.yaml"))
         memory_limit = parameters_file.read_variable("kubernetes_memory_limit", "")
         return memory_limit
 
@@ -533,7 +399,7 @@ class VTask(VObject):
         """
         Read the parameters file
         """
-        parameters_file = metadata.YamlFile(os.path.join(self.path, "chern.yaml"))
+        parameters_file = metadata.YamlFile(join(self.path, "chern.yaml"))
         parameters = parameters_file.read_variable("parameters", {})
         return sorted(parameters.keys()), parameters
 
@@ -541,7 +407,7 @@ class VTask(VObject):
         """
         Add a parameter to the parameters file
         """
-        parameters_file = metadata.YamlFile(os.path.join(self.path, "chern.yaml"))
+        parameters_file = metadata.YamlFile(join(self.path, "chern.yaml"))
         parameters = parameters_file.read_variable("parameters", {})
         parameters[parameter] = value
         parameters_file.write_variable("parameters", parameters)
@@ -550,7 +416,7 @@ class VTask(VObject):
         """
         Remove a parameter to the parameters file
         """
-        parameters_file = metadata.YamlFile(os.path.join(self.path, "chern.yaml"))
+        parameters_file = metadata.YamlFile(join(self.path, "chern.yaml"))
         parameters = parameters_file.read_variable("parameters", {})
         if parameter not in parameters.keys():
             print("Parameter not found")
@@ -621,6 +487,7 @@ class VTask(VObject):
         config_file = metadata.ConfigFile(self.path+"/.chern/config.json")
         return config_file.read_variable("default_runner", "local")
 
+
 def create_task(path):
     path = utils.strip_path_string(path)
     parent_path = os.path.abspath(path+"/..")
@@ -636,12 +503,13 @@ def create_task(path):
     task = VObject(path)
 
     # Create the default chern.yaml file
-    yaml_file = metadata.YamlFile(os.path.join(path, "chern.yaml"))
+    yaml_file = metadata.YamlFile(join(path, "chern.yaml"))
     yaml_file.write_variable("environment", "reanahub/reana-env-root6:6.18.04")
     yaml_file.write_variable("kubernetes_memory_limit", "256Mi")
 
     with open(path + "/.chern/README.md", "w") as f:
         f.write("Please write README for task {}".format(task.invariant_path()))
+
 
 def create_data(path):
     path = utils.strip_path_string(path)
@@ -658,6 +526,6 @@ def create_data(path):
     with open(path + "/.chern/README.md", "w") as f:
         f.write("Please write README for task {}".format(task.invariant_path()))
 
-    yaml_file = metadata.YamlFile(os.path.join(path, "chern.yaml"))
+    yaml_file = metadata.YamlFile(join(path, "chern.yaml"))
     yaml_file.write_variable("environment", "rawdata")
     yaml_file.write_variable("uuid", "")
