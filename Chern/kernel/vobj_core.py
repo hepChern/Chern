@@ -222,10 +222,10 @@ class Core:
                     alias1 = obj.path_to_alias(pred_object.invariant_path())
                     alias2 = pred_object.path_to_alias(obj.invariant_path())
                     norm_path = normpath(
-                        vobj.VObject(join(new_path, relative_path))
+                        join(new_path, relative_path)
                     )
                     new_object.set_alias(
-                        alias1, 
+                        alias1,
                         vobj.VObject(norm_path).invariant_path()
                     )
                     vobj.VObject(norm_path).set_alias(
