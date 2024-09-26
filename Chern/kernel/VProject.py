@@ -27,7 +27,7 @@ class VProject(VObject):
                 impressions.extend(sub_object.get_impressions())
         return impressions
 
-    def deposit(self, machine = "local"):
+    def deposit(self, machine="local"):
         sub_objects = self.sub_objects()
         for sub_object in sub_objects:
             if sub_object.object_type() == "task":
@@ -37,23 +37,12 @@ class VProject(VObject):
             else:
                 Chern.kernel.VDirectory.VDirectory(sub_object.path).deposit()
 
-    def submit(self, machine = "local"):
+    def submit(self, machine="local"):
         cherncc = ChernCommunicator.instance()
         self.deposit(machine)
         print("Submit the project")
         impressions = self.get_impressions()
         cherncc.execute(impressions, machine)
-
-    def get_impressions(self):
-        impressions = []
-        sub_objects = self.sub_objects()
-        for sub_object in sub_objects:
-            if sub_object.object_type() == "task" or sub_object.object_type() == "algorithm":
-                impressions.append(sub_object.impression().uuid)
-            else:
-                sub_object = Chern.kernel.VDirectory.VDirectory(sub_object.path)
-                impressions.extend(sub_object.get_impressions())
-        return impressions
 
     def clean_impressions(self):
         print("Clean all the impressions")
@@ -91,11 +80,13 @@ def create_readme(project_path):
     with open(project_path + "/.chern/README.md", "w") as f:
         f.write("")
 
+
 def create_configfile(project_path, uuid):
     config_file = metadata.ConfigFile(project_path+"/.chern/config.json")
     config_file.write_variable("object_type", "project")
     config_file.write_variable("chern_version", "4.0.0")
     config_file.write_variable("project_uuid", uuid)
+
 
 def create_hostsfile(project_path):
     config_file = metadata.ConfigFile(project_path+"/.chern/hosts.json")
@@ -103,9 +94,9 @@ def create_hostsfile(project_path):
     # config_file.write_variable("hosts", ["local"])
     # config_file.write_variable("urls", {"local":"127.0.0.1:3315"})
 
+
 ######################################
 # Functions:
-
 def init_project():
     """ Create a new project from the existing folder
     """
@@ -120,6 +111,7 @@ def init_project():
 
     # Check the forbidden name
     forbidden_names = ["config", "new", "projects", "start", "", "."]
+
     def check_project_failed(project_name, forbidden_names):
         message = "The following project names are forbidden:"
         message += "\n    "
@@ -143,6 +135,7 @@ def init_project():
     global_config_file.write_variable("projects_path", projects_path)
     global_config_file.write_variable("current_project", project_name)
     os.chdir(project_path)
+
 
 def use_project(path):
     """ Use an exsiting project
@@ -173,7 +166,6 @@ def use_project(path):
         print("The path is not a project")
         return
     print("The project type is ", object_type)
-    cwd = os.getcwd()
     os.chdir(path)
     global_config_file = metadata.ConfigFile(csys.local_config_path())
     projects_path = global_config_file.read_variable("projects_path", {})
@@ -191,6 +183,7 @@ def new_project(project_name):
 
     # Check the forbidden name
     forbidden_names = ["config", "new", "projects", "start"]
+
     def check_project_failed(project_name, forbidden_names):
         message = "The following project names are forbidden:"
         message += "\n    "
