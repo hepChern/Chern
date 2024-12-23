@@ -5,10 +5,10 @@ import os
 from subprocess import call, PIPE
 from Chern.utils import metadata
 from Chern.utils import csys
-from Chern.kernel.VAlgorithm import VAlgorithm #as _VAlgorithm
-from Chern.kernel.VTask import VTask #as _VTask
-from Chern.kernel.VDirectory import VDirectory
-from Chern.kernel.VProject import VProject
+import Chern.kernel.VAlgorithm as valg #as _VAlgorithm
+import Chern.kernel.VTask as vtsk #as _VTask
+import Chern.kernel.VDirectory as vdir
+import Chern.kernel.VProject as vproj
 
 def create_object_instance(path):
     """ Create an object instance
@@ -16,10 +16,10 @@ def create_object_instance(path):
     path = csys.strip_path_string(path)
     object_config_file = metadata.ConfigFile(path+"/.chern/config.json")
     object_type = object_config_file.read_variable("object_type")
-    vobject_class = {"algorithm":VAlgorithm,
-                     "task":VTask,
-                     "directory":VDirectory,
-                     "project":VProject}
+    vobject_class = {"algorithm":valg.VAlgorithm,
+                     "task":vtsk.VTask,
+                     "directory":vdir.VDirectory,
+                     "project":vproj.VProject}
     return vobject_class[object_type](path)
 
 class ChernProjectManager(object):

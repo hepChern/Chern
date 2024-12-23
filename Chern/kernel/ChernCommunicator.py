@@ -3,20 +3,25 @@ Chern class for communicate to local and remote server.
 """
 
 import tarfile
-import os
 import subprocess
 import requests
-from Chern.utils import csys
-from Chern.utils import metadata
+from ..utils import csys
+from ..utils import metadata
+from os.path import join
 from logging import getLogger
 logger = getLogger("ChernLogger")
 
+
 class ChernCommunicator(object):
     ins = None
+
+    # Initialization and Singleton
     def __init__(self):
         self.local_config_dir = csys.local_config_dir()
         project_path = csys.project_path()
-        self.config_file = metadata.ConfigFile(project_path+"/.chern/hosts.json")
+        self.config_file = metadata.ConfigFile(
+            join(project_path, "/.chern/hosts.json")
+            )
 
     @classmethod
     def instance(cls):
@@ -24,45 +29,91 @@ class ChernCommunicator(object):
             cls.ins = ChernCommunicator()
         return cls.ins
 
+    # Submission and Execution
     def submit(self, impression, machine="local"):
-        ## I should find a way to connect all the submission together to create a larger workflow
+        # I should find a way to connect all the submission
+        # together to create a larger workflow
         tarname = impression.tarfile
-        files = { "{}.tar.gz".format(impression.uuid) : open(tarname, "rb").read(), "config.json" : open(impression.path+"/config.json", "rb").read() }
+        files = {
+            "{}.tar.gz".format(impression.uuid): open(tarname, "rb").read(),
+            "config.json": open(impression.path + "/config.json", "rb").read()
+        }
         url = self.serverurl()
-        machine_id = requests.get("http://{}/machine_id/{}".format(url, machine)).text
-        requests.post("http://{}/upload".format(url), data = {'tarname': "{}.tar.gz".format(impression.uuid), 'config':"config.json"}, files = files)
-        ## FIXME: here we simply assume that the upload is always correct
-        requests.get("http://{}/run/{}/{}".format(url, impression.uuid, machine_id))
+        machine_id = requests.get(
+            "http://{}/machine_id/{}".format(url, machine)
+        ).text
+        requests.post(
+            "http://{}/upload".format(url),
+            data={
+                'tarname': "{}.tar.gz".format(impression.uuid),
+                'config': "config.json"
+            },
+            files=files
+        )
+        # FIXME: here we simply assume that the upload is always correct
+        requests.get(
+            "http://{}/run/{}/{}".format(url, impression.uuid, machine_id)
+        )
 
     def deposit(self, impression, machine="local"):
-        ## I should find a way to connect all the submission together to create a larger workflow
+        # I should find a way to connect all the submission
+        # together to create a larger workflow
         tarname = impression.tarfile
-        files = { "{}.tar.gz".format(impression.uuid) : open(tarname, "rb").read(), "config.json" : open(impression.path+"/config.json", "rb").read() }
+        files = {
+            "{}.tar.gz".format(impression.uuid): open(tarname, "rb").read(),
+            "config.json": open(impression.path + "/config.json", "rb").read()
+        }
         url = self.serverurl()
-        machine_id = requests.get("http://{}/machine_id/{}".format(url, machine)).text
-        requests.post("http://{}/upload".format(url), data = {'tarname': "{}.tar.gz".format(impression.uuid), 'config':"config.json"}, files = files)
-        ## FIXME: here we simply assume that the upload is always correct
+        machine_id = requests.get(
+            "http://{}/machine_id/{}".format(url, machine)
+        ).text
+        requests.post(
+            "http://{}/upload".format(url),
+            data={
+                'tarname': "{}.tar.gz".format(impression.uuid),
+                'config': "config.json"
+            },
+            files=files
+        )
+        # FIXME: here we simply assume that the upload is always correct
+        requests.get(
+            "http://{}/run/{}/{}".format(url, impression.uuid, machine_id)
+        )
 
     def execute(self, impressions, machine="local"):
-        files = { "impressions" : " ".join(impressions) }
+        files = {"impressions": " ".join(impressions)}
         url = self.serverurl()
-        machine_id = requests.get("http://{}/machine_id/{}".format(url, machine)).text
-        requests.post("http://{}/execute".format(url), data = {'machine': machine_id} , files = files)
+        machine_id = requests.get(
+            "http://{}/machine_id/{}".format(url, machine)
+        ).text
+        requests.post(
+            "http://{}/execute".format(url),
+            data={'machine': machine_id},
+            files=files
+        )
 
     # This is to check the status of the impression on any machine
     def is_deposited(self, impression):
         url = self.serverurl()
         try:
-            r = requests.get("http://{}/deposited/{}".format(url, impression.uuid))
-        except:
+            r = requests.get(
+                "http://{}/deposited/{}".format(url, impression.uuid)
+            )
+        except Exception as e:
+            # Handle the exception here
+            print(f"An error occurred: {e}")
             return "FALSE"
         return r.text
 
     def kill(self, impression):
         url = self.serverurl()
         try:
-            r = requests.get("http://{}/kill/{}".format(url, impression.uuid))
-        except:
+            r = requests.get(
+                "http://{}/kill/{}".format(url, impression.uuid)
+            )
+        except Exception as e:
+            # Handle the exception here
+            print(f"An error occurred: {e}")
             return "unconnected"
         return r.text
 
@@ -70,34 +121,46 @@ class ChernCommunicator(object):
         url = self.serverurl()
         try:
             r = requests.get("http://{}/runners".format(url))
-        except:
+        except Exception as e:
+            # Handle the exception here
+            print(f"An error occurred: {e}")
             return ["unconnected to DITE"]
         return r.text.split()
 
     def workflow(self, impression, machine="local"):
         url = self.serverurl()
         try:
-            r = requests.get("http://{}/workflow/{}".format(url, impression.uuid))
-        except:
+            r = requests.get(
+                "http://{}/workflow/{}".format(url, impression.uuid)
+            )
+        except Exception as e:
+            # Handle the exception here
+            print(f"An error occurred: {e}")
             return ["unconnected to DITE"]
         return r.text.split()
 
     def sample_status(self, impression):
         url = self.serverurl()
         try:
-            r = requests.get("http://{}/samplestatus/{}".format(url, impression.uuid))
-        except:
+            r = requests.get(
+                "http://{}/samplestatus/{}".format(url, impression.uuid)
+            )
+        except Exception as e:
+            # Handle the exception here
+            print(f"An error occurred: {e}")
             return "unconnected to DITE"
         return r.text
 
     def resubmit(self, impression, machine="local"):
         # Well, I don't know how to do it.
         # Because we need to check which part has the problem, etc.
-        # For testing purpose on a small project, we should first remove every thing in the impression and workflow directory and then to redo the submit
+        # For testing purpose on a small project,
+        # we should first remove every thing in the impression
+        # and workflow directory and then to redo the submit
         pass
 
     def add_host(self, url):
-        ## FIXME: add host_name and url check
+        # FIXME: add host_name and url check
         self.config_file.write_variable("serverrul", url)
 
     def serverurl(self):
@@ -107,22 +170,34 @@ class ChernCommunicator(object):
     def status(self, impression):
         url = self.serverurl()
         try:
-            r = requests.get("http://{}/status/{}".format(url, impression.uuid))
-        except:
+            r = requests.get(
+                "http://{}/status/{}".format(url, impression.uuid)
+            )
+        except Exception as e:
+            # Handle the exception here
+            print(f"An error occurred: {e}")
             return "unconnected"
         return r.text
 
     def run_status(self, impression, machine="local"):
         url = self.serverurl()
         try:
-            r = requests.get("http://{}/runstatus/{}/{}".format(url, impression.uuid, machine))
-        except:
+            r = requests.get(
+                "http://{}/runstatus/{}/{}".format(
+                    url, impression.uuid, machine
+                )
+            )
+        except Exception as e:
+            # Handle the exception here
+            print(f"An error occurred: {e}")
             return "unconnected"
         return r.text
 
     def register_machine(self, machine, machine_id):
         url = self.serverurl()
-        r = requests.get("http://{}/register/{}/{}".format(url, machine, machine_id))
+        requests.get(
+            "http://{}/register/{}/{}".format(url, machine, machine_id)
+        )
 
     def collect(self, impression):
         url = self.serverurl()
@@ -133,20 +208,20 @@ class ChernCommunicator(object):
         # Open the browser to display the file
         url = self.serverurl()
         # The browser is 'open'
-        subprocess.call(["open", "http://{}/export/{}/{}".format(url, impression.uuid, filename)])
-
-
-
-
+        subprocess.call(["open", "http://{}/export/{}/{}".format(
+            url, impression.uuid, filename
+        )])
 
     def export(self, impression, filename, output, machine="local"):
         url = self.serverurl()
-        machine_id = requests.get("http://{}/machine_id/{}".format(url, machine)).text
-        r = requests.get("http://{}/export/{}/{}".format(url, impression.uuid, filename))
+        requests.get("http://{}/machine_id/{}".format(
+            url, machine)).text
+        r = requests.get("http://{}/export/{}/{}".format(
+            url, impression.uuid, filename
+        ))
         # What we get is the file, save the file to the output
         with open(output, "wb") as f:
             f.write(r.content)
-
 
     def host_status(self):
         logger.debug("ChernCommunicator/host_status")
@@ -156,7 +231,9 @@ class ChernCommunicator(object):
             logger.debug("http://{}/serverstatus".format(url))
             r = requests.get("http://{}/serverstatus".format(url))
             logger.debug(r)
-        except:
+        except Exception as e:
+            # Handle the exception here
+            print(f"An error occurred: {e}")
             return "unconnected"
         status = r.text
         if (status == "ok"):
@@ -168,13 +245,19 @@ class ChernCommunicator(object):
         if machine == "none":
             machine_id = "none"
         else:
-            machine_id = requests.get("http://{}/machine_id/{}".format(url, machine)).text
-        r = requests.get("http://{}/outputs/{}/{}".format(url, impression, machine_id))
+            machine_id = requests.get(
+                "http://{}/machine_id/{}".format(url, machine)
+            ).text
+        r = requests.get(
+            "http://{}/outputs/{}/{}".format(url, impression, machine_id)
+        )
         return r.text.split()
 
     def get_file(self, impression, filename):
         url = self.serverurl()
-        path = requests.get("http://{}/getfile/{}/{}".format(url, impression, filename)).text
+        path = requests.get(
+            "http://{}/getfile/{}/{}".format(url, impression, filename)
+        ).text
         return path
 
     def input(self, impression, path):
@@ -183,11 +266,22 @@ class ChernCommunicator(object):
         tar = tarfile.open(tarname, "w:gz")
         tar.add(path, arcname="rawdata")
         tar.close()
-        files = { "{}.tar.gz".format(impression.uuid) : open(tarname, "rb").read() }
+
+        files = {
+            "{}.tar.gz".format(impression.uuid): open(tarname, "rb").read()
+        }
         url = self.serverurl()
-        machine_id = requests.get("http://{}/machine_id/{}".format(url, "local")).text
-        requests.post("http://{}/upload".format(url), data = {'tarname': "{}.tar.gz".format(impression.uuid)}, files = files)
+
+        requests.post(
+            "http://{}/upload".format(url),
+            data={'tarname': "{}.tar.gz".format(impression.uuid)},
+            files=files
+        )
 
     def set_sample_uuid(self, impression, sample_uuid):
         url = self.serverurl()
-        requests.get("http://{}/setsampleuuid/{}/{}".format(url, impression.uuid, sample_uuid))
+        requests.get(
+            "http://{}/setsampleuuid/{}/{}".format(
+                url, impression.uuid, sample_uuid
+            )
+        )

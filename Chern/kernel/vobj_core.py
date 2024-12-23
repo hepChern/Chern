@@ -1,12 +1,14 @@
+import os
 from os.path import join
 from os.path import normpath
 import shutil
 
-import Chern
-from Chern.utils.pretty import colorize
-from Chern.kernel.ChernCache import ChernCache
-from Chern.kernel.ChernCommunicator import ChernCommunicator
-import Chern.kernel.VObject as vobj
+# from ..interface.ChernManager import ChernManager
+
+from ..utils.pretty import colorize
+from .ChernCache import ChernCache
+from .ChernCommunicator import ChernCommunicator
+from . import VObject as vobj
 
 from logging import getLogger
 cherncache = ChernCache.instance()
@@ -21,17 +23,6 @@ class Core:
         I recommend to print also the README
         and the parameters|inputs|outputs ...
         """
-
-        """
-        FIXME: Should communicate with ChernCommunicator
-        to get the runner status
-        if not cherncache.is_docker_started():
-            color_print("!!Warning: docker not started", color="warning")
-        if daemon_status() != "started":
-            color_print("!!Warning: runner not started, the status is {}"
-            .format(daemon_status()), color="warning")
-        """
-
         logger.debug("VObject ls: {}".format(self.invariant_path()))
         cherncc = ChernCommunicator.instance()
 
@@ -69,9 +60,7 @@ class Core:
                 sub_path = self.relative_path(sub_object.path)
                 if show_status:
                     status = (
-                        Chern.interface.ChernManager.create_object_instance(
-                            sub_object.path
-                        ).status()
+                        vobj.VObject(sub_object.path).status()
                     )
                     color_tag = self.color_tag(status)
                     print("{2} {0:<12} {1:>20} ({3})".format(
@@ -120,10 +109,24 @@ class Core:
     def copy_to(self, new_path):
         """ Copy the current objects and its containings to a new path.
         """
+        print("self.path: ", self.path)
+        print("new_path: ", new_path)
+
+        # Check if the destination directory exists
+        destination_dir = os.path.dirname(new_path)
+        if not os.path.exists(destination_dir) and destination_dir:
+            print(f"Error: Destination directory '{destination_dir}' does not exist.")
+            return
+    
+        # Check if source and destination paths are the same
+        if os.path.abspath(self.path) == os.path.abspath(new_path):
+            print("Error: Source and destination paths are the same.")
+            return
+
         queue = self.sub_objects_recursively()
         # Make sure the related objects are all impressed
         for obj in queue:
-            if obj.object_type() != "task" and obj.object_type() != "algorithm":
+            if not obj.is_task_or_algorithm():
                 continue
             if not obj.is_impressed_fast():
                 obj.impress()
@@ -184,11 +187,12 @@ class Core:
         # Make sure the related objects are all impressed
         all_impressed = True
         for obj in queue:
-            if obj.object_type() != "task" and obj.object_type() != "algorithm":
+            if not obj.is_task_or_algorithm():
                 continue
             if not obj.is_impressed_fast():
                 all_impressed = False
-                print("The {} {} is not impressed, please impress it and try again".format(obj.object_type(), obj))
+                print("The {} {} is not impressed, please impress it "
+                      "and try again".format(obj.object_type(), obj))
         if not all_impressed:
             return
         shutil.copytree(self.path, new_path)
@@ -288,3 +292,27 @@ class Core:
                     succ_object.remove_alias(alias)
 
         shutil.rmtree(self.path)
+
+    def sub_objects(self):
+        """ return a list of the sub_objects
+        """
+        sub_directories = os.listdir(self.path)
+        sub_object_list = []
+        for item in sub_directories:
+            if os.path.isdir(join(self.path, item)):
+                obj = vobj.VObject(join(self.path, item))
+                if obj.is_zombie():
+                    continue
+                sub_object_list.append(obj)
+        return sub_object_list
+
+    def sub_objects_recursively(self):
+        """ Return a list of all the sub_objects
+        """
+        queue = [self]
+        index = 0
+        while index < len(queue):
+            top_object = queue[index]
+            queue += top_object.sub_objects()
+            index += 1
+        return queue

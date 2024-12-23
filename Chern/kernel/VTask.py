@@ -79,115 +79,28 @@
 """
 import os
 import subprocess
-from Chern.kernel.VObject import VObject
+from .VObject import VObject
 # from Chern.kernel.VContainer import VContainer
-from Chern.kernel import VAlgorithm
-from Chern.utils import utils
-from Chern.utils import metadata
-from Chern.utils.pretty import colorize
-from Chern.utils import csys
+from ..utils import utils
+from ..utils import metadata
+from ..utils import csys
+from ..utils.pretty import colorize
 
-from Chern.kernel.ChernCache import ChernCache
-from Chern.kernel.ChernCommunicator import ChernCommunicator
+from .ChernCache import ChernCache
+from .ChernCommunicator import ChernCommunicator
 from logging import getLogger
 from os.path import join
 
 from .vtask_input import InputManager
+from .vtask_setting import SettingManager
+from .vtask_core import Core
+from .vtask_file import FileManager
 
 cherncache = ChernCache.instance()
 logger = getLogger("ChernLogger")
 
 
-class VTask(VObject, InputManager):
-    def helpme(self, command):
-        from Chern.kernel.Helpme import task_helpme
-        print(task_helpme.get(command, "No such command, try ``helpme'' alone."))
-
-    def ls(self, show_readme=True, show_predecessors=True, show_sub_objects=True, show_status=True, show_successors=False):
-        super(VTask, self).ls(show_readme, show_predecessors, show_sub_objects, show_status, show_successors)
-        parameters, values = self.parameters()
-        if parameters != []:
-            print(colorize("---- Parameters:", "title0"))
-        for parameter in parameters:
-            print(parameter, end=" = ")
-            print(values[parameter])
-
-        if self.environment() == "rawdata":
-            print("Input data: {}".format(self.input_md5()))
-
-        print(colorize("---- Environment:", "title0"), self.environment())
-        print(colorize("---- Memory limit:", "title0"), self.memory_limit())
-        if self.validated():
-            print(colorize("---- Validated:", "title0"), colorize("True", "success"))
-        else:
-            print(colorize("---- Validated:", "title0"), colorize("False", "warning"))
-
-        print(colorize("---- Auto download:", "title0"), self.auto_download())
-        print(colorize("---- Default runner:", "title0"), self.default_runner())
-
-        if show_status:
-            status = self.status()
-            if status == "new":
-                status_color = "normal"
-            elif status == "impressed":
-                status_color = "success"
-
-            status_str = colorize("["+status+"]", status_color)
-
-            if status == "impressed":
-                run_status = self.run_status()
-                if run_status != "unconnected":
-                    if (run_status == "unsubmitted"):
-                        status_color = "warning"
-                    elif (run_status == "failed"):
-                        status_color = "warning"
-                    else:
-                        status_color = "success"
-                    status_str += colorize("["+run_status+"]", status_color)
-            print(colorize("**** STATUS:", "title0"), status_str)
-
-        if self.is_submitted():
-            print(colorize("---- Files:", "title0"))
-            files = self.output_files()
-            if files != []:
-                files.sort()
-                max_len = max([len(s) for s in files])
-                columns = os.get_terminal_size().columns
-                nfiles = columns // (max_len+4+7)
-                for i, f in enumerate(files):
-                    if not f.startswith(".") and f != "README.md":
-                        print(("local:{:<"+str(max_len+4)+"}").format(f), end="")
-                        if (i+1)%nfiles == 0:
-                            print("")
-                print("")
-
-        if self.algorithm() is not None:
-            print(colorize("---- Algorithm files:", "title0"))
-            files = os.listdir(self.algorithm().path)
-            if files == []: return
-            files.sort()
-            max_len = max([len(s) for s in files])
-            columns = os.get_terminal_size().columns
-            nfiles = columns // (max_len+4+11)
-            count = 0
-            for i, f in enumerate(files):
-                count += 1
-                if f.startswith("."): continue
-                if f == "README.md": continue
-                if f == "chern.yaml": continue
-                print(("algorithm:{:<"+str(max_len+4)+"}").format(f), end="")
-                if count % nfiles == 0:
-                    print("")
-            if count % nfiles != 0:
-                print("")
-            print(colorize("---- Commands:", "title0"))
-            for command in self.algorithm().commands():
-                parameters, values = self.parameters()
-                for parameter in parameters:
-                    parname = "${" + parameter + "}"
-                    command = command.replace(parname, values[parameter])
-                print(command)
-
+class VTask(VObject, Core, InputManager, SettingManager, FileManager):
     def output_files(self):
         # FIXME, to get the output files list
         return []
@@ -198,50 +111,6 @@ class VTask(VObject, InputManager):
         cherncc = ChernCommunicator.instance()
         return cherncc.get_file("local", self.impression(), filename)
 
-    def input_md5(self):
-        parameters_file = metadata.YamlFile(join(self.path, "chern.yaml"))
-        return parameters_file.read_variable("uuid", "")
-
-    def set_input_md5(self, path):
-        md5 = csys.dir_md5(path)
-        parameters_file = metadata.YamlFile(join(self.path, "chern.yaml"))
-        parameters_file.write_variable("uuid", md5)
-        return md5
-
-    def input(self, path):
-        """ Add input data to the task.
-            The input data should be a task.
-        """
-        if self.environment() != "rawdata":
-            print("Unable to add input to this task")
-            return
-        input_md5 = self.set_input_md5(path)
-        self.impress()
-        self.deposit()
-        cherncc = ChernCommunicator.instance()
-        cherncc.input(self.impression(), path)
-        cherncc.set_sample_uuid(self.impression(), input_md5)
-
-    def inputs(self):
-        """ Input data. """
-        inputs = filter(lambda x: x.object_type() == "task", self.predecessors())
-        return list(map(lambda x: VTask(x.path), inputs))
-
-    def outputs(self):
-        """ Output data. """
-        outputs = filter(lambda x: x.object_type() == "task", self.successors())
-        return list(map(lambda x: VTask(x.path), outputs))
-
-    def resubmit(self, machine = "local"):
-        if not self.is_submitted():
-            print("Not submitted yet.")
-            return
-        cherncc.resubmit(self.impression(), machine)
-
-        path = utils.storage_path() + "/" + self.impression()
-        csys.rm_tree(path)
-        self.submit()
-
     def view(self, filename):
         if filename.startswith("local:"):
             path = self.get_file("local:", filename[6:])
@@ -249,39 +118,6 @@ class VTask(VObject, InputManager):
                 print("File: {} do not exists".format(path))
                 return
             subprocess.Popen("open {}".format(path), shell=True)
-
-    def cp(self, source, dst):
-        if source.startswith("local:"):
-            path = self.container().path+"/output/"+source.replace("local:", "").lstrip()
-            if not csys.exists(path):
-                print("File: {} do not exists".format(path))
-                return
-            csys.copy(path, dst)
-
-    def stdout(self):
-        with open(self.container().path+"/stdout") as f:
-            return f.read()
-
-    def stderr(self):
-        with open(self.container().path+"/stderr") as f:
-            return f.read()
-
-    def is_submitted(self, machine="local"):
-        """ Judge whether submitted or not. Return a True or False.
-        [FIXME: incomplete]
-        """
-        if not self.is_impressed_fast():
-            return False
-        return False
-
-        cherncc = ChernCommunicator.instance()
-        if not self.is_impressed_fast():
-            return False
-        return cherncc.status(self.impression()) != "unsubmitted"
-
-    def output_md5(self):
-        output_md5s = self.config_file.read_variable("output_md5s", {})
-        return output_md5s.get(self.impression(), "")
 
     def print_status(self):
         print("Status of task: {}".format(self.invariant_path()))
@@ -351,146 +187,10 @@ class VTask(VObject, InputManager):
             consult_table[self.path] = (consult_id, status)
         return status
 
-    def collect(self):
-        cherncc = ChernCommunicator.instance()
-        cherncc.collect(self.impression())
-
-    def display(self, filename):
-        cherncc = ChernCommunicator.instance()
-        # Open the browser to display the file
-        cherncc.display(self.impression(), filename)
-
-    def export(self, filename, output_file):
-        cherncc = ChernCommunicator.instance()
-        output_file_path = cherncc.export(self.impression(), filename, output_file)
-        if output_file_path == "NOTFOUND":
-            print("File {} not found".format(filename))
-            return
-
-    def run_status(self, host = "local"):
-        cherncc = ChernCommunicator.instance()
-        environment = self.environment()
-        if environment == "rawdata":
-            md5 = self.input_md5()
-            dite_md5 = cherncc.sample_status(self.impression())
-            if dite_md5 == md5:
-                return "finished"
-            else:
-                return "unsubmitted"
-        return cherncc.status(self.impression())
-
-    def environment(self):
-        """
-        Read the environment file
-        """
-        parameters_file = metadata.YamlFile(join(self.path, "chern.yaml"))
-        environment = parameters_file.read_variable("environment", "")
-        return environment
-
-    def memory_limit(self):
-        """
-        Read the memory limit file
-        """
-        parameters_file = metadata.YamlFile(join(self.path, "chern.yaml"))
-        memory_limit = parameters_file.read_variable("kubernetes_memory_limit", "")
-        return memory_limit
-
-    def parameters(self):
-        """
-        Read the parameters file
-        """
-        parameters_file = metadata.YamlFile(join(self.path, "chern.yaml"))
-        parameters = parameters_file.read_variable("parameters", {})
-        return sorted(parameters.keys()), parameters
-
-    def add_parameter(self, parameter, value):
-        """
-        Add a parameter to the parameters file
-        """
-        parameters_file = metadata.YamlFile(join(self.path, "chern.yaml"))
-        parameters = parameters_file.read_variable("parameters", {})
-        parameters[parameter] = value
-        parameters_file.write_variable("parameters", parameters)
-
-    def remove_parameter(self, parameter):
-        """
-        Remove a parameter to the parameters file
-        """
-        parameters_file = metadata.YamlFile(join(self.path, "chern.yaml"))
-        parameters = parameters_file.read_variable("parameters", {})
-        if parameter not in parameters.keys():
-            print("Parameter not found")
-            return
-        parameters.pop(parameter)
-        parameters_file.write_variable("parameters", parameters)
-
-    def env_validated(self):
-        """
-        Check whether the environment is validated or not
-        """
-        if self.environment() == "rawdata":
-            return True
-        if self.algorithm() is not None:
-            if self.environment() == self.algorithm().environment():
-                return True
-        return False
-
-    def validated(self):
-        """
-        Check whether the task is validated or not
-        """
-        if self.environment() == "rawdata":
-            return True
-        if self.algorithm() is not None:
-            if self.environment() == self.algorithm().environment():
-                return False
-        return True
-
-    def importfile(self, filename):
-        """
-        Import the file to this task directory
-        """
-        csys.copy(filename, self.path)
-
-    def kill(self):
-        """
-        Kill the task
-        """
-        cherncc = ChernCommunicator.instance()
-        cherncc.kill(self.impression())
-
-    def auto_download(self):
-        """
-        Return whether the task is auto_download or not
-        """
-        config_file = metadata.ConfigFile(self.path+"/.chern/config.json")
-        return config_file.read_variable("auto_download", True)
-
-    def set_auto_download(self, auto_download):
-        """
-        Set the auto_download
-        """
-        config_file = metadata.ConfigFile(self.path+"/.chern/config.json")
-        config_file.write_variable("auto_download", auto_download)
-
-    def set_default_runner(self, runner):
-        """
-        Set the default runner
-        """
-        config_file = metadata.ConfigFile(self.path+"/.chern/config.json")
-        config_file.write_variable("default_runner", runner)
-
-    def default_runner(self):
-        """
-        Return the default runner
-        """
-        config_file = metadata.ConfigFile(self.path+"/.chern/config.json")
-        return config_file.read_variable("default_runner", "local")
-
 
 def create_task(path):
     path = utils.strip_path_string(path)
-    parent_path = os.path.abspath(path+"/..")
+    parent_path = os.path.abspath(join(path, ".."))
     object_type = VObject(parent_path).object_type()
     if object_type != "project" and object_type != "directory":
         return

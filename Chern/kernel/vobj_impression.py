@@ -1,8 +1,8 @@
 import filecmp
-from Chern.kernel.ChernCache import ChernCache
-from Chern.kernel.VImpression import VImpression
+from .ChernCache import ChernCache
+from .VImpression import VImpression
 import time
-from Chern.utils import csys
+from ..utils import csys
 
 from logging import getLogger
 cherncache = ChernCache.instance()

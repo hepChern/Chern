@@ -1,23 +1,21 @@
 """ VAlgorithm
 """
-import uuid
-import time
 import os
 import subprocess
 
-from Chern.kernel.VObject import VObject
+from .VObject import VObject
 # from Chern.kernel.VImage import VImage
 # from Chern.kernel.ChernDatabase import ChernDatabase
 from Chern.kernel.ChernCache import ChernCache
 
 from Chern.utils import utils
 from Chern.utils import csys
-from Chern.utils.utils import color_print
 from Chern.utils.pretty import colorize
 from Chern.utils import metadata
 
 from Chern.kernel.ChernCommunicator import ChernCommunicator
 cherncache = ChernCache.instance()
+
 
 class VAlgorithm(VObject):
     """ Algorithm class
@@ -192,6 +190,10 @@ class VAlgorithm(VObject):
         obj = VObject(path)
         if obj.object_type() != "algorithm":
             print("You are adding {} type object as input. The input is required to be an algorithm.".format(obj.object_type()))
+            return
+
+        if obj.has_predecessor_recursively(self):
+            print("The object is already in the dependency diagram of the ``input'', which will cause a loop.")
             return
 
         if self.has_alias(alias):

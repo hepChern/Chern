@@ -30,7 +30,6 @@ from Chern.interface.ChernShell import ChernShell
 from logging import getLogger
 import logging
 
-
 def is_first_time():
     """ Check if it is the first time to use the software """
     return not os.path.exists(csys.local_config_dir())
@@ -191,11 +190,11 @@ def prologue():
     print("""
     Chern: A data analysis management toolkit
     Author: Mingrui Zhao
-            2013 - 2017       
+            2013 - 2017
           @ Center of High Energy Physics, Tsinghua University
-            2017 - 2022       
+            2017 - 2022
           @ Department of Nuclear Physics, China Institute of Atomic Energy
-            2023 - 2024       
+            2023 - 2024
           @ China Institute of Atomic Energy & Niels Bohr Institute
     Email: mingrui.zhao@mail.labz0.org
 
