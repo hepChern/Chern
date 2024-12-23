@@ -1,8 +1,0 @@
-include Chern/data/profile/profile_chern/startup/010-startup.py
-include Chern/data/profile/profile_chern/startup/020-prompt.py
-include Chern/data/profile/profile_chern/startup/030-magic.py
-include Chern/data/profile/profile_chern/startup/040-mkobject.py
-include Chern/data/profile/profile_chern/startup/050-status.py
-include Chern/data/profile/profile_chern/startup/100-startup_message.py
-include Chern/data/profile/profile_chern/ipython_config.py
-
