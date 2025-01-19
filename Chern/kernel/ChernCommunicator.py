@@ -20,7 +20,7 @@ class ChernCommunicator(object):
         self.local_config_dir = csys.local_config_dir()
         project_path = csys.project_path()
         self.config_file = metadata.ConfigFile(
-            join(project_path, "/.chern/hosts.json")
+            join(project_path, ".chern/hosts.json")
             )
 
     @classmethod
@@ -101,7 +101,7 @@ class ChernCommunicator(object):
             )
         except Exception as e:
             # Handle the exception here
-            print(f"An error occurred: {e}")
+            # print(f"An error occurred: {e}")
             return "FALSE"
         return r.text
 
@@ -113,7 +113,7 @@ class ChernCommunicator(object):
             )
         except Exception as e:
             # Handle the exception here
-            print(f"An error occurred: {e}")
+            # print(f"An error occurred: {e}")
             return "unconnected"
         return r.text
 
@@ -123,7 +123,7 @@ class ChernCommunicator(object):
             r = requests.get("http://{}/runners".format(url))
         except Exception as e:
             # Handle the exception here
-            print(f"An error occurred: {e}")
+            # print(f"An error occurred: {e}")
             return ["unconnected to DITE"]
         return r.text.split()
 
@@ -135,7 +135,7 @@ class ChernCommunicator(object):
             )
         except Exception as e:
             # Handle the exception here
-            print(f"An error occurred: {e}")
+            # print(f"An error occurred: {e}")
             return ["unconnected to DITE"]
         return r.text.split()
 
@@ -147,7 +147,7 @@ class ChernCommunicator(object):
             )
         except Exception as e:
             # Handle the exception here
-            print(f"An error occurred: {e}")
+            # print(f"An error occurred: {e}")
             return "unconnected to DITE"
         return r.text
 
@@ -175,7 +175,7 @@ class ChernCommunicator(object):
             )
         except Exception as e:
             # Handle the exception here
-            print(f"An error occurred: {e}")
+            # print(f"An error occurred: {e}")
             return "unconnected"
         return r.text
 
@@ -189,7 +189,7 @@ class ChernCommunicator(object):
             )
         except Exception as e:
             # Handle the exception here
-            print(f"An error occurred: {e}")
+            # print(f"An error occurred: {e}")
             return "unconnected"
         return r.text
 
@@ -233,7 +233,7 @@ class ChernCommunicator(object):
             logger.debug(r)
         except Exception as e:
             # Handle the exception here
-            print(f"An error occurred: {e}")
+            # print(f"An error occurred: {e}")
             return "unconnected"
         status = r.text
         if (status == "ok"):
