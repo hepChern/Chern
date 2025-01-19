@@ -9,3 +9,11 @@ This type of metadata is saved in json file, not needed to be read by human
 ### Task
 ### Data
 ### Algorithm
+
+---------------------------
+Guidance for installing Chern
+python -m build
+pip install dist/chern-0.0.1-py3-none-any.whl
+
+If you want to install the package in editable mode, you can use the following command:
+pip install -e .
