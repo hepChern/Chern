@@ -26,7 +26,8 @@ dependencies = [
     "diff-match-patch",
     "python-daemon",
     "ipython",
-    "PyYAML>=5.1,<6.0",
+    # "PyYAML>=5.1,<6.0",
+    "PyYAML>=5.1",
     "requests"
 ]
 
