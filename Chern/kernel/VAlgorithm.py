@@ -216,6 +216,12 @@ class VAlgorithm(VObject):
         self.remove_arc_from()
         self.remove_alias(alias)
 
+    def importfile(self, filename):
+        """
+        Import the file to this task directory
+        """
+        csys.copy(filename, self.path)
+
 
 
 

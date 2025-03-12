@@ -312,6 +312,12 @@ def status():
 
         print("{1:<20} {0:<20} ".format(colorize(status, color_tag), manager.c.relative_path(obj.path)) )
 
+def importfile(filename):
+    if manager.c.object_type() != "task" and manager.c.object_type() != "algorithm":
+        print("Unable to call importfile if you are not in a task or algorithm.")
+        return
+    manager.c.importfile(filename) 
+
 
 def add_input(path, alias):
     if manager.c.object_type() != "task" and manager.c.object_type() != "algorithm":

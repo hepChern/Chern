@@ -59,8 +59,8 @@ algorithm_helpme = { "": """Hello, you are operating an ``algorithm'', what woul
 The commands to use:
     cd [object]
     ls : list the containings
-    mktask :
-    mkalgorithm : """,
+    importfile : import the files
+""",
 
 "cd": """The usage of cd:
     cd [object] """,

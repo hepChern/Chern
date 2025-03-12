@@ -252,8 +252,13 @@ class ChernShell(cmd.Cmd):
         except Exception as e:
             print(e)
 
-    def jobs(line):
-        shell.jobs
+    def do_importfile(self, arg):
+        try:
+            obj = arg.split()[0]
+            shell.importfile(obj)
+        except Exception as e:
+            print(e)
+
 
     def do_edit_script(self, arg):
         try:
