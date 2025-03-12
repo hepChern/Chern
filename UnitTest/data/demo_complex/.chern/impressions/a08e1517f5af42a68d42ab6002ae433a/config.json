@@ -1,0 +1,1 @@
+{"object_type": "task", "tree": [[".", [], ["chern.yaml"]]], "dependencies": ["24ca6d4da8c0447782a2ef586887c384", "74c8279c24a9467c84a91ec961993a41", "dc078d6fd4a14459b7c14d6dcd884b07"], "current_path": "taskAna2", "alias_to_impression": {"gen": "dc078d6fd4a14459b7c14d6dcd884b07", "ana1": "24ca6d4da8c0447782a2ef586887c384"}, "parents": ["f226d815f88f4d3b904e3b1197ac21ac"]}
