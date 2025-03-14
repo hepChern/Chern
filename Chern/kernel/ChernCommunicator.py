@@ -221,12 +221,6 @@ class ChernCommunicator(object):
             return "unconnected"
         return r.text
 
-    def register_machine(self, machine, machine_id):
-        url = self.serverurl()
-        requests.get(
-            "http://{}/register/{}/{}".format(url, machine, machine_id)
-        )
-
     def collect(self, impression):
         url = self.serverurl()
         r = requests.get("http://{}/collect/{}".format(url, impression.uuid))
