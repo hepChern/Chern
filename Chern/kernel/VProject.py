@@ -84,7 +84,7 @@ def create_readme(project_path):
 def create_configfile(project_path, uuid):
     config_file = metadata.ConfigFile(project_path+"/.chern/config.json")
     config_file.write_variable("object_type", "project")
-    config_file.write_variable("chern_version", "4.0.0")
+    config_file.write_variable("chern_version", "0.0.0")
     config_file.write_variable("project_uuid", uuid)
 
 
