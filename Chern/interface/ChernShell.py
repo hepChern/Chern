@@ -296,13 +296,17 @@ class ChernShell(cmd.Cmd):
 
     def do_register_runner(self, arg):
         try:
-            shell.register_runner()
+            runner = arg.split()[0]
+            url = arg.split()[1]
+            secret = arg.split()[2]
+            shell.register_runner(runner, url, secret)
         except Exception as e:
             print(e)
 
     def do_remove_runner(self, arg):
         try:
-            shell.remove_runner()
+            obj = arg.split()[0]
+            shell.remove_runner(obj)
         except Exception as e:
             print(e)
 

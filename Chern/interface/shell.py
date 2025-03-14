@@ -127,7 +127,7 @@ def cp(source, destination):
         source = os.path.normpath(csys.project_path() + source.strip("@"))
     else:
         source = os.path.abspath(source)
-    
+
     if destination.startswith("@/") or destination == "@":
         destination = os.path.join(csys.project_path(), destination.strip("@"))
     else:
@@ -142,12 +142,12 @@ def cp(source, destination):
     if source == destination:
         print("Source is the same as destination")
         return
-    
+
     # Skip the case that the destination is a subdirectory of the source
     if not os.path.relpath(destination, source).startswith(".."):
         print("Destination is a subdirectory of source")
         return
-    
+
     # Skip the case that the destination is already exists
     # unless the destination is a directory/project
     if os.path.exists(destination):
@@ -169,12 +169,12 @@ def cp(source, destination):
     if source == destination:
         print("Source is the same as destination")
         return
-    
+
     # Skip the case that the destination is a subdirectory of the source
     if not os.path.relpath(destination, source).startswith(".."):
         print("Destination is a subdirectory of source")
         return
-    
+
     # Skip the case that the destination is already exists
     # unless the destination is a directory/project
     if os.path.exists(destination):
@@ -189,7 +189,7 @@ def cp(source, destination):
     if os.path.relpath(destination, csys.project_path()).startswith(".."):
         print("Destination is outside the project")
         return
-        
+
     VObject(source).copy_to(destination)
 
 
@@ -316,7 +316,7 @@ def importfile(filename):
     if manager.c.object_type() != "task" and manager.c.object_type() != "algorithm":
         print("Unable to call importfile if you are not in a task or algorithm.")
         return
-    manager.c.importfile(filename) 
+    manager.c.importfile(filename)
 
 
 def add_input(path, alias):
@@ -382,8 +382,18 @@ def runners():
         return
     runners = cherncc.runners()
     print("Number of runners registered at DITE: ", len(runners))
-    for runner in runners:
-        print(runner)
+    if runners:
+        urls = cherncc.runners_url()
+        for runner, url in zip(runners, urls):
+            print("{0:<20}{1:20}".format(runner, url))
+
+def register_runner(runner, url, secret):
+    cherncc = ChernCommunicator.instance()
+    cherncc.register_runner(runner, url, secret)
+
+def remove_runner(runner):
+    cherncc = ChernCommunicator.instance()
+    cherncc.remove_runner(runner)
 
 
 def edit_script(obj):

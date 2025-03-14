@@ -126,6 +126,35 @@ class ChernCommunicator(object):
             return ["unconnected to DITE"]
         return r.text.split()
 
+    def runners_url(self):
+        url = self.serverurl()
+        try:
+            r = requests.get("http://{}/runnersurl".format(url))
+        except Exception as e:
+            return ["unconnected to DITE"]
+        return r.text.split()
+
+    def register_runner(self, runner, runner_url, secret):
+        url = self.serverurl()
+
+        requests.post(
+            "http://{}/registerrunner".format(url),
+            data={'runner': runner, 'url': runner_url, 'secret': secret}
+        )
+
+    def remove_runner(self, runner):
+        url = self.serverurl()
+        try:
+            r = requests.get("http://{}/removerunner/{}".format(url, runner))
+            if r.text != "successful":
+                print("Failed to remove runner")
+        except Exception as e:
+            return ["unconnected to DITE"]
+        return r.text.split()
+
+
+
+
     def workflow(self, impression, machine="local"):
         url = self.serverurl()
         try:
@@ -160,7 +189,7 @@ class ChernCommunicator(object):
 
     def add_host(self, url):
         # FIXME: add host_name and url check
-        self.config_file.write_variable("serverrul", url)
+        self.config_file.write_variable("serverurl", url)
 
     def serverurl(self):
         return self.config_file.read_variable("serverurl", "localhost:5000")
