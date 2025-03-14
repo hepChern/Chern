@@ -1,0 +1,1 @@
+{"object_type": "task", "auto_download": true, "default_runner": "local", "predecessors": ["tasks/taskAna1", "tasks/taskGen", "code/ana2"], "path_to_alias": {"taskGen": "gen"}, "alias_to_path": {"gen": "taskGen"}, "impression": "a08e1517f5af42a68d42ab6002ae433a", "successors": []}

@@ -288,10 +288,11 @@ class ChernCommunicator(object):
             files=files
         )
 
-    def set_sample_uuid(self, impression, sample_uuid):
-        url = self.serverurl()
-        requests.get(
-            "http://{}/setsampleuuid/{}/{}".format(
-                url, impression.uuid, sample_uuid
-            )
-        )
+# Deleted
+#    def set_sample_uuid(self, impression, sample_uuid):
+#        url = self.serverurl()
+#        requests.get(
+#            "http://{}/setsampleuuid/{}/{}".format(
+#                url, impression.uuid, sample_uuid
+#            )
+#        )
