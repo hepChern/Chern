@@ -106,8 +106,8 @@ class VDirectory(VObject):
         # FIXME: This function is not used now
         print("Status of directory: {}".format(self.invariant_path()))
         cherncc = ChernCommunicator.instance()
-        host_status = cherncc.host_status()
-        if host_status == "ok":
+        dite_status = cherncc.dite_status()
+        if dite_status == "ok":
             print("    Host: [{}]".format(colorize("Online", "success")))
 
         for sub_object in self.sub_objects():
@@ -119,7 +119,7 @@ class VDirectory(VObject):
                 else:
                     print("Impression: [{}]".format(colorize("New", "normal")))
                     continue
-            if host_status == "ok":
+            if dite_status == "ok":
                 if sub_object.object_type() == "task":
                     status = Chern.kernel.VTask.VTask(sub_object.path).status()
                 elif sub_object.object_type() == "algorithm":
