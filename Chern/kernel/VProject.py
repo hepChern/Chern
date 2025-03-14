@@ -91,8 +91,6 @@ def create_configfile(project_path, uuid):
 def create_hostsfile(project_path):
     config_file = metadata.ConfigFile(project_path+"/.chern/hosts.json")
     config_file.write_variable("serverurl", "127.0.0.1:3315")
-    # config_file.write_variable("hosts", ["local"])
-    # config_file.write_variable("urls", {"local":"127.0.0.1:3315"})
 
 
 ######################################
@@ -173,43 +171,3 @@ def use_project(path):
     global_config_file.write_variable("projects_path", projects_path)
     global_config_file.write_variable("current_project", project_name)
     os.chdir(project_path)
-
-
-def new_project(project_name):
-    """ Create a new project
-    """
-    project_name = utils.strip_path_string(project_name)
-    print("The project name is ", project_name)
-
-    # Check the forbidden name
-    forbidden_names = ["config", "new", "projects", "start"]
-
-    def check_project_failed(project_name, forbidden_names):
-        message = "The following project names are forbidden:"
-        message += "\n    "
-        for name in forbidden_names:
-            message += name + ", "
-        raise Exception(message)
-    if project_name in forbidden_names:
-        check_project_failed(project_name, forbidden_names)
-
-    pwd = os.getcwd()
-    project_path = pwd + "/" + project_name
-    if not os.path.exists(project_path):
-        os.mkdir(project_path)
-    else:
-        raise Exception("Project exist")
-    os.mkdir(project_path+"/.chern")
-    uuid = csys.generate_uuid()
-    create_readme(project_path)
-    create_configfile(project_path, uuid)
-    create_hostsfile(project_path)
-    global_config_file = metadata.ConfigFile(csys.local_config_path())
-    projects_path = global_config_file.read_variable("projects_path")
-    if projects_path is None:
-        projects_path = {}
-    projects_path[project_name] = project_path
-    global_config_file.write_variable("projects_path", projects_path)
-    global_config_file.write_variable("current_project", project_name)
-    os.chdir(project_path)
-
