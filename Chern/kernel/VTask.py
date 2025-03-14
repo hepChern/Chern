@@ -127,8 +127,8 @@ class VTask(VObject, Core, InputManager, SettingManager, FileManager):
             print("Impression: [{}]".format(colorize("New", "warning")))
             return
         cherncc = ChernCommunicator.instance()
-        host_status = cherncc.host_status()
-        if host_status == "ok":
+        dite_status = cherncc.dite_status()
+        if dite_status == "ok":
             print("DIET: [{}]".format(colorize("connected", "success")))
         else:
             print("DIET: [{}]".format(colorize("unconnected", "warning")))
