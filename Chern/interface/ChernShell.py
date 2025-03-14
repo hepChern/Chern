@@ -1,5 +1,4 @@
 from Chern.kernel.VProject import VProject
-from Chern.kernel.VProject import new_project
 import cmd, sys, os
 from Chern.utils import csys
 import Chern.interface.shell as shell
@@ -269,6 +268,7 @@ class ChernShell(cmd.Cmd):
 
     def do_clean_impressions(self, arg):
         try:
+            print("Very dangerous operation only for developer")
             print("cleaning impression")
             manager.current_object().clean_impressions()
         except Exception as e:
@@ -276,7 +276,13 @@ class ChernShell(cmd.Cmd):
 
     def do_runners(self, arg):
         try:
-            manager.current_object().runners()
+            shell.runners()
+        except Exception as e:
+            print(e)
+
+    def do_dite(self, arg):
+        try:
+            shell.dite()
         except Exception as e:
             print(e)
 
@@ -285,6 +291,18 @@ class ChernShell(cmd.Cmd):
             filename = arg.split()[0]
             output_path = arg.split()[1]
             manager.current_object().export(filename, output_path)
+        except Exception as e:
+            print(e)
+
+    def do_register_runner(self, arg):
+        try:
+            shell.register_runner()
+        except Exception as e:
+            print(e)
+
+    def do_remove_runner(self, arg):
+        try:
+            shell.remove_runner()
         except Exception as e:
             print(e)
 
