@@ -11,13 +11,6 @@ logger = getLogger("ChernLogger")
 
 
 class ExecutionManagement:
-    def runners(self):
-        """ Print the available runners
-        """
-        cherncc = ChernCommunicator.instance()
-        for runner in cherncc.runners():
-            print(runner)
-
     def is_submitted(self, machine="local"):
         """ Judge whether submitted or not. Return a True or False.
         [FIXME: incomplete]
