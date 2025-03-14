@@ -31,7 +31,7 @@ class Core:
         hosts = cherncc.hosts()
         hosts_status = colorize(">>>> Runners connection : ", "title0")
         for host in hosts:
-            status = cherncc.host_status(host)
+            status = cherncc.dite_status(host)
             if (status == "ok"):
                 hosts_status += colorize("["+host+"] ", "success")
             elif (status == "unconnected"):
@@ -39,7 +39,7 @@ class Core:
         print(hosts_status)
         """
         hosts_status = colorize(">>>> DITE: ", "title0")
-        status = cherncc.host_status()
+        status = cherncc.dite_status()
         if (status == "ok"):
             hosts_status += colorize("[connected] ", "success")
         elif (status == "unconnected"):
