@@ -79,6 +79,11 @@
         + unpack_impression:
         + is_packed:
             For future transfer purpose
+
+        
+        -----------------------------
+        # Communication with the DITE and the Runners
+        + dite
 """
 import os
 from os.path import join
