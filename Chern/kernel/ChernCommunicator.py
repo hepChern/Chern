@@ -7,6 +7,7 @@ import subprocess
 import requests
 from ..utils import csys
 from ..utils import metadata
+from ..utils.pretty import colorize
 from os.path import join
 from logging import getLogger
 logger = getLogger("ChernLogger")
@@ -122,8 +123,6 @@ class ChernCommunicator(object):
         try:
             r = requests.get("http://{}/runners".format(url))
         except Exception as e:
-            # Handle the exception here
-            # print(f"An error occurred: {e}")
             return ["unconnected to DITE"]
         return r.text.split()
 
@@ -223,22 +222,33 @@ class ChernCommunicator(object):
         with open(output, "wb") as f:
             f.write(r.content)
 
-    def host_status(self):
-        logger.debug("ChernCommunicator/host_status")
+    def dite_status(self):
+        logger.debug("ChernCommunicator/dite_status")
         url = self.serverurl()
         logger.debug("url: {}".format(url))
         try:
-            logger.debug("http://{}/serverstatus".format(url))
-            r = requests.get("http://{}/serverstatus".format(url))
+            logger.debug("http://{}/ditestatus".format(url))
+            r = requests.get("http://{}/ditestatus".format(url))
             logger.debug(r)
         except Exception as e:
-            # Handle the exception here
-            # print(f"An error occurred: {e}")
             return "unconnected"
         status = r.text
         if (status == "ok"):
             return "ok"
         return "unconnected"
+
+    def dite_info(self):
+        w = ""
+        w += colorize("DITE URL: ", "title0")
+        w += colorize(self.serverurl(), "normal")
+        w += "\n"
+        w += colorize("DITE Status: ", "title0")
+        if self.dite_status() == "ok":
+            w += colorize("[connected]", "success")
+        else:
+            w += colorize("[unconnected]", "warning")
+        w += "\n"
+        return w
 
     def output_files(self, impression, machine="local"):
         url = self.serverurl()
