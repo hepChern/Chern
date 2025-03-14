@@ -369,6 +369,22 @@ def hosts():
         color_tag = {"ok":"ok", "unconnected":"warning"}[status]
         print("{0:<20}{1:20}".format(host, colorize(status, color_tag)))
 
+def dite():
+    cherncc = ChernCommunicator.instance()
+    dite_info = cherncc.dite_info()
+    print(dite_info)
+
+def runners():
+    cherncc = ChernCommunicator.instance()
+    status = cherncc.dite_status()
+    if status == "unconnected":
+        print(colorize("DITE unconnected, please connect first", "warning"))
+        return
+    runners = cherncc.runners()
+    print("Number of runners registered at DITE: ", len(runners))
+    for runner in runners:
+        print(runner)
+
 
 def edit_script(obj):
     path = os.path.join(os.environ["HOME"], ".chern", "config.yaml")
