@@ -59,10 +59,10 @@ def test_core():
 
     print("#1 Test the sub_objects")
     obj_top = vobj.VObject(os.getcwd())
-    assert [obj.invariant_path() for obj in obj_top.sub_objects()] == ['tasks', 'includes', 'code']
+    assert sorted([obj.invariant_path() for obj in obj_top.sub_objects()]) == sorted(['tasks', 'includes', 'code'])
 
     obj_includes = vobj.VObject(os.getcwd()+"/includes")
-    assert [obj.invariant_path() for obj in obj_includes.sub_objects()] == ['includes/inc', 'includes/inc2']
+    assert sorted([obj.invariant_path() for obj in obj_includes.sub_objects()]) == sorted(['includes/inc', 'includes/inc2'])
 
     obj_task1 = vobj.VObject(os.getcwd()+"/tasks/taskAna2")
     assert [obj.invariant_path() for obj in obj_task1.sub_objects()] == []
@@ -70,7 +70,7 @@ def test_core():
     print("#2 Test the copy_to")
     obj_folder = vobj.VObject(os.getcwd()+"/tasks")
     obj_folder.copy_to("tasksDuplicate")
-    assert [obj.invariant_path() for obj in obj_top.sub_objects()] == ['tasks', 'includes', 'code', 'tasksDuplicate']
+    assert sorted([obj.invariant_path() for obj in obj_top.sub_objects()]) == sorted(['tasks', 'includes', 'code', 'tasksDuplicate'])
     assert vobj.VObject(os.getcwd()+"/tasksDuplicate").is_zombie() is False
     assert vobj.VObject(os.getcwd()+"/tasksDuplicate/taskAna1").is_impressed() is True
     assert vobj.VObject(os.getcwd()+"/tasksDuplicate/taskAna2").is_impressed() is True
@@ -89,7 +89,7 @@ def test_core():
     obj_folder = vobj.VObject(os.getcwd()+"/tasks")
     obj_folder.move_to("tasksMoved")
     # ['includes', 'code', 'tasksMoved', 'tasksDuplicate']
-    assert [obj.invariant_path() for obj in obj_top.sub_objects()] == ['includes', 'code', 'tasksMoved', 'tasksDuplicate']
+    assert sorted([obj.invariant_path() for obj in obj_top.sub_objects()]) == sorted(['includes', 'code', 'tasksMoved', 'tasksDuplicate'])
     assert vobj.VObject(os.getcwd()+"/tasksMoved").is_zombie() is False
     assert vobj.VObject(os.getcwd()+"/tasksMoved/taskAna1").is_impressed() is True
     assert vobj.VObject(os.getcwd()+"/tasksMoved/taskAna2").is_impressed() is True
@@ -105,11 +105,11 @@ def test_core():
     # ['tasksMoved/taskAna2']
     # ['tasksMoved/taskGen', 'code/ana1']
     assert [obj.invariant_path() for obj in obj_task1.successors()] == ['tasksMoved/taskAna2']
-    assert [obj.invariant_path() for obj in obj_task1.predecessors()] == ['tasksMoved/taskGen', 'code/ana1']
+    assert sorted([obj.invariant_path() for obj in obj_task1.predecessors()]) == sorted(['tasksMoved/taskGen', 'code/ana1'])
 
     obj_folder = vobj.VObject(os.getcwd()+"/tasksMoved")
     obj_folder.rm()
-    assert [obj.invariant_path() for obj in obj_top.sub_objects()] == ['includes', 'code', 'tasksDuplicate']
+    assert sorted([obj.invariant_path() for obj in obj_top.sub_objects()]) == sorted(['includes', 'code', 'tasksDuplicate'])
     assert vobj.VObject(os.getcwd()+"/tasksMoved").is_zombie() is True
     assert vobj.VObject(os.getcwd()+"/tasksMoved/taskAna1").is_zombie() is True
     # Check the impression could still be found after removing

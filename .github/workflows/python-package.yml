@@ -30,3 +30,8 @@ jobs:
         python -m pip install build
         python -m build
         python -m pip install -e .
+    - name: Unit test
+      run: |
+        cd UnitTest
+        python test_utils.py
+        python test_vobject.py

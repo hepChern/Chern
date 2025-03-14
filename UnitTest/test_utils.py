@@ -116,7 +116,7 @@ def test_list_dir():
     print("Testing list_dir...")
     prepare.create_chern_project("demo_genfit")
     print(csys.list_dir("demo_genfit/Gen"))
-    assert csys.list_dir("demo_genfit/Gen") == ["gendata.C", ".chern", "chern.yaml"]
+    assert sorted(csys.list_dir("demo_genfit/Gen")) == sorted(["gendata.C", ".chern", "chern.yaml"])
     prepare.remove_chern_project("demo_genfit")
 
 def test_rm_tree():
