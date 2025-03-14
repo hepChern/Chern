@@ -32,7 +32,7 @@ class ChernShell(cmd.Cmd):
 
     def do_status(self, arg):
         try:
-            manager.current_object().print_status()
+            shell.status()
         except Exception as e:
             print(e)
 

@@ -4,16 +4,14 @@ import os
 import subprocess
 
 from .VObject import VObject
-# from Chern.kernel.VImage import VImage
-# from Chern.kernel.ChernDatabase import ChernDatabase
-from Chern.kernel.ChernCache import ChernCache
+from .ChernCache import ChernCache
 
-from Chern.utils import utils
-from Chern.utils import csys
-from Chern.utils.pretty import colorize
-from Chern.utils import metadata
+from ..utils import utils
+from ..utils import csys
+from ..utils.pretty import colorize
+from ..utils import metadata
 
-from Chern.kernel.ChernCommunicator import ChernCommunicator
+from .ChernCommunicator import ChernCommunicator
 cherncache = ChernCache.instance()
 
 
@@ -24,6 +22,46 @@ class VAlgorithm(VObject):
     def helpme(self, command):
         from Chern.kernel.Helpme import algorithm_helpme
         print(algorithm_helpme.get(command, "No such command, try ``helpme'' alone."))
+
+
+    def print_status(self):
+        print("Status of task: {}".format(self.invariant_path()))
+        if self.status() == "impressed":
+            print("Impression: [{}]".format(colorize(self.impression().uuid, "success")))
+        else:
+            print("Impression: [{}]".format(colorize("New", "warning")))
+            return
+        cherncc = ChernCommunicator.instance()
+        dite_status = cherncc.dite_status()
+        if dite_status == "ok":
+            print("DIET: [{}]".format(colorize("connected", "success")))
+        else:
+            print("DIET: [{}]".format(colorize("unconnected", "warning")))
+            return
+
+        deposited = cherncc.is_deposited(self.impression())
+        if deposited == "FALSE":
+            print("Impression not deposited in DIET")
+            return
+
+        environment = self.environment()
+
+        workflow_check = cherncc.workflow(self.impression())
+        if workflow_check == "UNDEFINED":
+            print("Workflow not defined")
+            return
+
+        if environment != "rawdata":
+            print(colorize("**** WORKFLOW:", "title0"))
+            runner = workflow_check[0]
+            workflow = workflow_check[1]
+            print("Workflow: [{}][{}]".format(colorize(runner,"success"), colorize(workflow, "success")))
+
+            files = cherncc.output_files(self.impression(), runner)
+            print("Output files (collected on DIET):")
+            for f in files:
+                print("    {}".format(f))
+
 
     def status(self, consult_id = None, detailed = False):
         """ Consult the status of the object
@@ -54,25 +92,6 @@ class VAlgorithm(VObject):
         cherncc = ChernCommunicator.instance()
         return cherncc.status(self.impression())
 
-    """
-    def jobs(self):
-        impressions = self.config_file.read_variable("impressions", [])
-        if impressions == []:
-            return
-        impression = self.config_file.read_variable("impression")
-        for im in impressions:
-            path = utils.storage_path() + "/" + im
-            if not os.path.exists(path):
-                continue
-            if impression == im:
-                short = "*"
-            else:
-                short = " "
-            short += im[:8]
-            status = VImage(path).status()
-            print("{0:<12}   {1:>20}".format(short, status))
-    """
-
     def is_submitted(self):
         """ Judge whether submitted or not. Return a True or False.
         [FIXME: incomplete]
@@ -80,22 +99,6 @@ class VAlgorithm(VObject):
         if not self.is_impressed_fast():
             return False
         return False
-
-    """
-    def submit(self):
-        if self.is_submitted():
-            return ["[ERROR] {0} already submitted! Skip ``submit''.".format(self.invariant_path())]
-        if not self.is_impressed_fast():
-            self.impress()
-
-        path = csys.storage_path() + "/" + self.impression()
-        cwd = self.path
-        utils.copy_tree(cwd, path)
-        image = self.image()
-        image.config_file.write_variable("job_type", "image")
-        cherndb.add_job(self.impression())
-    """
-
 
     def resubmit(self):
         if not self.is_submitted():
@@ -116,15 +119,6 @@ class VAlgorithm(VObject):
         """
         with open(self.image().path+"/stderr") as stderr_file:
             return stderr_file.read()
-
-    """
-    def image(self):
-        # Get the image. If the image is not exists raise a exception.
-        path = utils.storage_path() + "/" + self.impression()
-        if not os.path.exists(path):
-            raise Exception("Image does not exist.")
-        return VImage(path)
-    """
 
     def ls(self, show_readme=True, show_predecessors=True, show_sub_objects=True, show_status=True, show_successors=False):
         """ list the infomation.

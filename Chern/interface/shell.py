@@ -279,38 +279,8 @@ def jobs(line):
         return
     manager.c.jobs()
 
-
 def status():
-    consult_id = time.time()
-    if manager.c.object_type() == "task" or manager.c.object_type() == "algorithm":
-        if manager.c.object_type() == "task":
-            status = manager.c.status(consult_id)
-        else:
-            status = manager.c.status(consult_id)
-        if status == "built" or status == "done":
-            color_tag = "success"
-        elif status == "failed":
-            color_tag = "warning"
-        elif status == "running":
-            color_tag = "running"
-        else:
-            color_tag = "normal"
-        color_print(status, color_tag)
-
-    sub_objects = manager.c.sub_objects()
-    sub_objects.sort(key=lambda x:(x.object_type(),x.path))
-    for obj in sub_objects:
-        status = create_object_instance(obj.path).status(consult_id)
-        if status == "built" or status == "done" or status == "finished":
-            color_tag = "success"
-        elif status == "failed" or status == "unfinished":
-            color_tag = "warning"
-        elif status == "running":
-            color_tag = "running"
-        else:
-            color_tag = "normal"
-
-        print("{1:<20} {0:<20} ".format(colorize(status, color_tag), manager.c.relative_path(obj.path)) )
+    manager.current_object().print_status()
 
 def importfile(filename):
     if manager.c.object_type() != "task" and manager.c.object_type() != "algorithm":
@@ -401,3 +371,37 @@ def edit_script(obj):
     yaml_file = metadata.YamlFile(path)
     editor = yaml_file.read_variable("editor", "vi")
     subprocess.call([editor, manager.c.path + "/" + obj])
+
+# Removed function
+# def status():
+#     consult_id = time.time()
+#     if manager.c.object_type() == "task" or manager.c.object_type() == "algorithm":
+#         if manager.c.object_type() == "task":
+#             status = manager.c.status(consult_id)
+#         else:
+#             status = manager.c.status(consult_id)
+#         if status == "built" or status == "done":
+#             color_tag = "success"
+#         elif status == "failed":
+#             color_tag = "warning"
+#         elif status == "running":
+#             color_tag = "running"
+#         else:
+#             color_tag = "normal"
+#         color_print(status, color_tag)
+#
+#     sub_objects = manager.c.sub_objects()
+#     sub_objects.sort(key=lambda x:(x.object_type(),x.path))
+#     for obj in sub_objects:
+#         status = create_object_instance(obj.path).status(consult_id)
+#         if status == "built" or status == "done" or status == "finished":
+#             color_tag = "success"
+#         elif status == "failed" or status == "unfinished":
+#             color_tag = "warning"
+#         elif status == "running":
+#             color_tag = "running"
+#         else:
+#             color_tag = "normal"
+#
+#         print("{1:<20} {0:<20} ".format(colorize(status, color_tag), manager.c.relative_path(obj.path)) )
+
