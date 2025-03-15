@@ -27,7 +27,7 @@ class VProject(VObject):
                 impressions.extend(sub_object.get_impressions())
         return impressions
 
-    def deposit(self, machine="local"):
+    def deposit(self):
         sub_objects = self.sub_objects()
         for sub_object in sub_objects:
             if sub_object.object_type() == "task":
@@ -39,7 +39,7 @@ class VProject(VObject):
 
     def submit(self, machine="local"):
         cherncc = ChernCommunicator.instance()
-        self.deposit(machine)
+        self.deposit()
         print("Submit the project")
         impressions = self.get_impressions()
         cherncc.execute(impressions, machine)

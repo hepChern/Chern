@@ -21,7 +21,7 @@ class ExecutionManagement:
 
     def submit(self, machine="local"):
         cherncc = ChernCommunicator.instance()
-        self.deposit(machine)
+        self.deposit()
         cherncc.execute([self.impression().uuid], machine)
 
     def resubmit(self, machine="local"):
@@ -37,15 +37,15 @@ class ExecutionManagement:
         csys.rm_tree(path)
         self.submit()
 
-    def deposit(self, machine="local"):
+    def deposit(self):
         cherncc = ChernCommunicator.instance()
         if self.is_deposited():
             return
         if not self.is_impressed_fast():
             self.impress()
         for obj in self.predecessors():
-            obj.deposit(machine)
-        cherncc.deposit(self.impression(), machine)
+            obj.deposit()
+        cherncc.deposit(self.impression())
 
     def is_deposited(self):
         if not self.is_impressed_fast():

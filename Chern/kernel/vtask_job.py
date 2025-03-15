@@ -51,3 +51,7 @@ class JobManager:
         if output_file_path == "NOTFOUND":
             print("File {} not found".format(filename))
             return
+
+    def send_data(self, path):
+        cherncc = ChernCommunicator.instance()
+        cherncc.deposit_with_data(self.impression(), path)

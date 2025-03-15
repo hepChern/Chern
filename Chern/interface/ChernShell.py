@@ -310,6 +310,13 @@ class ChernShell(cmd.Cmd):
         except Exception as e:
             print(e)
 
+    def do_send(self, arg):
+        try:
+            obj = arg.split()[0]
+            shell.send(obj)
+        except Exception as e:
+            print(e)
+
     def emptyline(self):
         pass
 

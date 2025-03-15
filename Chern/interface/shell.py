@@ -366,6 +366,9 @@ def remove_runner(runner):
     cherncc = ChernCommunicator.instance()
     cherncc.remove_runner(runner)
 
+def send(path):
+    manager.c.send(path)
+
 
 def edit_script(obj):
     path = os.path.join(os.environ["HOME"], ".chern", "config.yaml")

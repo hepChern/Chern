@@ -56,7 +56,7 @@ class ChernCommunicator(object):
             "http://{}/run/{}/{}".format(url, impression.uuid, machine_id)
         )
 
-    def deposit(self, impression, machine="local"):
+    def deposit(self, impression):
         # I should find a way to connect all the submission
         # together to create a larger workflow
         tarname = impression.tarfile
@@ -65,9 +65,6 @@ class ChernCommunicator(object):
             "config.json": open(impression.path + "/config.json", "rb").read()
         }
         url = self.serverurl()
-        machine_id = requests.get(
-            "http://{}/machine_id/{}".format(url, machine)
-        ).text
         requests.post(
             "http://{}/upload".format(url),
             data={
@@ -75,10 +72,6 @@ class ChernCommunicator(object):
                 'config': "config.json"
             },
             files=files
-        )
-        # FIXME: here we simply assume that the upload is always correct
-        requests.get(
-            "http://{}/run/{}/{}".format(url, impression.uuid, machine_id)
         )
 
     def execute(self, impressions, machine="local"):
@@ -315,21 +308,30 @@ class ChernCommunicator(object):
         ).text
         return path
 
-    def input(self, impression, path):
+    def deposit_with_data(self, impression, path):
         tmpdir = "/tmp"
         tarname = tmpdir + "/" + impression.uuid + ".tar.gz"
+        impression_tar = tarfile.open(impression.tarfile, "r")
+        # Add additional data to the tar file
         tar = tarfile.open(tarname, "w:gz")
+        for member in impression_tar.getmembers():
+            tar.addfile(member, impression_tar.extractfile(member))
         tar.add(path, arcname="rawdata")
         tar.close()
+        impression_tar.close()
 
         files = {
-            "{}.tar.gz".format(impression.uuid): open(tarname, "rb").read()
+            "{}.tar.gz".format(impression.uuid): open(tarname, "rb").read(),
+            "config.json": open(impression.path + "/config.json", "rb").read()
         }
         url = self.serverurl()
 
         requests.post(
             "http://{}/upload".format(url),
-            data={'tarname': "{}.tar.gz".format(impression.uuid)},
+            data={
+                'tarname': "{}.tar.gz".format(impression.uuid),
+                'config': "config.json"
+            },
             files=files
         )
 

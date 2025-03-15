@@ -9,6 +9,7 @@ logger = getLogger("ChernLogger")
 
 
 class InputManager:
+    # Abandoned method, replaced by send
     def add_source(self, path):
         """
         After add source, the status of the task should be done
@@ -17,6 +18,12 @@ class InputManager:
         data_file = metadata.ConfigFile(join(self.path, "data.json"))
         data_file.write_variable("md5", md5)
         self.impress()
+
+    def send(self, path):
+        md5 = csys.dir_md5(path)
+        self.set_input_md5(md5)
+        self.impress()
+        self.send_data(path)
 
     def add_algorithm(self, path):
         """
