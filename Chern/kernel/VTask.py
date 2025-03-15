@@ -95,12 +95,13 @@ from .vtask_input import InputManager
 from .vtask_setting import SettingManager
 from .vtask_core import Core
 from .vtask_file import FileManager
+from .vtask_job import JobManager
 
 cherncache = ChernCache.instance()
 logger = getLogger("ChernLogger")
 
 
-class VTask(VObject, Core, InputManager, SettingManager, FileManager):
+class VTask(VObject, Core, InputManager, SettingManager, FileManager, JobManager):
     def output_files(self):
         # FIXME, to get the output files list
         return []
@@ -138,11 +139,14 @@ class VTask(VObject, Core, InputManager, SettingManager, FileManager):
         if deposited == "FALSE":
             print("Impression not deposited in DIET")
             return
+        else:
+            job_status = cherncc.job_status(self.impression())
+            print("Job status: [{}]".format(colorize(job_status, "success")))
 
         environment = self.environment()
         if environment == "rawdata":
             run_status = self.run_status()
-            print("Sample status: [{}]".format(colorize(run_status, "success")))
+            print("Sample status: [{}]".format(colorize(run_status, run_status)))
             files = cherncc.output_files(self.impression(), "none")
             print("Sample files (collected on DIET):")
             for f in files:
@@ -150,7 +154,7 @@ class VTask(VObject, Core, InputManager, SettingManager, FileManager):
             return
 
         workflow_check = cherncc.workflow(self.impression())
-        if workflow_check == "UNDEFINED":
+        if workflow_check[0] == "UNDEFINED":
             print("Workflow not defined")
             return
 

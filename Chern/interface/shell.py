@@ -356,6 +356,7 @@ def runners():
         urls = cherncc.runners_url()
         for runner, url in zip(runners, urls):
             print("{0:<20}{1:20}".format(runner, url))
+            print(cherncc.runner_connection(runner))
 
 def register_runner(runner, url, secret):
     cherncc = ChernCommunicator.instance()

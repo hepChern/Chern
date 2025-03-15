@@ -13,6 +13,13 @@ class JobManager:
         cherncc = ChernCommunicator.instance()
         cherncc.kill(self.impression())
 
+    def job_status(self, host=None):
+        cherncc = ChernCommunicator.instance()
+        if host is None:
+            return cherncc.job_status(self.impression())
+        else:
+            return cherncc.job_status(self.impression(), host)
+
     # Status Checking Methods
     def run_status(self, host="local"):
         cherncc = ChernCommunicator.instance()

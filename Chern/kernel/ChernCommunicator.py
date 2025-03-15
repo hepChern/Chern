@@ -179,6 +179,28 @@ class ChernCommunicator(object):
             return "unconnected to DITE"
         return r.text
 
+    def job_status(self, impression):
+        url = self.serverurl()
+        try:
+            r = requests.get(
+                "http://{}/status/{}".format(url, impression.uuid)
+            )
+        except Exception as e:
+            # Handle the exception here
+            # print(f"An error occurred: {e}")
+            return "unconnected to DITE"
+        return r.text
+
+    def runner_connection(self, runner):
+        url = self.serverurl()
+        try:
+            r = requests.get(
+                "http://{}/runnerconnection/{}".format(url, runner)
+            )
+        except Exception as e:
+            return "unconnected to DITE"
+        return r.text
+
     def resubmit(self, impression, machine="local"):
         # Well, I don't know how to do it.
         # Because we need to check which part has the problem, etc.
