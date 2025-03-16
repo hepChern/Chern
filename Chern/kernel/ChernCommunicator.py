@@ -334,6 +334,10 @@ class ChernCommunicator(object):
             },
             files=files
         )
+        requests.get(
+            "http://{}//setjobstatus/{}/{}".format(
+                url, impression.uuid, "done"
+            ))
 
 # Deleted
 #    def set_sample_uuid(self, impression, sample_uuid):
