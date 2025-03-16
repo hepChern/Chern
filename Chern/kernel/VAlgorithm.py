@@ -3,7 +3,7 @@
 import os
 import subprocess
 
-from .VObject import VObject
+from .vobject import VObject
 from .chern_cache import ChernCache
 
 from ..utils import utils

@@ -34,7 +34,7 @@ import Chern
 from Chern.utils import utils
 from Chern.utils import csys
 from Chern.utils import metadata
-from Chern.kernel.VObject import VObject
+from .vobject import VObject
 from Chern.kernel.ChernCommunicator import ChernCommunicator
 class VDirectory(VObject):
     """

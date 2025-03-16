@@ -4,7 +4,7 @@ import os
 from logging import getLogger
 
 from Chern.utils import csys
-from . import VObject as vobj
+from . import vobject as vobj
 from .vobj_core import Core
 
 logger = getLogger("ChernLogger")

@@ -160,3 +160,6 @@ class VObject(ArcManagement, FileManagement, AliasManagement,
         editor = yaml_file.read_variable("editor", "vi")
         file_name = os.path.join(self.path, ".chern/README.md")
         subprocess.call(f"{editor} {file_name}", shell=True)
+
+    def get_vobject(self, path):
+        return VObject(path)

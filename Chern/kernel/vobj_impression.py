@@ -31,7 +31,7 @@ class ImpressionManagement(Core):
         print(f"Impressing: {self.path}")
         logger.debug("VObject impress: %s", self.path)
         object_type = self.object_type()
-        if object_type in ("task", "algorithm"):
+        if object_type not in ("task", "algorithm"):
             return
         logger.debug("Check whether it is impressed with is_impressed_fast")
         if self.is_impressed_fast():
@@ -82,7 +82,7 @@ class ImpressionManagement(Core):
 
         for dirpath, dirnames, filenames in file_list:
             for f in filenames:
-                if not filecmp.cmp(f"{self.path}/{dirnames}/{f}",
+                if not filecmp.cmp(f"{self.path}/{dirpath}/{f}",
                                    f"{impression.path}/contents/{dirpath}/{f}"):
                     return False
         return True

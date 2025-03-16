@@ -1,6 +1,5 @@
 from ..utils import metadata
 from ..utils import csys
-from . import VObject as vobj
 from . import vtask as vtsk
 from . import VAlgorithm as valg
 from logging import getLogger
@@ -29,7 +28,7 @@ class InputManager:
         """
         Add a algorithm
         """
-        obj = vobj.VObject(path)
+        obj = self.vobject(path)
         if obj.object_type() != "algorithm":
             print("You are adding {} type object as".format(
                 obj.object_type()
@@ -45,7 +44,7 @@ class InputManager:
         if algorithm is not None:
             print("Already have algorithm, will replace it")
             self.remove_algorithm()
-        self.add_arc_from(vobj.VObject(path))
+        self.add_arc_from(self.vobject(path))
 
     def remove_algorithm(self):
         """
@@ -70,7 +69,7 @@ class InputManager:
     def add_input(self, path, alias):
         """ FIXME: judge the input type
         """
-        obj = vobj.VObject(path)
+        obj = self.vobject(path)
         if obj.object_type() != "task":
             print("You are adding {} type object as".format(
                 obj.object_type()
@@ -86,7 +85,7 @@ class InputManager:
             print("The alias already exists. "
                   "The original input and alias will be replaced.")
             project_path = csys.project_path(self.path)
-            original_object = vobj.VObject(
+            original_object = self.vobject(
                 join(project_path, self.alias_to_path(alias))
             )
             self.remove_arc_from(original_object)
@@ -102,7 +101,7 @@ class InputManager:
             print("Alias not found")
             return
         project_path = csys.project_path(self.path)
-        obj = vobj.VObject(join(project_path, path))
+        obj = self.vobject(join(project_path, path))
         self.remove_arc_from(obj)
         self.remove_alias(alias)
 

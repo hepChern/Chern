@@ -8,7 +8,6 @@ from dataclasses import dataclass
 from logging import getLogger
 
 from ..utils.pretty import colorize
-from . import VObject as vobj
 from .vobj_core import Core
 
 from .chern_cache import ChernCache
@@ -140,7 +139,7 @@ class FileManagement(Core):
             norm_path = normpath(
                 join(new_path, self.relative_path(obj.path))
             )
-            new_object = vobj.VObject(norm_path)
+            new_object = self.get_vobject(norm_path)
             new_object.clean_flow()
             new_object.clean_impressions()
 
@@ -149,7 +148,7 @@ class FileManagement(Core):
             norm_path = normpath(
                 join(new_path, self.relative_path(obj.path))
             )
-            new_object = vobj.VObject(norm_path)
+            new_object = self.get_vobject(norm_path)
             for pred_object in obj.predecessors():
                 # if in the outside directory
                 if self.relative_path(pred_object.path).startswith(".."):
@@ -157,7 +156,7 @@ class FileManagement(Core):
                 else:
                     # if in the same tree
                     relative_path = self.relative_path(pred_object.path)
-                    new_object.add_arc_from(vobj.VObject(
+                    new_object.add_arc_from(self.get_vobject(
                         join(new_path, relative_path))
                     )
                     alias1 = obj.path_to_alias(pred_object.invariant_path())
@@ -166,15 +165,12 @@ class FileManagement(Core):
                     )
                     new_object.set_alias(
                         alias1,
-                        vobj.VObject(norm_path).invariant_path()
+                        self.get_vobject(norm_path).invariant_path()
                     )
 
             for succ_object in obj.successors():
                 if self.relative_path(succ_object.path).startswith(".."):
                     pass
-
-
-
 
     def copy_to(self, new_path):
         """ Copy the current objects and its containings to a new path.
@@ -201,7 +197,7 @@ class FileManagement(Core):
             norm_path = normpath(f"{new_path}/{self.relative_path(obj.path)}")
             if obj.object_type() == "directory":
                 continue
-            new_object = vobj.VObject(norm_path)
+            new_object = self.get_vobject(norm_path)
             new_object.impress()
 
     def move_to_deal_with_arcs(self, queue, new_path):
@@ -212,7 +208,7 @@ class FileManagement(Core):
             norm_path = normpath(
                 join(new_path, self.relative_path(obj.path))
             )
-            new_object = vobj.VObject(norm_path)
+            new_object = self.get_vobject(norm_path)
             new_object.clean_flow()
 
         for obj in queue:
@@ -220,7 +216,7 @@ class FileManagement(Core):
             norm_path = normpath(
                 join(new_path, self.relative_path(obj.path))
             )
-            new_object = vobj.VObject(norm_path)
+            new_object = self.get_vobject(norm_path)
             for pred_object in obj.predecessors():
                 if self.relative_path(pred_object.path).startswith(".."):
                     # if in the outside directory
@@ -231,7 +227,7 @@ class FileManagement(Core):
                     # if in the same tree
                     relative_path = self.relative_path(pred_object.path)
                     new_object.add_arc_from(
-                        vobj.VObject(join(new_path, relative_path))
+                        self.get_vobject(join(new_path, relative_path))
                     )
                     alias1 = obj.path_to_alias(pred_object.invariant_path())
                     alias2 = pred_object.path_to_alias(obj.invariant_path())
@@ -240,9 +236,9 @@ class FileManagement(Core):
                     )
                     new_object.set_alias(
                         alias1,
-                        vobj.VObject(norm_path).invariant_path()
+                        self.get_vobject(norm_path).invariant_path()
                     )
-                    vobj.VObject(norm_path).set_alias(
+                    self.get_vobject(norm_path).set_alias(
                         alias2,
                         new_object.invariant_path()
                     )
@@ -332,7 +328,7 @@ class FileManagement(Core):
         sub_object_list = []
         for item in sub_directories:
             if os.path.isdir(join(self.path, item)):
-                obj = vobj.VObject(join(self.path, item))
+                obj = self.get_vobject(join(self.path, item))
                 if obj.is_zombie():
                     continue
                 sub_object_list.append(obj)

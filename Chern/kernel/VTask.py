@@ -95,7 +95,7 @@ from ..utils.pretty import colorize
 from .chern_cache import ChernCache
 from .ChernCommunicator import ChernCommunicator
 
-from .VObject import VObject
+from .vobject import VObject
 from .vtask_input import InputManager
 from .vtask_setting import SettingManager
 from .vtask_core import Core

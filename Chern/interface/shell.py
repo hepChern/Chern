@@ -1,6 +1,6 @@
 import os
 from Chern.utils import csys
-from Chern.kernel.VObject import VObject
+from Chern.kernel.vobject import VObject
 from Chern.utils import utils
 from Chern.utils.utils import debug
 from Chern.interface.ChernManager import get_manager

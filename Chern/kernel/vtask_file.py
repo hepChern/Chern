@@ -1,4 +1,3 @@
-from Chern.kernel.VObject import VObject
 from Chern.kernel import VAlgorithm
 from Chern.utils import metadata
 from Chern.utils import csys

@@ -5,7 +5,7 @@ from logging import getLogger
 
 from ..utils import csys
 from .vobj_core import Core
-from . import VObject as vobj
+from . import vobject as vobj
 
 from .chern_cache import ChernCache
 

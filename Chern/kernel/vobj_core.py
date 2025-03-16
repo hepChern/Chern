@@ -74,6 +74,11 @@ class Core(ABC):
         """
         return self.object_type() == ""
 
+    @abstractmethod
+    def get_vobject(self, path):
+        """ To avoid circular import
+        """
+
     # Abstract methods, for file operations
     @abstractmethod
     def sub_objects_recursively(self):

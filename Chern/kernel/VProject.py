@@ -3,7 +3,7 @@
     The core part may move to c language in the future
 """
 import Chern
-from Chern.kernel.VObject import VObject
+from Chern.kernel.vobject import VObject
 from Chern.utils.utils import debug
 from Chern.utils import utils
 from Chern.utils import metadata
