@@ -1,318 +1,160 @@
+# pylint: disable=too-many-public-methods
+""" The Core of the VObject
+"""
 import os
-from os.path import join
-from os.path import normpath
-import shutil
-
-# from ..interface.ChernManager import ChernManager
-
-from ..utils.pretty import colorize
-from .chern_cache import ChernCache
-from .ChernCommunicator import ChernCommunicator
-from . import VObject as vobj
-
+from abc import ABC, abstractmethod
 from logging import getLogger
-cherncache = ChernCache.instance()
+
+from ..utils import csys
+from ..utils import metadata
+
 logger = getLogger("ChernLogger")
 
-
-class Core:
-    def ls(self,
-           show_readme=True, show_predecessors=True, show_sub_objects=True,
-           show_status=False, show_successors=False):
-        """ Print the subdirectory of the object
-        I recommend to print also the README
-        and the parameters|inputs|outputs ...
+class Core(ABC):
+    """ The core of the VObject
+    """
+    def __init__(self, path):
+        """ Initialize the VObject
         """
-        logger.debug("VObject ls: {}".format(self.invariant_path()))
-        cherncc = ChernCommunicator.instance()
+        logger.debug("VObject::Core.__init__")
+        self.path = csys.strip_path_string(path)
+        self.config_file = metadata.ConfigFile(self.path+"/.chern/config.json")
+        logger.debug("VObject::Core.__init__ done")
 
-        # Should have a flag whether to show the runner
+    def __str__(self):
+        """ Define the behavior of print(vobject)
         """
-        hosts = cherncc.hosts()
-        hosts_status = colorize(">>>> Runners connection : ", "title0")
-        for host in hosts:
-            status = cherncc.dite_status(host)
-            if (status == "ok"):
-                hosts_status += colorize("["+host+"] ", "success")
-            elif (status == "unconnected"):
-                hosts_status += colorize("["+host+"] ", "warning")
-        print(hosts_status)
+        return self.invariant_path()
+
+    def __repr__(self):
+        """ Define the behavior of print(vobject)
         """
-        hosts_status = colorize(">>>> DITE: ", "title0")
-        status = cherncc.dite_status()
-        if (status == "ok"):
-            hosts_status += colorize("[connected] ", "success")
-        elif (status == "unconnected"):
-            hosts_status += colorize("[unconnected] ", "warning")
-        print(hosts_status)
+        return self.invariant_path()
 
-        if show_readme:
-            print(colorize("README:", "comment"))
-            print(colorize(self.readme(), "comment"))
-
-        sub_objects = self.sub_objects()
-        sub_objects.sort(key=lambda x: (x.object_type(), x.path))
-        if sub_objects and show_sub_objects:
-            print(colorize(">>>> Subobjects:", "title0"))
-
-        if show_sub_objects:
-            for index, sub_object in enumerate(sub_objects):
-                sub_path = self.relative_path(sub_object.path)
-                if show_status:
-                    status = (
-                        vobj.VObject(sub_object.path).status()
-                    )
-                    color_tag = self.color_tag(status)
-                    print("{2} {0:<12} {1:>20} ({3})".format(
-                        "("+sub_object.object_type()+")",
-                        sub_path,
-                        "[{}]".format(index),
-                        colorize(status, color_tag)
-                    ))
-                else:
-                    print(
-                        "{2} {0:<12} {1:>20}".format(
-                            "(" + sub_object.object_type() + ")",
-                            sub_path,
-                            "[{}]".format(index)
-                        )
-                    )
-
-        total = len(sub_objects)
-        predecessors = self.predecessors()
-        if predecessors and show_predecessors:
-            print(colorize("o--> Predecessors:", "title0"))
-            for index, pred_object in enumerate(predecessors):
-                alias = self.path_to_alias(pred_object.invariant_path())
-                order = "[{}]".format(total+index)
-                pred_path = pred_object.invariant_path()
-                obj_type = "("+pred_object.object_type()+")"
-                print("{2} {0:<12} {3:>10}: @/{1:<20}".format(
-                    obj_type, pred_path, order, alias
-                ))
-
-        total += len(predecessors)
-        successors = self.successors()
-        if successors and show_successors:
-            print(colorize("-->o Successors:", "title0"))
-            for index, succ_object in enumerate(successors):
-                alias = self.path_to_alias(succ_object.invariant_path())
-                order = "[{}]".format(total+index)
-                succ_path = (
-                    succ_object.invariant_path()
-                )
-                obj_type = "("+succ_object.object_type()+")"
-                print("{2} {0:<12} {3:>10}: @/{1:<20}".format(
-                    obj_type, succ_path, order, alias
-                ))
-
-    def copy_to(self, new_path):
-        """ Copy the current objects and its containings to a new path.
+    # Path handling, type and status
+    def invariant_path(self):
+        """ The path relative to the project root.
+        It is invariant when the project is moved.
         """
-        print("self.path: ", self.path)
-        print("new_path: ", new_path)
+        project_path = csys.project_path(self.path)
+        path = os.path.relpath(self.path, project_path)
+        return path
 
-        # Check if the destination directory exists
-        destination_dir = os.path.dirname(new_path)
-        if not os.path.exists(destination_dir) and destination_dir:
-            print(f"Error: Destination directory '{destination_dir}' does not exist.")
-            return
-
-        # Check if source and destination paths are the same
-        if os.path.abspath(self.path) == os.path.abspath(new_path):
-            print("Error: Source and destination paths are the same.")
-            return
-
-        queue = self.sub_objects_recursively()
-        # Make sure the related objects are all impressed
-        for obj in queue:
-            if not obj.is_task_or_algorithm():
-                continue
-            if not obj.is_impressed_fast():
-                obj.impress()
-        shutil.copytree(self.path, new_path)
-
-        for obj in queue:
-            # Calculate the absolute path of the new directory
-            norm_path = normpath(
-                join(new_path, self.relative_path(obj.path))
-            )
-            new_object = vobj.VObject(norm_path)
-            new_object.clean_flow()
-            new_object.clean_impressions()
-
-        for obj in queue:
-            # Calculate the absolute path of the new directory
-            norm_path = normpath(
-                join(new_path, self.relative_path(obj.path))
-            )
-            new_object = vobj.VObject(norm_path)
-            for pred_object in obj.predecessors():
-                # if in the outside directory
-                if self.relative_path(pred_object.path).startswith(".."):
-                    pass
-                else:
-                    # if in the same tree
-                    relative_path = self.relative_path(pred_object.path)
-                    new_object.add_arc_from(vobj.VObject(
-                        join(new_path, relative_path))
-                    )
-                    alias1 = obj.path_to_alias(pred_object.invariant_path())
-                    norm_path = normpath(
-                        join(new_path, relative_path)
-                    )
-                    new_object.set_alias(
-                        alias1,
-                        vobj.VObject(norm_path).invariant_path()
-                    )
-
-            for succ_object in obj.successors():
-                if self.relative_path(succ_object.path).startswith(".."):
-                    pass
-
-        # Deal with the impression
-        for obj in queue:
-            # Calculate the absolute path of the new directory
-            norm_path = normpath(f"{new_path}/{self.relative_path(obj.path)}")
-            if obj.object_type() == "directory":
-                continue
-            new_object = vobj.VObject(norm_path)
-            new_object.impress()
-
-    def move_to(self, new_path):
-        """ move to another path
+    def relative_path(self, path):
+        """ Return a path relative to the path of this object
         """
-        queue = self.sub_objects_recursively()
+        return os.path.relpath(path, self.path)
 
-        # Make sure the related objects are all impressed
-        all_impressed = True
-        for obj in queue:
-            if not obj.is_task_or_algorithm():
-                continue
-            if not obj.is_impressed_fast():
-                all_impressed = False
-                print("The {} {} is not impressed, please impress it "
-                      "and try again".format(obj.object_type(), obj))
-        if not all_impressed:
-            return
-        shutil.copytree(self.path, new_path)
-
-        for obj in queue:
-            # Calculate the absolute path of the new directory
-            norm_path = normpath(
-                join(new_path, self.relative_path(obj.path))
-            )
-            new_object = vobj.VObject(norm_path)
-            new_object.clean_flow()
-
-        for obj in queue:
-            # Calculate the absolute path of the new directory
-            norm_path = normpath(
-                join(new_path, self.relative_path(obj.path))
-            )
-            new_object = vobj.VObject(norm_path)
-            for pred_object in obj.predecessors():
-                if self.relative_path(pred_object.path).startswith(".."):
-                    # if in the outside directory
-                    new_object.add_arc_from(pred_object)
-                    alias = obj.path_to_alias(pred_object.invariant_path())
-                    new_object.set_alias(alias, pred_object.invariant_path())
-                else:
-                    # if in the same tree
-                    relative_path = self.relative_path(pred_object.path)
-                    new_object.add_arc_from(
-                        vobj.VObject(join(new_path, relative_path))
-                    )
-                    alias1 = obj.path_to_alias(pred_object.invariant_path())
-                    alias2 = pred_object.path_to_alias(obj.invariant_path())
-                    norm_path = normpath(
-                        join(new_path, relative_path)
-                    )
-                    new_object.set_alias(
-                        alias1,
-                        vobj.VObject(norm_path).invariant_path()
-                    )
-                    vobj.VObject(norm_path).set_alias(
-                        alias2,
-                        new_object.invariant_path()
-                    )
-
-            for succ_object in obj.successors():
-                # if in the outside directory
-                if self.relative_path(succ_object.path).startswith(".."):
-                    new_object.add_arc_to(succ_object)
-                    succ_object.remove_arc_from(self)
-                    alias = obj.path_to_alias(succ_object.invariant_path())
-                    succ_object.remove_alias(alias)
-                    succ_object.set_alias(alias, new_object.invariant_path())
-
-        for obj in queue:
-            for pred_object in obj.predecessors():
-                if self.relative_path(pred_object.path).startswith(".."):
-                    obj.remove_arc_from(pred_object)
-
-            for succ_object in obj.successors():
-                if self.relative_path(succ_object.path).startswith(".."):
-                    obj.remove_arc_to(succ_object)
-
-        # Deal with the impression
-        for obj in queue:
-            # Calculate the absolute path of the new directory
-            if obj.object_type() == "directory":
-                continue
-            norm_path = normpath(
-                join(new_path, self.relative_path(obj.path))
-            )
-            new_object = vobj.VObject(norm_path)
-
-        if self.object_type() == "directory":
-            norm_path = normpath(
-                join(new_path, self.relative_path(obj.path))
-            )
-
-        shutil.rmtree(self.path)
-
-    def rm(self):
+    def object_type(self):
+        """ Return the type of the this object.
         """
-        Remove this object.
-        The important thing is to unalias.
+        return self.config_file.read_variable("object_type", "")
+
+    def is_task(self):
+        """ Judge whether it is a task.
         """
-        queue = self.sub_objects_recursively()
-        for obj in queue:
-            for pred_object in obj.predecessors():
-                if self.relative_path(pred_object.path).startswith(".."):
-                    obj.remove_arc_from(pred_object)
-                    alias = pred_object.path_to_alias(pred_object.path)
-                    pred_object.remove_alias(alias)
+        return self.object_type() == "task"
 
-            for succ_object in obj.successors():
-                if self.relative_path(succ_object.path).startswith(".."):
-                    obj.remove_arc_to(succ_object)
-                    alias = succ_object.path_to_alias(succ_object.path)
-                    succ_object.remove_alias(alias)
-
-        shutil.rmtree(self.path)
-
-    def sub_objects(self):
-        """ return a list of the sub_objects
+    def is_algorithm(self):
+        """ Judge whether it is an algorithm.
         """
-        sub_directories = os.listdir(self.path)
-        sub_object_list = []
-        for item in sub_directories:
-            if os.path.isdir(join(self.path, item)):
-                obj = vobj.VObject(join(self.path, item))
-                if obj.is_zombie():
-                    continue
-                sub_object_list.append(obj)
-        return sub_object_list
+        return self.object_type() == "algorithm"
 
+    def is_task_or_algorithm(self):
+        """ Judge whether it is a task or an algorithm.
+        """
+        if self.object_type() == "task":
+            return True
+        if self.object_type() == "algorithm":
+            return True
+        return False
+
+    def is_zombie(self):
+        """ Judge whether it is actually an object
+        """
+        return self.object_type() == ""
+
+    # Abstract methods, for file operations
+    @abstractmethod
     def sub_objects_recursively(self):
-        """ Return a list of all the sub_objects
-        """
-        queue = [self]
-        index = 0
-        while index < len(queue):
-            top_object = queue[index]
-            queue += top_object.sub_objects()
-            index += 1
-        return queue
+        """ Abstract method for future implementation"""
+
+    # Abstract methods, for arc management
+    @abstractmethod
+    def add_arc_from(self, obj):
+        """ Abstract method for future implementation"""
+
+    @abstractmethod
+    def remove_arc_from(self, obj, single=False):
+        """ Abstract method for future implementation"""
+
+    @abstractmethod
+    def add_arc_to(self, obj):
+        """ Abstract method for future implementation"""
+
+    @abstractmethod
+    def remove_arc_to(self, obj, single=False):
+        """ Abstract method for future implementation"""
+
+    @abstractmethod
+    def successors(self):
+        """ Abstract method for future implementation"""
+
+    @abstractmethod
+    def predecessors(self):
+        """ Abstract method for future implementation"""
+
+    @abstractmethod
+    def has_successor(self, obj):
+        """ Abstract method for future implementation"""
+
+    @abstractmethod
+    def has_predecessor(self, obj):
+        """ Abstract method for future implementation"""
+
+    @abstractmethod
+    def has_predecessor_recursively(self, obj):
+        """ Abstract method for future implementation"""
+
+    # Abstrac methods, for alias management
+    @abstractmethod
+    def path_to_alias(self, path):
+        """ Abstract method for future implementation"""
+
+    @abstractmethod
+    def alias_to_path(self, alias):
+        """ Abstract method for future implementation"""
+
+    @abstractmethod
+    def alias_to_impression(self, alias):
+        """ Abstract method for future implementation"""
+
+    @abstractmethod
+    def has_alias(self, alias):
+        """ Abstract method for future implementation"""
+
+    @abstractmethod
+    def remove_alias(self, alias):
+        """ Abstract method for future implementation"""
+
+    @abstractmethod
+    def set_alias(self, alias, path):
+        """ Abstract method for future implementation"""
+
+    # Impression
+    @abstractmethod
+    def impress(self):
+        """ Abstract method for future implementation"""
+
+    @abstractmethod
+    def is_impressed_fast(self):
+        """ Abstract method for future implementation"""
+
+    # Other methods
+    @abstractmethod
+    def readme(self):
+        """ Abstract method for future implementation"""
+
+    @abstractmethod
+    def color_tag(self, color):
+        """ Abstract method for future implementation"""

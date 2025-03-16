@@ -3,13 +3,14 @@ from .chern_cache import ChernCache
 from .VImpression import VImpression
 import time
 from ..utils import csys
+from .vobj_core import Core
 
 from logging import getLogger
 cherncache = ChernCache.instance()
 logger = getLogger("ChernLogger")
 
 
-class ImpressionManagement:
+class ImpressionManagement(Core):
     def impress(self):
         """ Create an impression.
         The impressions are store in a directory .chern/impressions/[uuid]

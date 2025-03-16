@@ -164,7 +164,7 @@ class VTask(VObject, Core, InputManager, SettingManager, FileManager, JobManager
             files = cherncc.output_files(self.impression(), "none")
             print("Sample files (collected on DIET):")
             for f in files:
-                print("    {f}")
+                print(f"    {f}")
             return
 
         workflow_check = cherncc.workflow(self.impression())

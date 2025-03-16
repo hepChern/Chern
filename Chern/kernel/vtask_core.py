@@ -1,3 +1,9 @@
+""" Core class for vtasks.
+    + helpme: Print help message for the command.
+    + ls: List the information of the task.
+"""
+# pylint: disable=too-many-public-methods
+
 from Chern.kernel.VObject import VObject
 from Chern.kernel import VAlgorithm
 from Chern.utils import metadata
@@ -6,17 +12,26 @@ from Chern.kernel.ChernCommunicator import ChernCommunicator
 
 import Chern.kernel.vtask as vtsk
 from logging import getLogger
+import os
 from os.path import join
 logger = getLogger("ChernLogger")
 
 
 class Core:
+    """ Core class for vtasks.
+    """
     def helpme(self, command):
-        from Chern.kernel.Helpme import task_helpme
+        """ Print help message for the command.
+        """
+        from .helpme import task_helpme
         print(task_helpme.get(command, "No such command, try ``helpme'' alone."))
 
-    def ls(self, show_readme=True, show_predecessors=True, show_sub_objects=True, show_status=True, show_successors=False):
-        super(VTask, self).ls(show_readme, show_predecessors, show_sub_objects, show_status, show_successors)
+    def ls(self, show_info=(True, True, True, True, False)):
+        """ List the information of the task.
+        """
+        show_readme, show_predecessors, show_sub_objects, show_status, show_successors = show_info
+        super(VTask, self).ls(show_readme, show_predecessors,
+                              show_sub_objects, show_status, show_successors)
         parameters, values = self.parameters()
         if parameters != []:
             print(colorize("---- Parameters:", "title0"))
@@ -49,9 +64,9 @@ class Core:
             if status == "impressed":
                 run_status = self.run_status()
                 if run_status != "unconnected":
-                    if (run_status == "unsubmitted"):
+                    if run_status == "unsubmitted":
                         status_color = "warning"
-                    elif (run_status == "failed"):
+                    elif run_status == "failed":
                         status_color = "warning"
                     else:
                         status_color = "success"

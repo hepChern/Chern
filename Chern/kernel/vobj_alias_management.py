@@ -1,14 +1,17 @@
 import os
 from Chern.utils import csys
 from .chern_cache import ChernCache
-import Chern.kernel.VObject as vobj
+from . import VObject as vobj
+from .vobj_core import Core
 
 from logging import getLogger
 cherncache = ChernCache.instance()
 logger = getLogger("ChernLogger")
 
 
-class AliasManagement:
+class AliasManagement(Core):
+    """
+    """
     def path_to_alias(self, path):
         path_to_alias = self.config_file.read_variable("path_to_alias", {})
         return path_to_alias.get(path, "")

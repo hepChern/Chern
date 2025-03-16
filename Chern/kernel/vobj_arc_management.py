@@ -1,14 +1,22 @@
-from ..utils import csys
-from .chern_cache import ChernCache
-from . import VObject as vobj
+""" The module for arc management of VObject
+"""
 from time import time
-
 from logging import getLogger
-cherncache = ChernCache.instance()
+
+from ..utils import csys
+from .vobj_core import Core
+from . import VObject as vobj
+
+from .chern_cache import ChernCache
+
+CHERN_CACHE = ChernCache.instance()
 logger = getLogger("ChernLogger")
 
 
-class ArcManagement:
+class ArcManagement(Core):
+    """ The class for arc management of VObject
+    """
+
     def add_arc_from(self, obj):
         """
         Add a link from the object contained in `path` to this object.
@@ -142,7 +150,7 @@ class ArcManagement:
         if obj.invariant_path() in pred_str:
             return True
         # Use cache to avoid infinite loop
-        consult_table = cherncache.predecessor_consult_table
+        consult_table = CHERN_CACHE.predecessor_consult_table
         (last_consult_time, has_predecessor) = consult_table.get(
             self.path, (-1, False)
         )
@@ -171,53 +179,68 @@ class ArcManagement:
             if not obj.is_task_or_algorithm():
                 continue
 
-            for pred_object in obj.predecessors():
-                if pred_object.is_zombie() or \
-                        not pred_object.has_successor(obj):
-                    print(f"The predecessor \n\t {pred_object} \n\t "
-                          f"does not exist or does not have a link "
-                          f"to object {obj}")
-                    choice = input(
-                        "Would you like to remove the input or the algorithm? "
-                        "[Y/N]: "
+            self.doctor_predecessor(obj)
+            self.doctor_successor(obj)
+            self.doctor_alias(obj)
+            self.doctor_path_to_alias(obj)
+
+    def doctor_predecessor(self, obj):
+        """ Doctor the predecessors of the object
+        """
+        for pred_object in obj.predecessors():
+            if pred_object.is_zombie() or \
+                    not pred_object.has_successor(obj):
+                print(f"The predecessor \n\t {pred_object} \n\t "
+                      f"does not exist or does not have a link "
+                      f"to object {obj}")
+                choice = input(
+                    "Would you like to remove the input or the algorithm? "
+                    "[Y/N]: "
+                )
+                if choice.upper() == "Y":
+                    obj.remove_arc_from(pred_object, single=True)
+                    obj.remove_alias(obj.path_to_alias(pred_object.path))
+                    obj.impress()
+
+
+    def doctor_successor(self, obj):
+        """ Doctor the successors of the object
+        """
+        for succ_object in obj.successors():
+            if succ_object.is_zombie() or \
+                    not succ_object.has_predecessor(obj):
+                print("The successor")
+                print(f"\t {succ_object}")
+                print(f"\t does not exist or does not have a link to object {obj}")
+                choice = input("Would you like to remove the output? [Y/N]")
+                if choice == "Y":
+                    obj.remove_arc_to(succ_object, single=True)
+
+    def doctor_alias(self, obj):
+        """ Doctor the alias of the object
+        """
+        for pred_object in obj.predecessors():
+            if obj.path_to_alias(pred_object.invariant_path()) == "" and \
+                    not pred_object.is_algorithm():
+                print(f"The input {pred_object} of {obj} does not have an alias, "
+                      f"it will be removed.")
+                choice = input(
+                    "Would you like to remove the input or the algorithm? [Y/N]: "
                     )
-                    if choice.upper() == "Y":
-                        obj.remove_arc_from(pred_object, single=True)
-                        obj.remove_alias(obj.path_to_alias(pred_object.path))
-                        obj.impress()
+                if choice.upper() == "Y":
+                    obj.remove_arc_from(pred_object)
+                    obj.impress()
 
-            for succ_object in obj.successors():
-                if succ_object.is_zombie() or \
-                        not succ_object.has_predecessor(obj):
-                    print("The successor")
-                    print("\t {}".format(succ_object))
-                    print("\t does not exist or does not have a link to "
-                          "object {}".format(obj))
-                    choice = input("Would you like to remove the output? "
-                                   "[Y/N]")
-                    if choice == "Y":
-                        obj.remove_arc_to(succ_object, single=True)
-
-            for pred_object in obj.predecessors():
-                if obj.path_to_alias(pred_object.invariant_path()) == "" and \
-                        not pred_object.is_algorithm():
-                    print("The input {} of {} does not have an alias, "
-                          "it will be removed.".format(pred_object, obj))
-                    choice = input(
-                        "Would you like to remove the input or the algorithm? "
-                        "[Y/N]: "
-                        )
-                    if choice.upper() == "Y":
-                        obj.remove_arc_from(pred_object)
-                        obj.impress()
-
-            path_to_alias = obj.config_file.read_variable("path_to_alias", {})
-            for path in path_to_alias.keys():
-                project_path = csys.project_path(self.path)
-                pred_obj = vobj.VObject(f"{project_path}/{path}")
-                if not obj.has_predecessor(pred_obj):
-                    print("There seems to be a zombie alias to")
-                    print(f"{pred_obj} in {obj}")
-                    choice = input("Would you like to remove it? [Y/N]: ")
-                    if choice.upper() == "Y":
-                        obj.remove_alias(obj.path_to_alias(path))
+    def doctor_path_to_alias(self, obj):
+        """ Doctor the alias of the object recursively
+        """
+        path_to_alias = obj.config_file.read_variable("path_to_alias", {})
+        for path in path_to_alias.keys():
+            project_path = csys.project_path(self.path)
+            pred_obj = vobj.VObject(f"{project_path}/{path}")
+            if not obj.has_predecessor(pred_obj):
+                print("There seems to be a zombie alias to")
+                print(f"{pred_obj} in {obj}")
+                choice = input("Would you like to remove it? [Y/N]: ")
+                if choice.upper() == "Y":
+                    obj.remove_alias(obj.path_to_alias(path))

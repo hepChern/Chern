@@ -92,10 +92,10 @@ from ..utils import csys
 from ..utils import metadata
 
 from .vobj_arc_management import ArcManagement
-from .vobj_core import Core
 from .vobj_alias_management import AliasManagement
 from .vobj_impression import ImpressionManagement
 from .vobj_execution import ExecutionManagement
+from .vobj_file import FileManagement
 
 from .chern_cache import ChernCache
 
@@ -104,7 +104,7 @@ cherncache = ChernCache.instance()
 logger = getLogger("ChernLogger")
 
 
-class VObject(Core, ArcManagement, AliasManagement,
+class VObject(ArcManagement, FileManagement, AliasManagement,
               ImpressionManagement, ExecutionManagement):
     """ Virtual class of the objects,
     including VData, VAlgorithm and VDirectory
@@ -118,62 +118,8 @@ class VObject(Core, ArcManagement, AliasManagement,
         begin with empty characters.
         """
         logger.debug("VObject init: {}".format(path))
-        self.path = csys.strip_path_string(path)
-        self.config_file = metadata.ConfigFile(self.path+"/.chern/config.json")
+        super().__init__(path)
         logger.debug("VObject init done: {}".format(path))
-
-    def __str__(self):
-        """ Define the behavior of print(vobject)
-        """
-        return self.invariant_path()
-
-    def __repr__(self):
-        """ Define the behavior of print(vobject)
-        """
-        return self.invariant_path()
-
-    # Path handling, type and status
-    def invariant_path(self):
-        """ The path relative to the project root.
-        It is invariant when the project is moved.
-        """
-        project_path = csys.project_path(self.path)
-        path = os.path.relpath(self.path, project_path)
-        return path
-
-    def relative_path(self, path):
-        """ Return a path relative to the path of this object
-        """
-        return os.path.relpath(path, self.path)
-
-    def object_type(self):
-        """ Return the type of the this object.
-        """
-        return self.config_file.read_variable("object_type", "")
-
-    def is_task(self):
-        """ Judge whether it is a task.
-        """
-        return self.object_type() == "task"
-
-    def is_algorithm(self):
-        """ Judge whether it is an algorithm.
-        """
-        return self.object_type() == "algorithm"
-
-    def is_task_or_algorithm(self):
-        """ Judge whether it is a task or an algorithm.
-        """
-        if self.object_type() == "task":
-            return True
-        if self.object_type() == "algorithm":
-            return True
-        return False
-
-    def is_zombie(self):
-        """ Judge whether it is actually an object
-        """
-        return self.object_type() == ""
 
     def color_tag(self, status):
         """ Get the color tag according to the status.
