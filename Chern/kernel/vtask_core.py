@@ -4,18 +4,22 @@
 """
 # pylint: disable=too-many-public-methods
 
-from Chern.utils import metadata
-from Chern.utils import csys
-from Chern.kernel.ChernCommunicator import ChernCommunicator
+from abc import abstractmethod
+from ..utils import metadata
+from ..utils import csys
+from .ChernCommunicator import ChernCommunicator
 
 import Chern.kernel.vtask as vtsk
 from logging import getLogger
 import os
 from os.path import join
+from .vobject import VObject
+from .vobj_core import LsParameters
+
 logger = getLogger("ChernLogger")
 
 
-class Core:
+class Core(VObject):
     """ Core class for vtasks.
     """
     def helpme(self, command):
@@ -24,12 +28,10 @@ class Core:
         from .helpme import task_helpme
         print(task_helpme.get(command, "No such command, try ``helpme'' alone."))
 
-    def ls(self, show_info=(True, True, True, True, False)):
+    def ls(self, show_info=LsParameters()):
         """ List the information of the task.
         """
-        show_readme, show_predecessors, show_sub_objects, show_status, show_successors = show_info
-        super(VTask, self).ls(show_readme, show_predecessors,
-                              show_sub_objects, show_status, show_successors)
+        super(VTask, self).ls(show_info)
         parameters, values = self.parameters()
         if parameters != []:
             print(colorize("---- Parameters:", "title0"))
@@ -50,7 +52,7 @@ class Core:
         print(colorize("---- Auto download:", "title0"), self.auto_download())
         print(colorize("---- Default runner:", "title0"), self.default_runner())
 
-        if show_status:
+        if show_info.status:
             status = self.status()
             if status == "new":
                 status_color = "normal"
@@ -116,3 +118,7 @@ class Core:
                     parname = "${" + parameter + "}"
                     command = command.replace(parname, values[parameter])
                 print(command)
+
+    @abstractmethod
+    def algorithm(self):
+        """ Abstract method for future implementation"""

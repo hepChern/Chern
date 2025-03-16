@@ -106,7 +106,7 @@ CHERN_CACHE = ChernCache.instance()
 logger = getLogger("ChernLogger")
 
 
-class VTask(VObject, Core, InputManager, SettingManager, FileManager, JobManager):
+class VTask(InputManager, SettingManager, FileManager, JobManager):
     """ The main vtask class
     It contains: Core, InputManager, SettingManager, FileManager, JobManager
     """
