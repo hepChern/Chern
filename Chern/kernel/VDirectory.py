@@ -31,11 +31,11 @@
 import os
 import subprocess
 import Chern
-from Chern.utils import utils
-from Chern.utils import csys
-from Chern.utils import metadata
+from ..utils import csys
+from ..utils import metadata
 from .vobject import VObject
-from Chern.kernel.ChernCommunicator import ChernCommunicator
+from .ChernCommunicator import ChernCommunicator
+
 class VDirectory(VObject):
     """
     Nothing more to do for this VDirectory.
@@ -140,7 +140,7 @@ class VDirectory(VObject):
                 Chern.kernel.VDirectory.VDirectory(sub_object.path).clean_impressions()
 
 def create_directory(path, inloop=False):
-    path = utils.strip_path_string(path)
+    path = csys.strip_path_string(path)
     parent_path = os.path.abspath(path+"/..")
     object_type = VObject(parent_path).object_type()
     if object_type != "project" and object_type != "directory":

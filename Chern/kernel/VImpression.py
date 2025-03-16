@@ -4,7 +4,7 @@ from os.path import join
 from Chern.utils import csys
 from Chern.utils import metadata
 from Chern.utils.pretty import colorize
-from Chern.utils.utils import color_print
+from Chern.utils.pretty import color_print
 from logging import getLogger
 logger = getLogger("ChernLogger")
 

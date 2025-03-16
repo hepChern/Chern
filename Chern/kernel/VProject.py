@@ -2,15 +2,19 @@
     It is only used to "operate" things since all the information are stored in disk
     The core part may move to c language in the future
 """
-import Chern
-from Chern.kernel.vobject import VObject
-from Chern.utils.utils import debug
-from Chern.utils import utils
-from Chern.utils import metadata
-from Chern.utils import csys
-from Chern.kernel.ChernCommunicator import ChernCommunicator
 import os
 import subprocess
+
+import Chern
+from .vobject import VObject
+from .vtask import VTask
+# from .valgorithm import VAlgorithm
+# from .vdirectory import VDirectory
+from ..utils.csys import debug
+from ..utils import metadata
+from ..utils import csys
+from .ChernCommunicator import ChernCommunicator
+
 class VProject(VObject):
 
     def helpme(self, command):
@@ -31,11 +35,11 @@ class VProject(VObject):
         sub_objects = self.sub_objects()
         for sub_object in sub_objects:
             if sub_object.object_type() == "task":
-                Chern.kernel.VTask.VTask(sub_object.path).deposit()
+                VTask(sub_object.path).deposit()
             elif sub_object.object_type() == "algorithm":
-                Chern.kernel.VAlgorithm.VAlgorithm(sub_object.path).deposit()
+                VAlgorithm(sub_object.path).deposit()
             else:
-                Chern.kernel.VDirectory.VDirectory(sub_object.path).deposit()
+                VDirectory(sub_object.path).deposit()
 
     def submit(self, machine="local"):
         cherncc = ChernCommunicator.instance()

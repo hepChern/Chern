@@ -6,7 +6,6 @@ import subprocess
 from .vobject import VObject
 from .chern_cache import ChernCache
 
-from ..utils import utils
 from ..utils import csys
 from ..utils.pretty import colorize
 from ..utils import metadata
@@ -104,7 +103,7 @@ class VAlgorithm(VObject):
         if not self.is_submitted():
             print("Not submitted yet.")
             return
-        path = utils.storage_path() + "/" + self.impression()
+        path = csys.storage_path() + "/" + self.impression()
         csys.rm_tree(path)
         self.submit()
 
@@ -222,7 +221,7 @@ class VAlgorithm(VObject):
 
 
 def create_algorithm(path, use_template=False):
-    path = utils.strip_path_string(path)
+    path = csys.strip_path_string(path)
     os.mkdir(path)
     os.mkdir(path+"/.chern")
     config_file = metadata.ConfigFile(path+"/.chern/config.json")

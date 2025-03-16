@@ -6,7 +6,6 @@ from os.path import join
 from .ChernCommunicator import ChernCommunicator
 
 from ..utils import csys
-from ..utils import utils
 
 from .vobj_core import Core
 
@@ -37,7 +36,7 @@ class ExecutionManagement(Core):
         cherncc = ChernCommunicator.instance()
         cherncc.resubmit(self.impression(), runner)
         path = join(
-            utils.storage_path(),
+            csys.storage_path(),
             self.impression().uuid
         )
         csys.rm_tree(path)

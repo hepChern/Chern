@@ -87,7 +87,6 @@ import subprocess
 from logging import getLogger
 from os.path import join
 
-from ..utils import utils
 from ..utils import metadata
 from ..utils import csys
 from ..utils.pretty import colorize
@@ -210,7 +209,7 @@ class VTask(InputManager, SettingManager, FileManager, JobManager):
 def create_task(path):
     """ Create a task
     """
-    path = utils.strip_path_string(path)
+    path = csys.strip_path_string(path)
     parent_path = os.path.abspath(join(path, ".."))
     object_type = VObject(parent_path).object_type()
     if object_type not in ("project", "directory"):
@@ -235,7 +234,7 @@ def create_task(path):
 def create_data(path):
     """ Create a data
     """
-    path = utils.strip_path_string(path)
+    path = csys.strip_path_string(path)
     parent_path = os.path.abspath(path+"/..")
     object_type = VObject(parent_path).object_type()
     if object_type not in ("project", "directory"):

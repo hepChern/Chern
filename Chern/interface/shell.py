@@ -1,8 +1,7 @@
 import os
 from Chern.utils import csys
 from Chern.kernel.vobject import VObject
-from Chern.utils import utils
-from Chern.utils.utils import debug
+from Chern.utils.csys import debug
 from Chern.interface.ChernManager import get_manager
 from Chern.interface.ChernManager import create_object_instance
 import shutil
@@ -62,7 +61,7 @@ def cd(line):
             return
     else:
         # cd can be used to change directory using absolute path
-        line = utils.special_path_string(line)
+        line = csys.special_path_string(line)
         if line.startswith("@/") or line == "@":
             line = csys.project_path() + line.strip("@")
         else:
