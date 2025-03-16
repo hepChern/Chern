@@ -3,8 +3,10 @@ from .ChernCommunicator import ChernCommunicator
 from logging import getLogger
 logger = getLogger("ChernLogger")
 
+from .vtask_core import Core
 
-class JobManager:
+
+class JobManager(Core):
     # Submission Methods
     def kill(self):
         """

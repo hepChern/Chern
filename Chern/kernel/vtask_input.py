@@ -1,6 +1,5 @@
 from ..utils import metadata
 from ..utils import csys
-from . import vtask as vtsk
 from . import VAlgorithm as valg
 from logging import getLogger
 from os.path import join
@@ -29,7 +28,7 @@ class InputManager(Core):
         """
         Add a algorithm
         """
-        obj = self.vobject(path)
+        obj = self.get_vobject(path)
         if obj.object_type() != "algorithm":
             print("You are adding {} type object as".format(
                 obj.object_type()
@@ -45,7 +44,7 @@ class InputManager(Core):
         if algorithm is not None:
             print("Already have algorithm, will replace it")
             self.remove_algorithm()
-        self.add_arc_from(self.vobject(path))
+        self.add_arc_from(self.get_vobject(path))
 
     def remove_algorithm(self):
         """
@@ -70,7 +69,7 @@ class InputManager(Core):
     def add_input(self, path, alias):
         """ FIXME: judge the input type
         """
-        obj = self.vobject(path)
+        obj = self.get_vobject(path)
         if obj.object_type() != "task":
             print("You are adding {} type object as".format(
                 obj.object_type()
@@ -86,7 +85,7 @@ class InputManager(Core):
             print("The alias already exists. "
                   "The original input and alias will be replaced.")
             project_path = csys.project_path(self.path)
-            original_object = self.vobject(
+            original_object = self.get_vobject(
                 join(project_path, self.alias_to_path(alias))
             )
             self.remove_arc_from(original_object)
@@ -102,7 +101,7 @@ class InputManager(Core):
             print("Alias not found")
             return
         project_path = csys.project_path(self.path)
-        obj = self.vobject(join(project_path, path))
+        obj = self.get_vobject(join(project_path, path))
         self.remove_arc_from(obj)
         self.remove_alias(alias)
 
@@ -111,6 +110,7 @@ class InputManager(Core):
         inputs = filter(
             lambda x: (x.object_type() == "task"), self.predecessors()
             )
+        from . import vtask as vtsk
         return list(map(lambda x: vtsk.VTask(x.path), inputs))
 
     def outputs(self):

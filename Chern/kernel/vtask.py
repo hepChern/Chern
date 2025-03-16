@@ -96,9 +96,9 @@ from .chern_cache import ChernCache
 from .ChernCommunicator import ChernCommunicator
 
 from .vobject import VObject
+from .vtask_core import Core
 from .vtask_input import InputManager
 from .vtask_setting import SettingManager
-from .vtask_core import Core
 from .vtask_file import FileManager
 from .vtask_job import JobManager
 

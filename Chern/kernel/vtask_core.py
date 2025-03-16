@@ -7,9 +7,9 @@
 from abc import abstractmethod
 from ..utils import metadata
 from ..utils import csys
+from ..utils.pretty import colorize
 from .ChernCommunicator import ChernCommunicator
 
-import Chern.kernel.vtask as vtsk
 from logging import getLogger
 import os
 from os.path import join
@@ -122,3 +122,36 @@ class Core(VObject):
     @abstractmethod
     def algorithm(self):
         """ Abstract method for future implementation"""
+
+    @abstractmethod
+    def parameters(self):
+        """ Abstract method for future implementation"""
+
+    @abstractmethod
+    def input_md5(self):
+        """ Abstract method for future implementation"""
+
+    @abstractmethod
+    def environment(self):
+        """ Abstract method for future implementation"""
+
+    @abstractmethod
+    def memory_limit(self):
+        """ Abstract method for future implementation"""
+
+    @abstractmethod
+    def validated(self):
+        """ Abstract method for future implementation"""
+
+    @abstractmethod
+    def auto_download(self):
+        """ Abstract method for future implementation"""
+
+    @abstractmethod
+    def default_runner(self):
+        """ Abstract method for future implementation"""
+
+    @abstractmethod
+    def status(self):
+        """ Abstract method for future implementation"""
+

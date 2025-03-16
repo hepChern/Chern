@@ -1,15 +1,16 @@
-from Chern.kernel import VAlgorithm
-from Chern.utils import metadata
-from Chern.utils import csys
-from Chern.kernel.ChernCommunicator import ChernCommunicator
-
-import Chern.kernel.vtask as vtsk
 from logging import getLogger
+
+from Chern.kernel import VAlgorithm
+from ..utils import metadata
+from ..utils import csys
+from .ChernCommunicator import ChernCommunicator
+form .vtask_core import Core
+
 from os.path import join
 logger = getLogger("ChernLogger")
 
 
-class FileManager:
+class FileManager(Core):
     def cp(self, source, dst):
         if source.startswith("local:"):
             path = self.container().path+"/output/"+source.replace("local:", "").lstrip()
