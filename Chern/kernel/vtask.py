@@ -91,6 +91,7 @@ from ..utils import utils
 from ..utils import metadata
 from ..utils import csys
 from ..utils.pretty import colorize
+from ..utils.csys import open_subprocess
 
 from .chern_cache import ChernCache
 from .ChernCommunicator import ChernCommunicator

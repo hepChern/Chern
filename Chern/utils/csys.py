@@ -147,11 +147,11 @@ def tree_excluded(path):
 def project_path(path=None):
     """ Get the project path by searching for project.json
     """
-    if (path is None):
+    if path is None:
         path = os.getcwd()
     if not os.path.exists(path):
         return None
-    while (path != "/"):
+    while path != "/":
         if exists(path+"/.chern/project.json"):
             return abspath(path)
         path = abspath(path+"/..")
