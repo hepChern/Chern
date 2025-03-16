@@ -4,7 +4,7 @@ import os
 import subprocess
 
 from .VObject import VObject
-from .ChernCache import ChernCache
+from .chern_cache import ChernCache
 
 from ..utils import utils
 from ..utils import csys

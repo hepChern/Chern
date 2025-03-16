@@ -1,5 +1,5 @@
 from ..utils import csys
-from .ChernCache import ChernCache
+from .chern_cache import ChernCache
 from . import VObject as vobj
 from time import time
 

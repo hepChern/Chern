@@ -1,5 +1,5 @@
 import filecmp
-from .ChernCache import ChernCache
+from .chern_cache import ChernCache
 from .VImpression import VImpression
 import time
 from ..utils import csys

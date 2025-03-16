@@ -1,6 +1,6 @@
 import os
 from Chern.utils import csys
-from Chern.kernel.ChernCache import ChernCache
+from .chern_cache import ChernCache
 import Chern.kernel.VObject as vobj
 
 from logging import getLogger

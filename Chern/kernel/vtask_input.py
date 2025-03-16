@@ -1,7 +1,7 @@
 from ..utils import metadata
 from ..utils import csys
 from . import VObject as vobj
-from . import VTask as vtsk
+from . import vtask as vtsk
 from . import VAlgorithm as valg
 from logging import getLogger
 from os.path import join

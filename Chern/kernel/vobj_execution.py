@@ -1,4 +1,4 @@
-from .ChernCache import ChernCache
+from .chern_cache import ChernCache
 from .ChernCommunicator import ChernCommunicator
 
 from os.path import join

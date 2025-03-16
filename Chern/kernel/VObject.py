@@ -80,7 +80,7 @@
         + is_packed:
             For future transfer purpose
 
-        
+
         -----------------------------
         # Communication with the DITE and the Runners
         + dite
@@ -97,7 +97,7 @@ from .vobj_alias_management import AliasManagement
 from .vobj_impression import ImpressionManagement
 from .vobj_execution import ExecutionManagement
 
-from .ChernCache import ChernCache
+from .chern_cache import ChernCache
 
 from logging import getLogger
 cherncache = ChernCache.instance()

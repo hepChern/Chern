@@ -6,7 +6,7 @@ import shutil
 # from ..interface.ChernManager import ChernManager
 
 from ..utils.pretty import colorize
-from .ChernCache import ChernCache
+from .chern_cache import ChernCache
 from .ChernCommunicator import ChernCommunicator
 from . import VObject as vobj
 
@@ -117,7 +117,7 @@ class Core:
         if not os.path.exists(destination_dir) and destination_dir:
             print(f"Error: Destination directory '{destination_dir}' does not exist.")
             return
-    
+
         # Check if source and destination paths are the same
         if os.path.abspath(self.path) == os.path.abspath(new_path):
             print("Error: Source and destination paths are the same.")
