@@ -100,12 +100,8 @@ class VAlgorithm(VObject):
         return False
 
     def resubmit(self):
-        if not self.is_submitted():
-            print("Not submitted yet.")
-            return
-        path = csys.storage_path() + "/" + self.impression()
-        csys.rm_tree(path)
-        self.submit()
+        pass
+        # FIXME: fixit later
 
     def stdout(self):
         """ stdout

@@ -30,17 +30,7 @@ class ExecutionManagement(Core):
 
     def resubmit(self, runner="local"):
         """ Resubmit the impression to the runner. """
-        if not self.is_submitted():
-            print("Not submitted yet.")
-            return
-        cherncc = ChernCommunicator.instance()
-        cherncc.resubmit(self.impression(), runner)
-        path = join(
-            csys.storage_path(),
-            self.impression().uuid
-        )
-        csys.rm_tree(path)
-        self.submit()
+        # FIXME: incomplete
 
     def deposit(self):
         """ Deposit the impression to the dite. """
