@@ -4,7 +4,7 @@ from Chern.kernel import VAlgorithm
 from ..utils import metadata
 from ..utils import csys
 from .ChernCommunicator import ChernCommunicator
-form .vtask_core import Core
+from .vtask_core import Core
 
 from os.path import join
 logger = getLogger("ChernLogger")
