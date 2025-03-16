@@ -6,11 +6,12 @@ define some classes and functions used throughout the project
 import os
 import shutil
 import uuid
-from colored import fg, attr
 import hashlib
 import tarfile
 import subprocess
+
 from contextlib import contextmanager
+from colored import fg, attr
 
 # Utility Functions
 def generate_uuid():
@@ -26,9 +27,9 @@ def colorize(string, color):
         return "\033[31m" + string + "\033[m"
     if color == "debug":
         return "\033[31m" + string + "\033[m"
-    elif color == "comment":
+    if color == "comment":
         return fg("blue") + string + attr("reset")
-    elif color == "title0":
+    if color == "title0":
         return fg("red")+attr("bold")+string+attr("reset")
     return string
 
@@ -44,7 +45,7 @@ def debug(*arg):
     """
     print(colorize("debug >> ", "debug"), end="")
     for s in arg:
-        print(colorize(s.__str__(), "debug"), end=" ")
+        print(colorize(s, "debug"), end=" ")
     print("*")
 
 
@@ -269,7 +270,7 @@ def dir_md5(directory_path):
     """
     md5_hash = hashlib.md5()
 
-    for root, dirs, files in os.walk(directory_path):
+    for root, dirs, files in os.walk(directory_path): # pylint: disable=unused-variable
         for file in files:
             file_path = os.path.join(root, file)
             file_hash = md5sum(file_path)
@@ -279,7 +280,8 @@ def dir_md5(directory_path):
 
 @contextmanager
 def open_subprocess(command):
-    # Create the subprocess
+    """ Open a subprocess
+    """
     process = subprocess.Popen(command, shell=True)
     try:
         # Yield the process to the 'with' block

@@ -3,29 +3,21 @@ Created by Mingrui Zhao @ 2017
 define some classes and functions used throughout the project
 """
 # Load module
-import os
-import shutil
-import uuid
-from colored import fg, bg, attr
+from colored import fg, attr
 
 def colorize(string, color):
-    """ Make the string have color
-    """
-    if color == "success":
-        return fg("green")+string+attr("reset")
-    elif color == "normal":
-        return fg("blue")+ string +attr("reset")
-    elif color == "running":
-        return fg("yellow")+ string +attr("reset")
-    elif color == "warning":
-        return "\033[31m" + string + "\033[m"
-    elif color == "debug":
-        return "\033[31m" + string + "\033[m"
-    elif color == "comment":
-        return fg("blue")+ string +attr("reset")
-    elif color == "title0":
-        return fg("red")+attr("bold")+string+attr("reset")
-    return string
+    """Make the string have color"""
+    colors = {
+        "success": fg("green") + string + attr("reset"),
+        "normal": fg("blue") + string + attr("reset"),
+        "running": fg("yellow") + string + attr("reset"),
+        "warning": "\033[31m" + string + "\033[m",
+        "debug": "\033[31m" + string + "\033[m",
+        "comment": fg("blue") + string + attr("reset"),
+        "title0": fg("red") + attr("bold") + string + attr("reset")
+    }
+    return colors.get(color, string)  # Default to 'string' if color not found
 
 def color_print(string, color):
+    """Print the string with color"""
     print(colorize(string, color))
