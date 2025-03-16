@@ -129,7 +129,8 @@ class VTask(VObject, Core, InputManager, SettingManager, FileManager, JobManager
             if not csys.exists(path):
                 print(f"File: {path} do not exists")
                 return
-            subprocess.Popen(f"open {path}", shell=True)
+            with open_subprocess(f"open {path}") as process:
+                pass
 
     def print_status(self):
         """ Print the status of the task

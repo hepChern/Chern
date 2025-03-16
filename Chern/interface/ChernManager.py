@@ -6,7 +6,7 @@ from subprocess import call, PIPE
 from Chern.utils import metadata
 from Chern.utils import csys
 import Chern.kernel.VAlgorithm as valg #as _VAlgorithm
-import Chern.kernel.VTask as vtsk #as _VTask
+import Chern.kernel.vtask as vtsk #as _VTask
 import Chern.kernel.VDirectory as vdir
 import Chern.kernel.VProject as vproj
 

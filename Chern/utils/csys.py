@@ -9,7 +9,8 @@ import uuid
 from colored import fg, attr
 import hashlib
 import tarfile
-
+import subprocess
+from contextlib import contextmanager
 
 # Utility Functions
 def generate_uuid():
@@ -275,3 +276,14 @@ def dir_md5(directory_path):
             md5_hash.update(file_hash.encode('utf-8'))
 
     return md5_hash.hexdigest()
+
+@contextmanager
+def open_subprocess(command):
+    # Create the subprocess
+    process = subprocess.Popen(command, shell=True)
+    try:
+        # Yield the process to the 'with' block
+        yield process
+    finally:
+        # Ensure the subprocess is finished and cleaned up
+        process.wait()
