@@ -1,18 +1,15 @@
+# pylint: disable=too-many-public-methods
 """ Core class for vtasks.
     + helpme: Print help message for the command.
     + ls: List the information of the task.
 """
-# pylint: disable=too-many-public-methods
 
-from abc import abstractmethod
-from ..utils import metadata
-from ..utils import csys
-from ..utils.pretty import colorize
-from .ChernCommunicator import ChernCommunicator
-
-from logging import getLogger
 import os
-from os.path import join
+from abc import abstractmethod
+from logging import getLogger
+
+from . import helpme
+from ..utils.pretty import colorize
 from .vobject import VObject
 from .vobj_file import LsParameters
 
@@ -25,13 +22,27 @@ class Core(VObject):
     def helpme(self, command):
         """ Print help message for the command.
         """
-        from .helpme import task_helpme
-        print(task_helpme.get(command, "No such command, try ``helpme'' alone."))
+        print(helpme.task_helpme.get(command, "No such command, try ``helpme'' alone."))
 
     def ls(self, show_info=LsParameters()):
         """ List the information of the task.
         """
-        super(VTask, self).ls(show_info)
+        super().ls(show_info)
+
+        self.show_parameters()
+
+        if show_info.status:
+            self.show_status()
+
+        if self.is_submitted():
+            self.show_submission()
+
+        if self.algorithm() is not None:
+            self.show_algorithm()
+
+    def show_parameters(self):
+        """ Show the parameters of the task.
+        """
         parameters, values = self.parameters()
         if parameters != []:
             print(colorize("---- Parameters:", "title0"))
@@ -40,7 +51,7 @@ class Core(VObject):
             print(values[parameter])
 
         if self.environment() == "rawdata":
-            print("Input data: {}".format(self.input_md5()))
+            print(f"Input data: {self.input_md5()}")
 
         print(colorize("---- Environment:", "title0"), self.environment())
         print(colorize("---- Memory limit:", "title0"), self.memory_limit())
@@ -52,72 +63,85 @@ class Core(VObject):
         print(colorize("---- Auto download:", "title0"), self.auto_download())
         print(colorize("---- Default runner:", "title0"), self.default_runner())
 
-        if show_info.status:
-            status = self.status()
-            if status == "new":
-                status_color = "normal"
-            elif status == "impressed":
-                status_color = "success"
+    def show_status(self):
+        """ Show the status of the task.
+        """
+        status = self.status()
+        status_color = ""
+        if status == "new":
+            status_color = "normal"
+        elif status == "impressed":
+            status_color = "success"
 
-            status_str = colorize("["+status+"]", status_color)
+        status_str = colorize("["+status+"]", status_color)
 
-            if status == "impressed":
-                run_status = self.run_status()
-                if run_status != "unconnected":
-                    if run_status == "unsubmitted":
-                        status_color = "warning"
-                    elif run_status == "failed":
-                        status_color = "warning"
-                    else:
-                        status_color = "success"
-                    status_str += colorize("["+run_status+"]", status_color)
-            print(colorize("**** STATUS:", "title0"), status_str)
+        if status == "impressed":
+            # run_status = self.run_status()
+            run_status = self.job_status()
+            if run_status != "unconnected":
+                if run_status == "unsubmitted":
+                    status_color = "warning"
+                elif run_status == "failed":
+                    status_color = "warning"
+                else:
+                    status_color = "success"
+                status_str += colorize("["+run_status+"]", status_color)
+        print(colorize("**** STATUS:", "title0"), status_str)
 
-        if self.is_submitted():
-            print(colorize("---- Files:", "title0"))
-            files = self.output_files()
-            if files != []:
-                files.sort()
-                max_len = max([len(s) for s in files])
-                columns = os.get_terminal_size().columns
-                nfiles = columns // (max_len+4+7)
-                for i, f in enumerate(files):
-                    if not f.startswith(".") and f != "README.md":
-                        print(("local:{:<"+str(max_len+4)+"}").format(f), end="")
-                        if (i+1) % nfiles == 0:
-                            print("")
+    def show_algorithm(self):
+        """ Show the algorithm of the task.
+        """
+        print(colorize("---- Algorithm files:", "title0"))
+        files = os.listdir(self.algorithm().path)
+        if files == []:
+            return
+        files.sort()
+        max_len = max(len(s) for s in files)
+        columns = os.get_terminal_size().columns
+        nfiles = columns // (max_len+4+11)
+        count = 0
+        for f in files:
+            count += 1
+            if f.startswith("."):
+                continue
+            if f == "README.md":
+                continue
+            if f == "chern.yaml":
+                continue
+            print(f"algorithm:{f:<{max_len+4}}", end="")
+            if count % nfiles == 0:
                 print("")
+        if count % nfiles != 0:
+            print("")
+        print(colorize("---- Commands:", "title0"))
+        for command in self.algorithm().commands():
+            parameters, values = self.parameters()
+            for parameter in parameters:
+                parname = "${" + parameter + "}"
+                command = command.replace(parname, values[parameter])
+            print(command)
 
-        if self.algorithm() is not None:
-            print(colorize("---- Algorithm files:", "title0"))
-            files = os.listdir(self.algorithm().path)
-            if files == []:
-                return
+    def show_submission(self):
+        """ Show the submission of the task.
+        """
+        print(colorize("---- Files:", "title0"))
+        files = self.output_files()
+        if files != []:
             files.sort()
-            max_len = max([len(s) for s in files])
+            max_len = max(len(s) for s in files)
             columns = os.get_terminal_size().columns
-            nfiles = columns // (max_len+4+11)
-            count = 0
+            nfiles = columns // (max_len+4+7)
             for i, f in enumerate(files):
-                count += 1
-                if f.startswith("."):
-                    continue
-                if f == "README.md":
-                    continue
-                if f == "chern.yaml":
-                    continue
-                print(("algorithm:{:<"+str(max_len+4)+"}").format(f), end="")
-                if count % nfiles == 0:
-                    print("")
-            if count % nfiles != 0:
-                print("")
-            print(colorize("---- Commands:", "title0"))
-            for command in self.algorithm().commands():
-                parameters, values = self.parameters()
-                for parameter in parameters:
-                    parname = "${" + parameter + "}"
-                    command = command.replace(parname, values[parameter])
-                print(command)
+                if not f.startswith(".") and f != "README.md":
+                    print(f"local:{f:<{max_len+4}}", end="")
+                    if (i+1) % nfiles == 0:
+                        print("")
+            print("")
+
+    @abstractmethod
+    def get_task(self, path):
+        """ Get the task from the path.
+        """
 
     @abstractmethod
     def algorithm(self):
@@ -129,6 +153,14 @@ class Core(VObject):
 
     @abstractmethod
     def input_md5(self):
+        """ Abstract method for future implementation"""
+
+    @abstractmethod
+    def set_input_md5(self, path):
+        """ Abstract method for future implementation"""
+
+    @abstractmethod
+    def output_files(self):
         """ Abstract method for future implementation"""
 
     @abstractmethod
@@ -152,6 +184,13 @@ class Core(VObject):
         """ Abstract method for future implementation"""
 
     @abstractmethod
-    def status(self):
+    def send_data(self, path):
         """ Abstract method for future implementation"""
 
+    @abstractmethod
+    def job_status(self):
+        """ Abstract method for future implementation"""
+
+    @abstractmethod
+    def status(self):
+        """ Abstract method for future implementation"""

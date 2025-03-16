@@ -49,7 +49,6 @@ The following commands can be used, and type ``helpme [COMMAND]'' or ``[COMMAND]
     new: The task is edited and not impressed yet.
     impressed: The task is impressed, however, there is not a job link to the impression.
     submitted: The task is impressed and .
-    running: The container is running.
     failed: The task is failed for some reason.
     finished:
     missing: """

@@ -1,38 +1,41 @@
+""" Input manager for VTask
+"""
+from os.path import join
+from logging import getLogger
+
 from ..utils import metadata
 from ..utils import csys
-from . import VAlgorithm as valg
-from logging import getLogger
-from os.path import join
 from .vtask_core import Core
+from . import VAlgorithm as valg
+
 logger = getLogger("ChernLogger")
 
-
 class InputManager(Core):
-    # Abandoned method, replaced by send
+    """ Input manager for VTask"""
+
     def add_source(self, path):
+        """ After add source, the status of the task should be done
         """
-        After add source, the status of the task should be done
-        """
+        # FIXME: out-dated code
         md5 = csys.dir_md5(path)
         data_file = metadata.ConfigFile(join(self.path, "data.json"))
         data_file.write_variable("md5", md5)
         self.impress()
 
     def send(self, path):
+        """ Send the data to the task"""
         md5 = csys.dir_md5(path)
         self.set_input_md5(md5)
         self.impress()
         self.send_data(path)
 
     def add_algorithm(self, path):
-        """
-        Add a algorithm
+        """ Add a algorithm
         """
         obj = self.get_vobject(path)
         if obj.object_type() != "algorithm":
-            print("You are adding {} type object as".format(
-                obj.object_type()
-            ) + " algorithm. The algorithm is required to be an algorithm.")
+            print(f"You are adding {obj.object_type()} type object as"
+                  f" algorithm. The algorithm is required to be an algorithm.")
             return
         # Check whether the algorithm is already in the dependency diagram
         if obj.has_predecessor_recursively(self):
@@ -47,8 +50,7 @@ class InputManager(Core):
         self.add_arc_from(self.get_vobject(path))
 
     def remove_algorithm(self):
-        """
-        Remove the algorithm
+        """ Remove the algorithm
         """
         algorithm = self.algorithm()
         if algorithm is None:
@@ -57,8 +59,7 @@ class InputManager(Core):
             self.remove_arc_from(algorithm)
 
     def algorithm(self):
-        """
-        Return the algorithm
+        """ Return the algorithm
         """
         predecessors = self.predecessors()
         for pred_object in predecessors:
@@ -67,13 +68,12 @@ class InputManager(Core):
         return None
 
     def add_input(self, path, alias):
-        """ FIXME: judge the input type
+        """ add input
         """
         obj = self.get_vobject(path)
         if obj.object_type() != "task":
-            print("You are adding {} type object as".format(
-                obj.object_type()
-                ) + " input. The input is required to be a task.")
+            print(f"You are adding {obj.object_type()} type object as"
+                   " input. The input is required to be a task.")
             return
 
         if obj.has_predecessor_recursively(self):
@@ -110,12 +110,11 @@ class InputManager(Core):
         inputs = filter(
             lambda x: (x.object_type() == "task"), self.predecessors()
             )
-        from . import vtask as vtsk
-        return list(map(lambda x: vtsk.VTask(x.path), inputs))
+        return list(map(lambda x: self.get_task(x.path), inputs))
 
     def outputs(self):
         """ Output data. """
         outputs = filter(
             lambda x: x.object_type() == "task", self.successors()
             )
-        return list(map(lambda x: vtsk.VTask(x.path), outputs))
+        return list(map(lambda x: self.get_task(x.path), outputs))

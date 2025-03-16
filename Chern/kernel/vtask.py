@@ -83,7 +83,6 @@
 
 """
 import os
-import subprocess
 from logging import getLogger
 from os.path import join
 
@@ -96,7 +95,6 @@ from .chern_cache import ChernCache
 from .ChernCommunicator import ChernCommunicator
 
 from .vobject import VObject
-from .vtask_core import Core
 from .vtask_input import InputManager
 from .vtask_setting import SettingManager
 from .vtask_file import FileManager
@@ -129,7 +127,7 @@ class VTask(InputManager, SettingManager, FileManager, JobManager):
             if not csys.exists(path):
                 print(f"File: {path} do not exists")
                 return
-            with open_subprocess(f"open {path}") as process:
+            with open_subprocess(f"open {path}"):
                 pass
 
     def print_status(self):
@@ -204,6 +202,11 @@ class VTask(InputManager, SettingManager, FileManager, JobManager):
         if consult_id:
             consult_table[self.path] = (consult_id, status)
         return status
+
+    def get_task(self, path):
+        """ Get the task from the path
+        """
+        return VTask(path)
 
 
 def create_task(path):
