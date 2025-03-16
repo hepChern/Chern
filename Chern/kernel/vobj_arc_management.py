@@ -5,7 +5,6 @@ from logging import getLogger
 
 from ..utils import csys
 from .vobj_core import Core
-from . import vobject as vobj
 
 from .chern_cache import ChernCache
 
@@ -113,7 +112,7 @@ class ArcManagement(Core):
         successors = []
         project_path = csys.project_path(self.path)
         for path in succ_str:
-            successors.append(vobj.VObject(project_path+"/"+path))
+            successors.append(self.get_vobject(f"{project_path}/{path}"))
         return successors
 
     def predecessors(self):
@@ -124,7 +123,7 @@ class ArcManagement(Core):
         predecessors = []
         project_path = csys.project_path(self.path)
         for path in pred_str:
-            predecessors.append(vobj.VObject(project_path+"/"+path))
+            predecessors.append(self.get_vobject(f"{project_path}/{path}"))
         return predecessors
 
     def has_successor(self, obj):
@@ -164,7 +163,7 @@ class ArcManagement(Core):
 
         for pred_path in pred_str:
             project_path = csys.project_path(self.path)
-            pred_obj = vobj.VObject(f"{project_path}/{pred_path}")
+            pred_obj = self.get_vobject(f"{project_path}/{pred_path}")
             if pred_obj.has_predecessor_recursively(obj):
                 consult_table[self.path] = (time.time(), True)
                 return True
@@ -237,7 +236,7 @@ class ArcManagement(Core):
         path_to_alias = obj.config_file.read_variable("path_to_alias", {})
         for path in path_to_alias.keys():
             project_path = csys.project_path(self.path)
-            pred_obj = vobj.VObject(f"{project_path}/{path}")
+            pred_obj = self.get_vobject(f"{project_path}/{path}")
             if not obj.has_predecessor(pred_obj):
                 print("There seems to be a zombie alias to")
                 print(f"{pred_obj} in {obj}")

@@ -80,7 +80,7 @@ class ImpressionManagement(Core):
         if file_list != impression.tree():
             return False
 
-        for dirpath, dirnames, filenames in file_list:
+        for dirpath, dirnames, filenames in file_list: # pylint: disable=unused-variable
             for f in filenames:
                 if not filecmp.cmp(f"{self.path}/{dirpath}/{f}",
                                    f"{impression.path}/contents/{dirpath}/{f}"):

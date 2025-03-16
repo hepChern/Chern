@@ -4,7 +4,6 @@ import os
 from logging import getLogger
 
 from Chern.utils import csys
-from . import vobject as vobj
 from .vobj_core import Core
 
 logger = getLogger("ChernLogger")
@@ -26,7 +25,7 @@ class AliasManagement(Core):
     def alias_to_impression(self, alias):
         """ Get the impression of the vobj by the alias."""
         path = self.alias_to_path(alias)
-        obj = vobj.VObject(os.path.join(csys.project_path(self.path), path))
+        obj = self.get_vobject(os.path.join(csys.project_path(self.path), path))
         return obj.impression()
 
     def has_alias(self, alias):

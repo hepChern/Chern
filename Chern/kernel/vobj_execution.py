@@ -15,7 +15,7 @@ logger = getLogger("ChernLogger")
 
 class ExecutionManagement(Core):
     """ Manage the contact with dite and runner. """
-    def is_submitted(self, runner="local"):
+    def is_submitted(self, runner="local"): # pylint: disable=unused-argument
         """ Judge whether submitted or not. Return a True or False.
         """
         # FIXME: incomplete
