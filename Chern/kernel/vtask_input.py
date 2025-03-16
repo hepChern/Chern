@@ -4,10 +4,11 @@ from . import vtask as vtsk
 from . import VAlgorithm as valg
 from logging import getLogger
 from os.path import join
+from .vtask_core import Core
 logger = getLogger("ChernLogger")
 
 
-class InputManager:
+class InputManager(Core):
     # Abandoned method, replaced by send
     def add_source(self, path):
         """

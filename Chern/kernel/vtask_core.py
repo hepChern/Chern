@@ -14,7 +14,7 @@ from logging import getLogger
 import os
 from os.path import join
 from .vobject import VObject
-from .vobj_core import LsParameters
+from .vobj_file import LsParameters
 
 logger = getLogger("ChernLogger")
 
