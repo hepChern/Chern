@@ -1,16 +1,21 @@
+""" Module for impression management
+"""
 import filecmp
-from .chern_cache import ChernCache
-from .VImpression import VImpression
 import time
+from logging import getLogger
+
 from ..utils import csys
 from .vobj_core import Core
+from .VImpression import VImpression
+from .chern_cache import ChernCache
 
-from logging import getLogger
-cherncache = ChernCache.instance()
+CHERN_CACHE = ChernCache.instance()
 logger = getLogger("ChernLogger")
 
 
 class ImpressionManagement(Core):
+    """ Class for impression management
+    """
     def impress(self):
         """ Create an impression.
         The impressions are store in a directory .chern/impressions/[uuid]
@@ -23,10 +28,10 @@ class ImpressionManagement(Core):
         The object_type is also saved in the json file.
         The tree and the dependencies are sorted via name.
         """
-        print("Impressing: {}".format(self.path))
+        print(f"Impressing: {self.path}")
         logger.debug("VObject impress: %s", self.path)
         object_type = self.object_type()
-        if object_type != "task" and object_type != "algorithm":
+        if object_type in ("task", "algorithm"):
             return
         logger.debug("Check whether it is impressed with is_impressed_fast")
         if self.is_impressed_fast():
@@ -39,10 +44,10 @@ class ImpressionManagement(Core):
         impression.create(self)
         self.config_file.write_variable("impression", impression.uuid)
         # update the impression_consult_table, since the impression is changed
-        consult_table = cherncache.impression_consult_table
+        consult_table = CHERN_CACHE.impression_consult_table
         consult_table[self.path] = (-1, -1)
 
-    def is_impressed(self, is_global=False):
+    def is_impressed(self):
         """ Judge whether the file is impressed
         """
         logger.debug("VObject is_impressed in %s", self.path)
@@ -77,10 +82,8 @@ class ImpressionManagement(Core):
 
         for dirpath, dirnames, filenames in file_list:
             for f in filenames:
-                if not filecmp.cmp(self.path+"/{}/{}".format(dirpath, f),
-                                   "{}/contents/{}/{}".format(
-                                       impression.path, dirpath, f
-                                    )):
+                if not filecmp.cmp(f"{self.path}/{dirnames}/{f}",
+                                   f"{impression.path}/contents/{dirpath}/{f}"):
                     return False
         return True
 
@@ -108,7 +111,7 @@ class ImpressionManagement(Core):
         """ Judge whether the file is impressed, with timestamp
         """
         logger.debug("VObject is_impressed_fast")
-        consult_table = cherncache.impression_consult_table
+        consult_table = CHERN_CACHE.impression_consult_table
         # FIXME cherncache should be replaced
         # by some function called like cache
         (last_consult_time, is_impressed) = consult_table.get(
@@ -119,8 +122,8 @@ class ImpressionManagement(Core):
             # If the last consult time is less than 1 second ago,
             # we can use the cache
             # But honestly, I don't remember why I set it to 1 second
-            logger.debug("Time now: {}".format(now))
-            logger.debug("Last consult time: {}".format(last_consult_time))
+            logger.debug("Time now: %lf", now)
+            logger.debug("Last consult time: %lf", last_consult_time)
             return is_impressed
         modification_time = csys.dir_mtime(csys.project_path(self.path))
         if modification_time < last_consult_time:
@@ -144,7 +147,6 @@ class ImpressionManagement(Core):
         """ Get the impression of the current object
         """
         uuid = self.config_file.read_variable("impression", "")
-        if (uuid == ""):
+        if uuid == "":
             return None
-        else:
-            return VImpression(uuid)
+        return VImpression(uuid)

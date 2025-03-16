@@ -1,35 +1,41 @@
-from .chern_cache import ChernCache
+""" This module provides the ExecutionManagement class.
+"""
+from logging import getLogger
+from os.path import join
+
 from .ChernCommunicator import ChernCommunicator
 
-from os.path import join
 from ..utils import csys
 from ..utils import utils
 
-from logging import getLogger
-cherncache = ChernCache.instance()
+from .vobj_core import Core
+
 logger = getLogger("ChernLogger")
 
 
-class ExecutionManagement:
-    def is_submitted(self, machine="local"):
+class ExecutionManagement(Core):
+    """ Manage the contact with dite and runner. """
+    def is_submitted(self, runner="local"):
         """ Judge whether submitted or not. Return a True or False.
-        [FIXME: incomplete]
         """
+        # FIXME: incomplete
         if not self.is_impressed_fast():
             return False
         return False
 
-    def submit(self, machine="local"):
+    def submit(self, runner="local"):
+        """ Submit the impression to the runner. """
         cherncc = ChernCommunicator.instance()
         self.deposit()
-        cherncc.execute([self.impression().uuid], machine)
+        cherncc.execute([self.impression().uuid], runner)
 
-    def resubmit(self, machine="local"):
+    def resubmit(self, runner="local"):
+        """ Resubmit the impression to the runner. """
         if not self.is_submitted():
             print("Not submitted yet.")
             return
         cherncc = ChernCommunicator.instance()
-        cherncc.resubmit(self.impression(), machine)
+        cherncc.resubmit(self.impression(), runner)
         path = join(
             utils.storage_path(),
             self.impression().uuid
@@ -38,6 +44,7 @@ class ExecutionManagement:
         self.submit()
 
     def deposit(self):
+        """ Deposit the impression to the dite. """
         cherncc = ChernCommunicator.instance()
         if self.is_deposited():
             return
@@ -48,6 +55,7 @@ class ExecutionManagement:
         cherncc.deposit(self.impression())
 
     def is_deposited(self):
+        """ Judge whether deposited or not. Return a True or False. """
         if not self.is_impressed_fast():
             return False
         cherncc = ChernCommunicator.instance()

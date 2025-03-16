@@ -88,7 +88,8 @@
 import os
 from os.path import join
 import subprocess
-from ..utils import csys
+from logging import getLogger
+
 from ..utils import metadata
 
 from .vobj_arc_management import ArcManagement
@@ -97,12 +98,8 @@ from .vobj_impression import ImpressionManagement
 from .vobj_execution import ExecutionManagement
 from .vobj_file import FileManagement
 
-from .chern_cache import ChernCache
 
-from logging import getLogger
-cherncache = ChernCache.instance()
 logger = getLogger("ChernLogger")
-
 
 class VObject(ArcManagement, FileManagement, AliasManagement,
               ImpressionManagement, ExecutionManagement):
@@ -117,16 +114,16 @@ class VObject(ArcManagement, FileManagement, AliasManagement,
         parameter ``path'' is allowed to be a string
         begin with empty characters.
         """
-        logger.debug("VObject init: {}".format(path))
+        logger.debug("VObject init: %s", path)
         super().__init__(path)
-        logger.debug("VObject init done: {}".format(path))
+        logger.debug("VObject init done: %s", path)
 
     def color_tag(self, status):
         """ Get the color tag according to the status.
         """
-        if status == "built" or status == "done" or status == "finished":
+        if status in ("built", "done", "finished"):
             color_tag = "success"
-        elif status == "failed" or status == "unfinished":
+        elif status in ("failed", "unfinished"):
             color_tag = "warning"
         elif status == "running":
             color_tag = "running"
@@ -135,8 +132,10 @@ class VObject(ArcManagement, FileManagement, AliasManagement,
         return color_tag
 
     def cat(self, file_name):
+        """ Get the content of a file in the directory
+        """
         path = os.path.join(self.path, file_name)
-        with open(path) as f:
+        with open(path, "r", encoding="utf-8") as f:
             print(f.read().strip(""))
 
     def readme(self):
@@ -145,17 +144,19 @@ class VObject(ArcManagement, FileManagement, AliasManagement,
         Get the README String.
         I'd like it to support more
         """
-        with open(self.path+"/.chern/README.md") as f:
+        with open(self.path+"/.chern/README.md", "r", encoding="utf-8") as f:
             return f.read().strip("\n")
 
     def comment(self, line):
-        with open(self.path+"/.chern/README.md", "a") as f:
+        """ Add a comment line to the README.md"""
+        with open(self.path+"/.chern/README.md", "a", encoding="utf-8") as f:
             f.write(line + "\n")
 
     def edit_readme(self):
+        """ Edit the README.md file of the object"""
         yaml_file = metadata.YamlFile(
             join(os.environ["HOME"], ".chern", "config.yaml")
         )
         editor = yaml_file.read_variable("editor", "vi")
         file_name = os.path.join(self.path, ".chern/README.md")
-        subprocess.call("{} {}".format(editor, file_name), shell=True)
+        subprocess.call(f"{editor} {file_name}", shell=True)

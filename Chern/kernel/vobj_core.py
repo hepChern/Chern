@@ -147,6 +147,10 @@ class Core(ABC):
         """ Abstract method for future implementation"""
 
     @abstractmethod
+    def impression(self):
+        """ Abstract method for future implementation"""
+
+    @abstractmethod
     def is_impressed_fast(self):
         """ Abstract method for future implementation"""
 
@@ -156,5 +160,5 @@ class Core(ABC):
         """ Abstract method for future implementation"""
 
     @abstractmethod
-    def color_tag(self, color):
+    def color_tag(self, status):
         """ Abstract method for future implementation"""
