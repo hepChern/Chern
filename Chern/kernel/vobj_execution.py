@@ -1,12 +1,8 @@
 """ This module provides the ExecutionManagement class.
 """
 from logging import getLogger
-from os.path import join
 
 from .chern_communicator import ChernCommunicator
-
-from ..utils import csys
-
 from .vobj_core import Core
 
 logger = getLogger("ChernLogger")
