@@ -6,7 +6,7 @@ from logging import getLogger
 from ..utils import metadata
 from ..utils import csys
 from .vtask_core import Core
-from . import VAlgorithm as valg
+from . import valgorithm as valg
 
 logger = getLogger("ChernLogger")
 
@@ -64,7 +64,7 @@ class InputManager(Core):
         predecessors = self.predecessors()
         for pred_object in predecessors:
             if pred_object.object_type() == "algorithm":
-                return valg.VAlgorithm(pred_object.path)
+                return valg.valgorithm(pred_object.path)
         return None
 
     def add_input(self, path, alias):

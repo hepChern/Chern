@@ -13,7 +13,7 @@ from .vtask import VTask
 from ..utils.csys import debug
 from ..utils import metadata
 from ..utils import csys
-from .ChernCommunicator import ChernCommunicator
+from .chern_communicator import ChernCommunicator
 
 class VProject(VObject):
 
@@ -58,7 +58,7 @@ class VProject(VObject):
             if sub_object.object_type() == "task":
                 Chern.kernel.VTask.VTask(sub_object.path).clean_impressions()
             elif sub_object.object_type() == "algorithm":
-                Chern.kernel.VAlgorithm.VAlgorithm(sub_object.path).clean_impressions()
+                Chern.kernel.valgorithm.valgorithm(sub_object.path).clean_impressions()
             else:
                 Chern.kernel.VDirectory.VDirectory(sub_object.path).clean_impressions()
         csys.rm_tree(self.path+"/.chern/impressions")
@@ -70,7 +70,7 @@ class VProject(VObject):
                 if Chern.kernel.VTask.VTask(sub_object.path).status() != "done":
                     return "unfinished"
             elif sub_object.object_type() == "algorithm":
-                if Chern.kernel.VAlgorithm.VAlgorithm(sub_object.path).status() != "built":
+                if Chern.kernel.valgorithm.valgorithm(sub_object.path).status() != "built":
                     return "unfinished"
             elif Chern.kernel.VDirectory.VDirectory(sub_object.path).status() != "finished":
                 return "unfinished"

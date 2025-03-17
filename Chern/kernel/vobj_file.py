@@ -11,7 +11,7 @@ from ..utils.pretty import colorize
 from .vobj_core import Core
 
 from .chern_cache import ChernCache
-from .ChernCommunicator import ChernCommunicator
+from .chern_communicator import ChernCommunicator
 CHERN_CACHE = ChernCache.instance()
 
 logger = getLogger("ChernLogger")

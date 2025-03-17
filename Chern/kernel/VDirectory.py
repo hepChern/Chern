@@ -34,7 +34,7 @@ import Chern
 from ..utils import csys
 from ..utils import metadata
 from .vobject import VObject
-from .ChernCommunicator import ChernCommunicator
+from .chern_communicator import ChernCommunicator
 
 class VDirectory(VObject):
     """
@@ -52,7 +52,7 @@ class VDirectory(VObject):
                 if status == "running":
                     return "processing"
             elif sub_object.object_type() == "algorithm":
-                if Chern.kernel.VAlgorithm.VAlgorithm(sub_object.path).status(consult_id) == "building":
+                if Chern.kernel.valgorithm.valgorithm(sub_object.path).status(consult_id) == "building":
                     return "processing"
             else:
                 status = Chern.kernel.VDirectory.VDirectory(sub_object.path).status(consult_id)
@@ -65,7 +65,7 @@ class VDirectory(VObject):
                 if status != "done":
                     return "unfinished"
             elif sub_object.object_type() == "algorithm":
-                if Chern.kernel.VAlgorithm.VAlgorithm(sub_object.path).status(consult_id) != "built":
+                if Chern.kernel.valgorithm.valgorithm(sub_object.path).status(consult_id) != "built":
                     return "unfinished"
             else:
                 status = Chern.kernel.VDirectory.VDirectory(sub_object.path).status(consult_id)
@@ -91,7 +91,7 @@ class VDirectory(VObject):
             if sub_object.object_type() == "task":
                 Chern.kernel.VTask.VTask(sub_object.path).deposit()
             elif sub_object.object_type() == "algorithm":
-                Chern.kernel.VAlgorithm.VAlgorithm(sub_object.path).deposit()
+                Chern.kernel.valgorithm.valgorithm(sub_object.path).deposit()
             else:
                 Chern.kernel.VDirectory.VDirectory(sub_object.path).deposit()
 
@@ -123,7 +123,7 @@ class VDirectory(VObject):
                 if sub_object.object_type() == "task":
                     status = Chern.kernel.VTask.VTask(sub_object.path).status()
                 elif sub_object.object_type() == "algorithm":
-                    status = Chern.kernel.VAlgorithm.VAlgorithm(sub_object.path).status()
+                    status = Chern.kernel.valgorithm.valgorithm(sub_object.path).status()
                 else:
                     status = Chern.kernel.VDirectory.VDirectory(sub_object.path).status()
                 print("    Status: [{}]".format(colorize(status, "success")))
@@ -135,7 +135,7 @@ class VDirectory(VObject):
             if sub_object.object_type() == "task":
                 Chern.kernel.VTask.VTask(sub_object.path).clean_impressions()
             elif sub_object.object_type() == "algorithm":
-                Chern.kernel.VAlgorithm.VAlgorithm(sub_object.path).clean_impressions()
+                Chern.kernel.valgorithm.valgorithm(sub_object.path).clean_impressions()
             else:
                 Chern.kernel.VDirectory.VDirectory(sub_object.path).clean_impressions()
 

@@ -3,7 +3,7 @@
 from logging import getLogger
 from os.path import join
 
-from .ChernCommunicator import ChernCommunicator
+from .chern_communicator import ChernCommunicator
 
 from ..utils import csys
 

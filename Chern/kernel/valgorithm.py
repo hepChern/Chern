@@ -10,7 +10,7 @@ from ..utils import csys
 from ..utils.pretty import colorize
 from ..utils import metadata
 
-from .ChernCommunicator import ChernCommunicator
+from .chern_communicator import ChernCommunicator
 cherncache = ChernCache.instance()
 
 

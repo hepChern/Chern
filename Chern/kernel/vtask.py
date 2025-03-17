@@ -92,7 +92,7 @@ from ..utils.pretty import colorize
 from ..utils.csys import open_subprocess
 
 from .chern_cache import ChernCache
-from .ChernCommunicator import ChernCommunicator
+from .chern_communicator import ChernCommunicator
 
 from .vobject import VObject
 from .vtask_input import InputManager

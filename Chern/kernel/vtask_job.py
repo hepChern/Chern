@@ -2,7 +2,7 @@
 """
 from logging import getLogger
 
-from .ChernCommunicator import ChernCommunicator
+from .chern_communicator import ChernCommunicator
 from .vtask_core import Core
 
 logger = getLogger("ChernLogger")
