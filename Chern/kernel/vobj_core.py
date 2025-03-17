@@ -79,6 +79,14 @@ class Core(ABC):
         """ To avoid circular import
         """
 
+    @abstractmethod
+    def status(self, consult_id=None):
+        """ Abstract method for future implementation"""
+
+    @abstractmethod
+    def job_status(self, runner=None):
+        """ Abstract method for future implementation"""
+
     # Abstract methods, for file operations
     @abstractmethod
     def sub_objects_recursively(self):

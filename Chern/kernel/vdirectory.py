@@ -49,34 +49,8 @@ class VDirectory(VObject):
     def status(self, consult_id = None):
         """ Give the status of the object
         """
-        sub_objects = self.sub_objects()
-        for sub_object in sub_objects:
-            if sub_object.object_type() == "task":
-                status = VTask(sub_object.path).status(consult_id)
-                if status == "running":
-                    return "processing"
-            elif sub_object.object_type() == "algorithm":
-                if VAlgorithm(sub_object.path).status(consult_id) == "building":
-                    return "processing"
-            else:
-                status = VDirectory(sub_object.path).status(consult_id)
-                if status == "processing":
-                    return "processing"
-
-        for sub_object in sub_objects:
-            if sub_object.object_type() == "task":
-                status = VTask(sub_object.path).status(consult_id)
-                if status != "done":
-                    return "unfinished"
-            elif sub_object.object_type() == "algorithm":
-                if VAlgorithm(sub_object.path).status(consult_id) != "built":
-                    return "unfinished"
-            else:
-                status = VDirectory(sub_object.path).status(consult_id)
-                if status != "finished":
-                    return "unfinished"
-
-        return "finished"
+        # FIXME: Implement the status of the directory
+        return "Not implemented yet"
 
     def get_impressions(self):
         """ Get the impressions of the directory

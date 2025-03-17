@@ -56,7 +56,8 @@ class VProject(VObject):
 # Helper functions
 def create_readme(project_path):
     """ Create the README.md and project.json file"""
-    open(project_path+"/.chern/project.json", "w", encoding="utf-8").close()
+    with open(project_path+"/.chern/project.json", "w", encoding="utf-8"):
+        pass
     with open(project_path + "/.chern/README.md", "w", encoding="utf-8") as f:
         f.write("")
 

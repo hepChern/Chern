@@ -1,5 +1,6 @@
 """ The module for arc management of VObject
 """
+from os.path import join
 from time import time
 from logging import getLogger
 
@@ -243,3 +244,46 @@ class ArcManagement(Core):
                 choice = input("Would you like to remove it? [Y/N]: ")
                 if choice.upper() == "Y":
                     obj.remove_alias(obj.path_to_alias(path))
+
+    def add_input(self, path, alias):
+        """ add input
+        """
+        if not self.is_task_or_algorithm():
+            print(f"You are adding input to {self.object_type()} type object. "
+                  "The input is required to be a task or an algorithm.")
+            return
+
+        obj = self.get_vobject(path)
+        if obj.object_type() != self.object_type():
+            print(f"You are adding {obj.object_type()} type object as"
+                   " input. The input is required to be a {self.object_type()}.")
+            return
+
+        if obj.has_predecessor_recursively(self):
+            print("The object is already in the dependency diagram of "
+                  "the ``input'', which will cause a loop.")
+            return
+
+        if self.has_alias(alias):
+            print("The alias already exists. "
+                  "The original input and alias will be replaced.")
+            project_path = csys.project_path(self.path)
+            original_object = self.get_vobject(
+                join(project_path, self.alias_to_path(alias))
+            )
+            self.remove_arc_from(original_object)
+            self.remove_alias(alias)
+
+        self.add_arc_from(obj)
+        self.set_alias(alias, obj.invariant_path())
+
+    def remove_input(self, alias):
+        """ Remove the input """
+        path = self.alias_to_path(alias)
+        if path == "":
+            print("Alias not found")
+            return
+        project_path = csys.project_path(self.path)
+        obj = self.get_vobject(join(project_path, path))
+        self.remove_arc_from(obj)
+        self.remove_alias(alias)

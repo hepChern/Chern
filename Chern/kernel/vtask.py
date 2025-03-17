@@ -133,25 +133,9 @@ class VTask(InputManager, SettingManager, FileManager, JobManager):
     def print_status(self):
         """ Print the status of the task
         """
-        print(f"Status of task: {self.invariant_path()}")
-        if self.status() == "impressed":
-            print(f"Impression: [{colorize(self.impression().uuid, 'success')}]")
-        else:
-            print(f"Impression: [{colorize('New', 'warning')}]")
-            return
+        super().print_status()
+
         cherncc = ChernCommunicator.instance()
-        dite_status = cherncc.dite_status()
-        if dite_status == "ok":
-            print(f"DIET: [{colorize('connected', 'success')}]")
-        else:
-            print(f"DIET: [{colorize('unconnected', 'warning')}]")
-            return
-
-        deposited = cherncc.is_deposited(self.impression())
-        if deposited == "FALSE":
-            print("Impression not deposited in DIET")
-            return
-
         job_status = cherncc.job_status(self.impression())
         print(f"Job status: [{colorize(job_status, 'success')}]")
 

@@ -51,3 +51,10 @@ class ExecutionManagement(Core):
             return False
         cherncc = ChernCommunicator.instance()
         return cherncc.is_deposited(self.impression()) == "TRUE"
+
+    def job_status(self, runner=None):
+        """ Get the status of the job"""
+        cherncc = ChernCommunicator.instance()
+        if runner is None:
+            return cherncc.job_status(self.impression())
+        return cherncc.job_status(self.impression(), runner)

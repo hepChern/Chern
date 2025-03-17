@@ -63,31 +63,6 @@ class Core(VObject):
         print(colorize("---- Auto download:", "title0"), self.auto_download())
         print(colorize("---- Default runner:", "title0"), self.default_runner())
 
-    def show_status(self):
-        """ Show the status of the task.
-        """
-        status = self.status()
-        status_color = ""
-        if status == "new":
-            status_color = "normal"
-        elif status == "impressed":
-            status_color = "success"
-
-        status_str = colorize("["+status+"]", status_color)
-
-        if status == "impressed":
-            # run_status = self.run_status()
-            run_status = self.job_status()
-            if run_status != "unconnected":
-                if run_status == "unsubmitted":
-                    status_color = "warning"
-                elif run_status == "failed":
-                    status_color = "warning"
-                else:
-                    status_color = "success"
-                status_str += colorize("["+run_status+"]", status_color)
-        print(colorize("**** STATUS:", "title0"), status_str)
-
     def show_algorithm(self):
         """ Show the algorithm of the task.
         """
@@ -185,8 +160,4 @@ class Core(VObject):
 
     @abstractmethod
     def send_data(self, path):
-        """ Abstract method for future implementation"""
-
-    @abstractmethod
-    def job_status(self):
         """ Abstract method for future implementation"""

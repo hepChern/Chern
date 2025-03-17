@@ -16,13 +16,6 @@ class JobManager(Core):
         cherncc = ChernCommunicator.instance()
         cherncc.kill(self.impression())
 
-    def job_status(self, host=None):
-        """ Get the status of the job"""
-        cherncc = ChernCommunicator.instance()
-        if host is None:
-            return cherncc.job_status(self.impression())
-        return cherncc.job_status(self.impression(), host)
-
     def run_status(self, host="local"): # pylint: disable=unused-argument
         """ Get the run status of the job"""
         # FIXME duplicated code

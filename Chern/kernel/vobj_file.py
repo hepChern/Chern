@@ -58,6 +58,54 @@ class FileManagement(Core):
         if successors and show_info.successors:
             self.show_successors(successors, total)
 
+    def show_status(self):
+        """ Show the status of the task.
+        """
+        status = self.status()
+        status_color_map = {
+            "new": "normal",
+            "impressed": "success"
+        }
+
+        status_color = status_color_map.get(status, "")
+        status_str = colorize(f"[{status}]", status_color)
+
+        if status == "impressed":
+            run_status = self.job_status()
+            if run_status != "unconnected":
+                run_status_color_map = {
+                    "unsubmitted": "warning",
+                    "failed": "warning"
+                }
+                status_str += colorize(
+                        f"[{run_status}]",
+                        run_status_color_map.get(run_status, "success")
+                )
+
+        print(colorize("**** STATUS:", "title0"), status_str)
+
+    def print_status(self):
+        """ Print the status of the task"""
+        print(f"Status of task: {self.invariant_path()}")
+        if self.status() == "impressed":
+            print(f"Impression: [{colorize(self.impression().uuid, 'success')}]")
+        else:
+            print(f"Impression: [{colorize('New','warning')}]")
+            return
+        cherncc = ChernCommunicator.instance()
+        dite_status = cherncc.dite_status()
+        if dite_status == "ok":
+            print(f"DIET: [{colorize('connected','success')}]")
+        else:
+            print(f"DIET: [{colorize('unconnected','warning')}]")
+            return
+
+        deposited = cherncc.is_deposited(self.impression())
+        if deposited == "FALSE":
+            print("Impression not deposited in DIET")
+            return
+
+
     def print_dite_status(self):
         """ Print the status of the DITE"""
         cherncc = ChernCommunicator.instance()

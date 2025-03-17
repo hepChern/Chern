@@ -1,3 +1,7 @@
+""" Module containing all README information
+"""
+
+
 project_helpme = { "": """
 Hello, you are in a ``project''. What would you like to do?
 You can consult http://chern.readthedocs.io/en/latest/ for a complete document.
@@ -79,5 +83,3 @@ The commands to use:
 
 "cd test": """Test for cd"""
                   }
-
-

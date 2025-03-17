@@ -67,44 +67,6 @@ class InputManager(Core):
                 return valg.VAlgorithm(pred_object.path)
         return None
 
-    def add_input(self, path, alias):
-        """ add input
-        """
-        obj = self.get_vobject(path)
-        if obj.object_type() != "task":
-            print(f"You are adding {obj.object_type()} type object as"
-                   " input. The input is required to be a task.")
-            return
-
-        if obj.has_predecessor_recursively(self):
-            print("The object is already in the dependency diagram of "
-                  "the ``input'', which will cause a loop.")
-            return
-
-        if self.has_alias(alias):
-            print("The alias already exists. "
-                  "The original input and alias will be replaced.")
-            project_path = csys.project_path(self.path)
-            original_object = self.get_vobject(
-                join(project_path, self.alias_to_path(alias))
-            )
-            self.remove_arc_from(original_object)
-            self.remove_alias(alias)
-
-        self.add_arc_from(obj)
-        self.set_alias(alias, obj.invariant_path())
-
-    def remove_input(self, alias):
-        """ Remove the input """
-        path = self.alias_to_path(alias)
-        if path == "":
-            print("Alias not found")
-            return
-        project_path = csys.project_path(self.path)
-        obj = self.get_vobject(join(project_path, path))
-        self.remove_arc_from(obj)
-        self.remove_alias(alias)
-
     def inputs(self):
         """ Input data """
         inputs = filter(

@@ -24,51 +24,13 @@ class VAlgorithm(VObject):
         """ Helpme function """
         print(helpme.algorithm_helpme.get(command, "No such command, try ``helpme'' alone."))
 
-
     def print_status(self):
         """ Print the status """
-        print(f"Status of task: {self.invariant_path()}")
-        if self.status() == "impressed":
-            print(f"Impression: [{colorize(self.impression().uuid, 'success')}]")
-        else:
-            print(f"Impression: [{colorize('New','warning')}]")
-            return
+        super().print_status()
         cherncc = ChernCommunicator.instance()
-        dite_status = cherncc.dite_status()
-        if dite_status == "ok":
-            print(f"DIET: [{colorize('connected','success')}]")
-        else:
-            print(f"DIET: [{colorize('unconnected','warning')}]")
-            return
-
-        deposited = cherncc.is_deposited(self.impression())
-        if deposited == "FALSE":
-            print("Impression not deposited in DIET")
-            return
-
-        environment = self.environment()
-
         workflow_check = cherncc.workflow(self.impression())
         if workflow_check == "UNDEFINED":
             print("Workflow not defined")
-            return
-
-        if environment != "rawdata":
-            print(colorize("**** WORKFLOW:", "title0"))
-            runner = workflow_check[0]
-            workflow = workflow_check[1]
-            print(f"Workflow: [{colorize(runner,'success')}][{colorize(workflow,'success')}]")
-
-            files = cherncc.output_files(self.impression(), runner)
-            print("Output files (collected on DIET):")
-            for f in files:
-                print(f"    {f}")
-
-    def job_status(self):
-        """ Asking for the remote status
-        """
-        cherncc = ChernCommunicator.instance()
-        return cherncc.job_status(self.impression())
 
     def run_status(self):
         """ Asking for the remote status
@@ -146,17 +108,6 @@ class VAlgorithm(VObject):
         """
         yaml_file = metadata.YamlFile(os.path.join(self.path, "chern.yaml"))
         return yaml_file.read_variable("environment", {})
-
-    def remove_input(self, alias):
-        """ Remove the input """
-        path = self.alias_to_path(alias)
-        if path == "":
-            print("Alias not found")
-            return
-        project_path = csys.project_path(self.path)
-        obj = VObject(project_path+"/"+path)
-        self.remove_arc_from(obj)
-        self.remove_alias(alias)
 
 def create_algorithm(path, use_template=False):
     """ Create an algorithm """
