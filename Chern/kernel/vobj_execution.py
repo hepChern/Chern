@@ -30,6 +30,12 @@ class ExecutionManagement(Core):
 
     def deposit(self):
         """ Deposit the impression to the dite. """
+        if not self.is_task_or_algorithm():
+            sub_objects = self.sub_objects()
+            for sub_object in sub_objects:
+                sub_object.deposit()
+            return
+
         cherncc = ChernCommunicator.instance()
         if self.is_deposited():
             return

@@ -190,7 +190,3 @@ class Core(VObject):
     @abstractmethod
     def job_status(self):
         """ Abstract method for future implementation"""
-
-    @abstractmethod
-    def status(self):
-        """ Abstract method for future implementation"""

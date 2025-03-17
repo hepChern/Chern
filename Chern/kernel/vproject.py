@@ -3,25 +3,22 @@
     The core part may move to c language in the future
 """
 import os
-import subprocess
-
-import Chern
-from .vobject import VObject
-from .vtask import VTask
-# from .valgorithm import VAlgorithm
-# from .vdirectory import VDirectory
-from ..utils.csys import debug
 from ..utils import metadata
 from ..utils import csys
+from .vobject import VObject
 from .chern_communicator import ChernCommunicator
+from . import helpme
 
 class VProject(VObject):
+    """ operate the project
+    """
 
     def helpme(self, command):
-        from Chern.kernel.Helpme import project_helpme
-        print(project_helpme.get(command, "No such command, try ``helpme'' alone."))
+        """ Print the help message"""
+        print(helpme.project_helpme.get(command, "No such command, try ``helpme'' alone."))
 
     def get_impressions(self):
+        """ Get all the impressions of the project"""
         impressions = []
         sub_objects = self.sub_objects()
         for sub_object in sub_objects:
@@ -31,61 +28,41 @@ class VProject(VObject):
                 impressions.extend(sub_object.get_impressions())
         return impressions
 
-    def deposit(self):
-        sub_objects = self.sub_objects()
-        for sub_object in sub_objects:
-            if sub_object.object_type() == "task":
-                VTask(sub_object.path).deposit()
-            elif sub_object.object_type() == "algorithm":
-                VAlgorithm(sub_object.path).deposit()
-            else:
-                VDirectory(sub_object.path).deposit()
-
-    def submit(self, machine="local"):
+    def submit(self, runner="local"):
+        """ Submit the project to the server"""
         cherncc = ChernCommunicator.instance()
         self.deposit()
         print("Submit the project")
         impressions = self.get_impressions()
-        cherncc.execute(impressions, machine)
+        cherncc.execute(impressions, runner)
 
     def clean_impressions(self):
+        """ Clean all the impressions of the project"""
         print("Clean all the impressions")
         clean_confirmed = input("Are you sure to clean all the impressions? [y/n]")
         if clean_confirmed != "y":
             return
         sub_objects = self.sub_objects()
         for sub_object in sub_objects:
-            if sub_object.object_type() == "task":
-                Chern.kernel.VTask.VTask(sub_object.path).clean_impressions()
-            elif sub_object.object_type() == "algorithm":
-                Chern.kernel.valgorithm.valgorithm(sub_object.path).clean_impressions()
-            else:
-                Chern.kernel.VDirectory.VDirectory(sub_object.path).clean_impressions()
+            VObject(sub_object.path).clean_impressions()
         csys.rm_tree(self.path+"/.chern/impressions")
 
-    def status(self):
-        sub_objects = self.sub_objects()
-        for sub_object in sub_objects:
-            if sub_object.object_type() == "task":
-                if Chern.kernel.VTask.VTask(sub_object.path).status() != "done":
-                    return "unfinished"
-            elif sub_object.object_type() == "algorithm":
-                if Chern.kernel.valgorithm.valgorithm(sub_object.path).status() != "built":
-                    return "unfinished"
-            elif Chern.kernel.VDirectory.VDirectory(sub_object.path).status() != "finished":
-                return "unfinished"
-        return "finished"
-
+    def status(self, consult_id=None):
+        """ Get the status of the project"""
+        # FIXME: return
+        return "Further implementation is needed"
 
 ######################################
 # Helper functions
 def create_readme(project_path):
-    open(project_path+"/.chern/project.json", "w").close()
-    with open(project_path + "/.chern/README.md", "w") as f:
+    """ Create the README.md and project.json file"""
+    open(project_path+"/.chern/project.json", "w", encoding="utf-8").close()
+    with open(project_path + "/.chern/README.md", "w", encoding="utf-8") as f:
         f.write("")
 
 
 def create_configfile(project_path, uuid):
+    """ Create the config file"""
     config_file = metadata.ConfigFile(project_path+"/.chern/config.json")
     config_file.write_variable("object_type", "project")
     config_file.write_variable("chern_version", "0.0.0")
@@ -93,6 +70,7 @@ def create_configfile(project_path, uuid):
 
 
 def create_hostsfile(project_path):
+    """ Create the hosts file"""
     config_file = metadata.ConfigFile(project_path+"/.chern/hosts.json")
     config_file.write_variable("serverurl", "127.0.0.1:3315")
 
@@ -104,9 +82,9 @@ def init_project():
     """
     pwd = os.getcwd()
     if os.listdir(pwd) != []:
-        raise Exception("[ERROR] Initialize on a unempty directory is not allowed {}".format(pwd))
+        raise Exception(f"[ERROR] Initialize on a unempty directory is not allowed {pwd}")
     project_name = pwd[pwd.rfind("/")+1:]
-    print("The project name is ``{}'', would you like to change it? [y/n]".format(project_name))
+    print(f"The project name is ``{project_name}'', would you like to change it? [y/n]")
     change = input()
     if change == "y":
         project_name = input("Please input the project name: ")
@@ -114,14 +92,15 @@ def init_project():
     # Check the forbidden name
     forbidden_names = ["config", "new", "projects", "start", "", "."]
 
-    def check_project_failed(project_name, forbidden_names):
+    def check_project_failed(forbidden_names):
         message = "The following project names are forbidden:"
         message += "\n    "
         for name in forbidden_names:
             message += name + ", "
         raise Exception(message)
+
     if project_name in forbidden_names:
-        check_project_failed(project_name, forbidden_names)
+        check_project_failed(forbidden_names)
 
     project_path = pwd
     uuid = csys.generate_uuid()
@@ -145,21 +124,21 @@ def use_project(path):
     path = os.path.abspath(path)
     print(path)
     project_name = path[path.rfind("/")+1:]
-    print("The project name is ``{}'', would you like to change it? [y/n]".format(project_name))
+    print("The project name is ``{project_name}'', would you like to change it? [y/n]")
     change = input()
     if change == "y":
         project_name = input("Please input the project name")
 
     # Check the forbidden name
     forbidden_names = ["config", "new", "projects", "start", "", "."]
-    def check_project_failed(project_name, forbidden_names):
+    def check_project_failed(forbidden_names):
         message = "The following project names are forbidden:"
         message += "\n    "
         for name in forbidden_names:
             message += name + ", "
         raise Exception(message)
     if project_name in forbidden_names:
-        check_project_failed(project_name, forbidden_names)
+        check_project_failed(forbidden_names)
 
     project_path = path
     config_file = metadata.ConfigFile(project_path+"/.chern/config.json")

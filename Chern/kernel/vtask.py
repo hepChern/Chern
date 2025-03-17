@@ -181,28 +181,6 @@ class VTask(InputManager, SettingManager, FileManager, JobManager):
             for f in files:
                 print(f"    {f}")
 
-    def status(self, consult_id=None):
-        """ Consult the status of the object
-            There should be only two status locally: new|impressed
-        """
-        # If it is already asked, just give us the answer
-        logger.debug("VTask status: Consulting status of %s", self.path)
-        if consult_id:
-            consult_table = CHERN_CACHE.status_consult_table
-            cid, status = consult_table.get(self.path, (-1,-1))
-            if cid == consult_id:
-                return status
-
-        if not self.is_impressed_fast():
-            if consult_id:
-                consult_table[self.path] = (consult_id, "new")
-            return "new"
-
-        status = "impressed"
-        if consult_id:
-            consult_table[self.path] = (consult_id, status)
-        return status
-
     def get_task(self, path):
         """ Get the task from the path
         """

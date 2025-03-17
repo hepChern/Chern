@@ -23,7 +23,7 @@
 import click
 import os
 from os.path import join
-from Chern.kernel import VProject
+from Chern.kernel import vproject
 from Chern.utils import csys
 from Chern.utils import metadata
 from Chern.interface.ChernShell import ChernShell
@@ -109,7 +109,7 @@ def chern_command_line():
 def init():
     """ Add the current directory to project """
     try:
-        VProject.init_project()
+        vproject.init_project()
         start_chern_command_line()
     except Exception as e:
         print(e)
@@ -121,7 +121,7 @@ def init():
 def use(path):
     """ Use a directory as the project"""
     try:
-        VProject.use_project(path)
+        vproject.use_project(path)
         start_chern_command_line()
     except Exception as e:
         print("Fail to start ipython:", e)

@@ -8,7 +8,7 @@ import shutil
 from Chern.kernel.vtask import create_task
 from Chern.kernel.vtask import create_data
 from Chern.kernel.valgorithm import create_algorithm
-from Chern.kernel.VDirectory import create_directory
+from Chern.kernel.vdirectory import create_directory
 from Chern.utils.pretty import color_print
 from Chern.utils.pretty import colorize
 from Chern.utils import metadata

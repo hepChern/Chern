@@ -1,4 +1,4 @@
-from Chern.kernel.VProject import VProject
+from Chern.kernel.vproject import VProject
 import cmd, sys, os
 from Chern.utils import csys
 import Chern.interface.shell as shell

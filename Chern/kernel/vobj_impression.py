@@ -6,7 +6,7 @@ from logging import getLogger
 
 from ..utils import csys
 from .vobj_core import Core
-from .VImpression import VImpression
+from .vimpression import VImpression
 from .chern_cache import ChernCache
 
 CHERN_CACHE = ChernCache.instance()
@@ -92,6 +92,11 @@ class ImpressionManagement(Core):
         this is used only when it is copied to a new place and
         needed to remove impression information.
         """
+        if not self.is_task_or_algorithm():
+            sub_objects = self.sub_objects()
+            for sub_object in sub_objects:
+                sub_object.clean_impressions()
+            return
         self.config_file.write_variable("impressions", [])
         self.config_file.write_variable("impression", "")
         self.config_file.write_variable("output_md5s", {})
@@ -150,3 +155,25 @@ class ImpressionManagement(Core):
         if uuid == "":
             return None
         return VImpression(uuid)
+
+    def status(self, consult_id=None):
+        """ Consult the status of the object
+            There should be only two status locally: new|impressed
+        """
+        # If it is already asked, just give us the answer
+        logger.debug("VTask status: Consulting status of %s", self.path)
+        if consult_id:
+            consult_table = CHERN_CACHE.status_consult_table
+            cid, status = consult_table.get(self.path, (-1,-1))
+            if cid == consult_id:
+                return status
+
+        if not self.is_impressed_fast():
+            if consult_id:
+                consult_table[self.path] = (consult_id, "new")
+            return "new"
+
+        status = "impressed"
+        if consult_id:
+            consult_table[self.path] = (consult_id, status)
+        return status

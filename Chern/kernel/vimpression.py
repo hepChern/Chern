@@ -1,16 +1,20 @@
 """ Helper class for impress operation
 """
 from os.path import join
-from Chern.utils import csys
-from Chern.utils import metadata
-from Chern.utils.pretty import colorize
-from Chern.utils.pretty import color_print
 from logging import getLogger
+
+from ..utils import csys
+from ..utils import metadata
+
 logger = getLogger("ChernLogger")
 
-class VImpression(object):
+class VImpression():
+    """ A class to represent an impression
+    """
     uuid = None
     def __init__(self, uuid = None):
+        """ Initialize the impression
+        """
         if uuid is None:
             self.uuid = csys.generate_uuid()
         else:
@@ -20,13 +24,18 @@ class VImpression(object):
         self.tarfile = self.path + "/packed" + self.uuid + ".tar.gz"
 
     def __str__(self):
+        """ Print the impression
+        """
         return self.uuid
 
     def is_zombie(self):
+        """ Check whether the impression is a zombie
+        """
         return not csys.exists(self.path)
 
     def is_packed(self):
-        # We should check whether it is affacted by other things
+        """ Check whether the impression is packed
+        """
         return csys.exists(
                 join(self.path, "/packed", self.uuid, ".tar.gz")
                 )
@@ -34,7 +43,7 @@ class VImpression(object):
     def pack(self):
         """ Pack the impression
         """
-        if (self.is_packed()):
+        if self.is_packed():
             return
         output_name = self.path + "/packed" + self.uuid
         csys.make_archive(output_name, self.path+"/contents")
@@ -47,30 +56,37 @@ class VImpression(object):
     def upack(self):
         """ Unpack the impression
         """
-        pass
+        # FIXME: to be implemented
 
     def difference(self):
         """ Calculate the difference between this and another impression
         """
+        # FIXME: to be implemented
 
     def tree(self):
+        """ Get the tree of the impression
+        """
         return self.config_file.read_variable("tree")
 
     def parents(self):
+        """ Get the parents of the impression
+        """
         return self.config_file.read_variable("parents", [])
 
     def parent(self):
+        """ Get the parent of the impression
+        """
         parents = self.parents()
-        if (parents):
+        if parents:
             return parents[-1]
-        else:
-            return None
+        return None
 
     def pred_impressions(self):
         """ Get the impression dependencies
         """
-        # FIXME An assumption is that all the predcessor's are impressed, if they are not, we should impress them first
-        # Add check to this
+        # FIXME An assumption is that all the predcessor's are impressed,
+        # if they are not, we should impress them first
+        # Need to add check to this
         dependencies_uuid = self.config_file.read_variable("dependencies", [])
         dependencies = [VImpression(uuid) for uuid in dependencies_uuid]
         return dependencies
@@ -78,15 +94,14 @@ class VImpression(object):
     def create(self, obj):
         """ Create this impression with a VObject file
         """
-        print("Creating impression {}".format(self.uuid))
+        print(f"Creating impression {self.uuid}")
         # Create an impression directory and copy the files to it
         file_list = csys.tree_excluded(obj.path)
-        csys.mkdir(self.path+"/contents".format(self.uuid))
-        for dirpath, dirnames, filenames in file_list:
+        csys.mkdir(self.path+"/contents")
+        for dirpath, dirnames, filenames in file_list: # pylint: disable=unused-variable
             for f in filenames:
-                # print("Copying {} to {}".format(obj.path+"/{}/{}".format(dirpath, f), self.path+"/contents/{}/{}".format(dirpath, f)))
-                csys.copy(obj.path+"/{}/{}".format(dirpath, f),
-                          self.path+"/contents/{}/{}".format(dirpath, f))
+                csys.copy(f"{obj.path}/{dirpath}/{f}",
+                          f"{self.path}/contents/{dirpath}/{f}")
 
         # Write tree and dependencies to the configuration file
         dependencies = obj.pred_impressions()
@@ -100,19 +115,19 @@ class VImpression(object):
         if obj.object_type() == "task":
             alias_to_imp = {}
             alias_to_path = obj.config_file.read_variable("alias_to_path", {})
-            for alias, path in alias_to_path.items():
+            for alias, path in alias_to_path.items(): # pylint: disable=unused-variable
                 alias_to_imp[alias] = obj.alias_to_impression(alias).uuid
             self.config_file.write_variable("alias_to_impression", alias_to_imp)
 
         # Write the basic metadata to the configuration file
         # self.config_file.write_variable("object_type", obj.object_type)
         parent_impression = obj.impression()
-        if (parent_impression is None):
+        if parent_impression is None:
             parents = []
         else:
             parents = parent_impression.parents()
             parents.append(parent_impression.uuid)
-            if (parent_impression.is_zombie()):
+            if parent_impression.is_zombie():
                 parent_impression.clean()
         self.config_file.write_variable("parents", parents)
         self.pack()

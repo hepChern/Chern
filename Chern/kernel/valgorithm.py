@@ -64,28 +64,6 @@ class VAlgorithm(VObject):
             for f in files:
                 print(f"    {f}")
 
-
-    def status(self, consult_id = None):
-        """ Consult the status of the object
-            There should be only two status locally: new|impressed
-        """
-        # If it is already asked, just give us the answer
-        if consult_id:
-            consult_table = CHERN_CACHE.status_consult_table
-            cid, status = consult_table.get(self.path, (-1,-1))
-            if cid == consult_id:
-                return status
-
-        if not self.is_impressed_fast():
-            if consult_id:
-                consult_table[self.path] = (consult_id, "new")
-            return "new"
-
-        status = "impressed"
-        if consult_id:
-            consult_table[self.path] = (consult_id, status)
-        return status
-
     def job_status(self):
         """ Asking for the remote status
         """
@@ -168,30 +146,6 @@ class VAlgorithm(VObject):
         """
         yaml_file = metadata.YamlFile(os.path.join(self.path, "chern.yaml"))
         return yaml_file.read_variable("environment", {})
-
-    def add_input(self, path, alias):
-        """ FIXME: judge the input type
-        """
-        obj = VObject(path)
-        if obj.object_type() != "algorithm":
-            print(f"You are adding {obj.object_type()} type object as input."
-                  " The input is required to be an algorithm.")
-            return
-
-        if obj.has_predecessor_recursively(self):
-            print("The object is already in the dependency diagram of"
-                  " the ``input'', which will cause a loop.")
-            return
-
-        if self.has_alias(alias):
-            print("The alias already exists. The original input and alias will be replaced.")
-            project_path = csys.project_path(self.path)
-            original_object = VObject(project_path+"/"+self.alias_to_path(alias))
-            self.remove_arc_from(original_object)
-            self.remove_alias(alias)
-
-        self.add_arc_from(obj)
-        self.set_alias(alias, obj.invariant_path())
 
     def remove_input(self, alias):
         """ Remove the input """
