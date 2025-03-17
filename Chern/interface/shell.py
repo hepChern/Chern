@@ -7,12 +7,12 @@ from Chern.interface.ChernManager import create_object_instance
 import shutil
 from Chern.kernel.vtask import create_task
 from Chern.kernel.vtask import create_data
-from Chern.kernel.VAlgorithm import create_algorithm
+from Chern.kernel.valgorithm import create_algorithm
 from Chern.kernel.VDirectory import create_directory
 from Chern.utils.pretty import color_print
 from Chern.utils.pretty import colorize
 from Chern.utils import metadata
-from Chern.kernel.ChernCommunicator import ChernCommunicator
+from Chern.kernel.chern_communicator import ChernCommunicator
 import subprocess
 
 import time
