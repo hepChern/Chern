@@ -394,7 +394,7 @@ class FileManagement(Core):
             index += 1
         return queue
 
-    def import_file(self, file):
+    def import_file(self, path):
         """
         Import the file to this task directory
         """
@@ -402,19 +402,19 @@ class FileManagement(Core):
             print("This function is only available for task or algorithm.")
             return
 
-        if not os.path.exists(file):
+        if not os.path.exists(path):
             print("File does not exist.")
             return
 
-        filename = os.path.basename(file)
+        filename = os.path.basename(path)
         if os.path.exists(self.path + "/" + filename):
             print("File already exists.")
             return
 
-        if os.path.isdir(file):
-            csys.copy_tree(file, self.path + "/" + filename)
+        if os.path.isdir(path):
+            csys.copy_tree(path, self.path + "/" + filename)
         else:
-            csys.copy(file, self.path + "/" + filename)
+            csys.copy(path, self.path + "/" + filename)
 
     def rm_file(self, file):
         """
@@ -449,4 +449,3 @@ class FileManagement(Core):
             csys.rm_tree(abspath)
         else:
             os.remove(abspath)
-
