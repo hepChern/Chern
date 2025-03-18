@@ -13,11 +13,6 @@ logger = getLogger("ChernLogger")
 class FileManager(Core):
     """ The file manager for the VTask."""
 
-    def importfile(self, filename):
-        """ Import the file to this task directory
-        """
-        csys.copy(filename, self.path)
-
     def input_md5(self):
         """ Get the md5 of the input files"""
         parameters_file = metadata.YamlFile(join(self.path, "chern.yaml"))

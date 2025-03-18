@@ -7,6 +7,7 @@ import shutil
 from dataclasses import dataclass
 from logging import getLogger
 
+from ..utils import csys
 from ..utils.pretty import colorize
 from .vobj_core import Core
 
@@ -392,3 +393,60 @@ class FileManagement(Core):
             queue += top_object.sub_objects()
             index += 1
         return queue
+
+    def import_file(self, file):
+        """
+        Import the file to this task directory
+        """
+        if not self.is_task_or_algorithm():
+            print("This function is only available for task or algorithm.")
+            return
+
+        if not os.path.exists(file):
+            print("File does not exist.")
+            return
+
+        filename = os.path.basename(file)
+        if os.path.exists(self.path + "/" + filename):
+            print("File already exists.")
+            return
+
+        if os.path.isdir(file):
+            csys.copy_tree(file, self.path + "/" + filename)
+        else:
+            csys.copy(file, self.path + "/" + filename)
+
+    def rm_file(self, file):
+        """
+        Remove the files within a task or an algorithm
+        """
+        if not self.is_task_or_algorithm():
+            print("This function is only available for task or algorithm.")
+            return
+
+        abspath = self.path + "/" + file
+
+        if not os.path.exists(abspath):
+            print("File does not exist.")
+            return
+
+        # protect: the file should not go out of the task directory
+        if self.relative_path(abspath).startswith(".."):
+            print("The file should not go out of the task directory.")
+            return
+
+        # protect: the file should not be the task directory
+        if self.relative_path(abspath) == ".":
+            print("The file should not be the task directory.")
+            return
+
+        # protect: should not remove the .chern and chern.yaml
+        if self.relative_path(abspath) in (".chern", "chern.yaml"):
+            print("The file should not be the .chern or chern.yaml.")
+            return
+
+        if os.path.isdir(abspath):
+            csys.rm_tree(abspath)
+        else:
+            os.remove(abspath)
+

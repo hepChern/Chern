@@ -265,6 +265,21 @@ def rm(line):
         return
     VObject(line).rm()
 
+def rm_file(file):
+    if manager.c.object_type() != "task" and manager.c.object_type() != "algorithm":
+        print("Unable to call rm_file if you are not in a task or algorithm.")
+        return
+    # Deal with * case
+    if file == "*":
+        path = manager.c.path
+        for file in os.listdir(path):
+            # protect .chern and chern.yaml
+            if file in (".chern", "chern.yaml"):
+                continue
+            manager.c.rm_file(file)
+        return
+    manager.c.rm_file(file)
+
 
 def add_source(line):
     # line = os.path.abspath(line)
@@ -281,12 +296,23 @@ def jobs(line):
 def status():
     manager.current_object().print_status()
 
-def importfile(filename):
+def import_file(filename):
     if manager.c.object_type() != "task" and manager.c.object_type() != "algorithm":
         print("Unable to call importfile if you are not in a task or algorithm.")
         return
-    manager.c.importfile(filename)
 
+    # Check if the path is a format of /path/to/a/dir/*
+    if filename.endswith("/*"):
+        filename = filename[:-2]
+        if not os.path.isdir(filename):
+            print("The path is not a directory")
+            return
+        for file in os.listdir(filename):
+            print("Importing: from ", os.path.join(filename, file))
+            print("Importing: to ", manager.c.path)
+            manager.c.import_file(os.path.join(filename, file))
+        return
+    manager.c.import_file(filename)
 
 def add_input(path, alias):
     if manager.c.object_type() != "task" and manager.c.object_type() != "algorithm":

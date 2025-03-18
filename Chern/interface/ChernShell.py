@@ -58,8 +58,8 @@ class ChernShell(cmd.Cmd):
 
     def do_import(self, arg):
         try:
-            input_path = arg.split()[0]
-            manager.current_object().importfile(input_path)
+            obj = arg.split()[0]
+            shell.import_file(obj)
         except Exception as e:
             print(e)
 
@@ -251,10 +251,18 @@ class ChernShell(cmd.Cmd):
         except Exception as e:
             print(e)
 
-    def do_importfile(self, arg):
+    def do_import_file(self, arg):
         try:
             obj = arg.split()[0]
-            shell.importfile(obj)
+            shell.import_file(obj)
+        except Exception as e:
+            print(e)
+
+    def do_rm_file(self, arg):
+        try:
+            objs = arg.split()
+            for obj in objs:
+                shell.rm_file(obj)
         except Exception as e:
             print(e)
 

@@ -87,6 +87,10 @@ class Core(ABC):
     def job_status(self, runner=None):
         """ Abstract method for future implementation"""
 
+    @abstractmethod
+    def import_file(self, path):
+        """ Abstract method for future implementation"""
+
     # Abstract methods, for file operations
     @abstractmethod
     def sub_objects_recursively(self):

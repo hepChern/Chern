@@ -90,19 +90,6 @@ class VAlgorithm(VObject):
         yaml_file = metadata.YamlFile(os.path.join(self.path, "chern.yaml"))
         return yaml_file.read_variable("commands", [])
 
-    def importfile(self, file):
-        """
-        Import the file to this task directory
-        """
-        if not os.path.exists(file):
-            print("File does not exist.")
-            return
-        filename = os.path.basename(file)
-        if os.path.exists(self.path + "/" + filename):
-            print("File already exists.")
-            return
-        csys.copy_tree(file, self.path + "/" + filename)
-
     def environment(self):
         """ Get the environment
         """
