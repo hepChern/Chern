@@ -6,6 +6,7 @@ Chern class for communicate to local and remote server.
 """
 
 from os.path import join
+import json
 from logging import getLogger
 import subprocess
 import tarfile
@@ -236,7 +237,7 @@ class ChernCommunicator():
         except Exception as e:
             print(f"An error occurred: {e}")
             return "unconnected to DITE"
-        return r.text
+        return json.loads(r.text)
 
     def resubmit(self, impression, machine="local"):
         """ Resubmit the impression to the server """
