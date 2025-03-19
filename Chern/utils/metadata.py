@@ -94,6 +94,9 @@ class YamlFile():
             if not contents.strip():
                 return default
             data = yaml.load(contents, Loader=yaml.Loader)
+            # Check data is of type dict
+            if not isinstance(data, dict):
+                return default
             return data.get(variable_name, default)
 
     def write_variable(self, variable_name, value):
