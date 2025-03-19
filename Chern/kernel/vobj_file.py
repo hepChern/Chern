@@ -71,17 +71,17 @@ class FileManagement(Core):
         status_color = status_color_map.get(status, "")
         status_str = colorize(f"[{status}]", status_color)
 
-        if status == "impressed":
-            run_status = self.job_status()
-            if run_status != "unconnected":
-                run_status_color_map = {
-                    "unsubmitted": "warning",
-                    "failed": "warning"
-                }
-                status_str += colorize(
-                        f"[{run_status}]",
-                        run_status_color_map.get(run_status, "success")
-                )
+        # if status == "impressed":
+        #     run_status = self.job_status()
+        #     if run_status != "unconnected":
+        #         run_status_color_map = {
+        #             "unsubmitted": "warning",
+        #             "failed": "warning"
+        #         }
+        #         status_str += colorize(
+        #                 f"[{run_status}]",
+        #                 run_status_color_map.get(run_status, "success")
+        #         )
 
         print(colorize("**** STATUS:", "title0"), status_str)
 
