@@ -128,6 +128,6 @@ class SettingManager(Core):
         if self.environment() == "rawdata":
             return True
         if self.algorithm() is not None:
-            if self.environment() == self.algorithm().environment():
+            if self.environment() != self.algorithm().environment():
                 return False
         return True
