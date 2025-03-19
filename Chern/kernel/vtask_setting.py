@@ -117,6 +117,8 @@ class SettingManager(Core):
         if self.environment() == "rawdata":
             return True
         if self.algorithm() is not None:
+            if self.algorithm().environment() == "script":
+                return True
             if self.environment() == self.algorithm().environment():
                 return True
         return False
@@ -125,9 +127,6 @@ class SettingManager(Core):
         """
         Check whether the task is validated or not
         """
-        if self.environment() == "rawdata":
-            return True
-        if self.algorithm() is not None:
-            if self.environment() != self.algorithm().environment():
-                return False
+        if not self.env_validated():
+            return False
         return True
