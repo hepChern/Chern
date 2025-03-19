@@ -154,7 +154,7 @@ class ArcManagement(Core):
         (last_consult_time, has_predecessor) = consult_table.get(
             self.path, (-1, False)
         )
-        now = time.time()
+        now = time()
         if now - last_consult_time < 1:
             return has_predecessor
 
@@ -166,9 +166,9 @@ class ArcManagement(Core):
             project_path = csys.project_path(self.path)
             pred_obj = self.get_vobject(f"{project_path}/{pred_path}")
             if pred_obj.has_predecessor_recursively(obj):
-                consult_table[self.path] = (time.time(), True)
+                consult_table[self.path] = (time(), True)
                 return True
-        consult_table[self.path] = (time.time(), False)
+        consult_table[self.path] = (time(), False)
         return False
 
     def doctor(self):
