@@ -34,8 +34,8 @@ class Core(VObject):
         if show_info.status:
             self.show_status()
 
-        if self.is_submitted():
-            self.show_submission()
+        # if self.is_submitted():
+        #   self.show_submission()
 
         if self.algorithm() is not None:
             self.show_algorithm()
