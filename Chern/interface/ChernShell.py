@@ -274,6 +274,12 @@ class ChernShell(cmd.Cmd):
         except Exception as e:
             print(e)
 
+    def do_config(self, arg):
+        try:
+            shell.config()
+        except Exception as e:
+            print(e)
+
     def do_clean_impressions(self, arg):
         try:
             print("Very dangerous operation only for developer")
