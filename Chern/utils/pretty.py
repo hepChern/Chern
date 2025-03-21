@@ -5,7 +5,7 @@ define some classes and functions used throughout the project
 # Load module
 from colored import fg, attr
 
-def colorize(string, color):
+def colorize(string, color=""):
     """Make the string have color"""
     colors = {
         "success": fg("green") + string + attr("reset"),
@@ -16,6 +16,22 @@ def colorize(string, color):
         "comment": fg("blue") + string + attr("reset"),
         "title0": fg("red") + attr("bold") + string + attr("reset")
     }
+    if color == "":
+        possible_status = {
+            "success": ["success", "done", "pass", "connected", "ok", "good", "succeed", "validated", "archived"],
+            "normal": ["normal", "info", "new"],
+            "running": ["running", "start"],
+            "warning": ["warning", "error", "fail", "failed", "wrong", "incorrect", "bad", "unsuccessful"],
+            "debug": ["debug"],
+        }
+        for key, value in possible_status.items():
+            if string.lower() in value:
+                color = key
+                break
+            # if remove the bracket []:
+            if string.lower()[1:-1] in value:
+                color = key
+                break
     return colors.get(color, string)  # Default to 'string' if color not found
 
 def color_print(string, color):

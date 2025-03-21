@@ -51,14 +51,14 @@ class Core(VObject):
             print(values[parameter])
 
         if self.environment() == "rawdata":
-            print(f"Input data: {self.input_md5()}")
+            print(colorize("---- Input data:", "title0"), self.input_md5())
 
         print(colorize("---- Environment:", "title0"), self.environment())
         print(colorize("---- Memory limit:", "title0"), self.memory_limit())
         if self.validated():
-            print(colorize("---- Validated:", "title0"), colorize("True", "success"))
+            print(colorize("---- Validated:", "title0"), colorize("true"))
         else:
-            print(colorize("---- Validated:", "title0"), colorize("False", "warning"))
+            print(colorize("---- Validated:", "title0"), colorize("false"))
 
         print(colorize("---- Auto download:", "title0"), self.auto_download())
         print(colorize("---- Default runner:", "title0"), self.default_runner())

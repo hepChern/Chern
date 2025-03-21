@@ -86,19 +86,24 @@ class FileManagement(Core):
         print(colorize("**** STATUS:", "title0"), status_str)
 
     def print_status(self):
-        """ Print the status of the task"""
-        print(f"Status of task: {self.invariant_path()}")
-        if self.status() == "impressed":
-            print(f"Impression: [{colorize(self.impression().uuid, 'success')}]")
-        else:
-            print(f"Impression: [{colorize('New','warning')}]")
+        """ Print the status of the object"""
+        if not self.is_task_or_algorithm():
+            print("Printing the status is only available for task or algorithm.")
             return
+
+        print(f"Status of : {self.invariant_path()}")
+        if self.status() == "impressed":
+            print(f"Impression: {colorize('['+self.impression().uuid+']', 'success')}")
+        else:
+            print(f"Impression: {colorize('[new]')}")
+            return
+
         cherncc = ChernCommunicator.instance()
         dite_status = cherncc.dite_status()
         if dite_status == "ok":
-            print(f"DIET: [{colorize('connected','success')}]")
+            print(f"DIET: {colorize('[connected]')}")
         else:
-            print(f"DIET: [{colorize('unconnected','warning')}]")
+            print(f"DIET: {colorize('[unconnected]')}")
             return
 
         deposited = cherncc.is_deposited(self.impression())

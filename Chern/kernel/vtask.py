@@ -135,14 +135,15 @@ class VTask(InputManager, SettingManager, FileManager, JobManager):
         """
         super().print_status()
 
+        if self.status() != "impressed":
+            return
+
         cherncc = ChernCommunicator.instance()
         job_status = cherncc.job_status(self.impression())
-        print(f"Job status: [{colorize(job_status, 'success')}]")
+        print(f"Job status: {colorize('['+job_status+']', 'success')}")
 
         environment = self.environment()
         if environment == "rawdata":
-            run_status = self.run_status()
-            print(f"Sample status: [{colorize(run_status, run_status)}]")
             files = cherncc.output_files(self.impression(), "none")
             print("Sample files (collected on DIET):")
             for f in files:
@@ -158,7 +159,7 @@ class VTask(InputManager, SettingManager, FileManager, JobManager):
             print(colorize("**** WORKFLOW:", "title0"))
             runner = workflow_check[0]
             workflow = workflow_check[1]
-            print(f"Workflow: [{colorize(runner,'success')}][{colorize(workflow, 'success')}]")
+            print(f"Workflow: {colorize('['+runner+']')}{colorize('['+workflow+']')}")
 
             files = cherncc.output_files(self.impression(), runner)
             print("Output files (collected on DIET):")
