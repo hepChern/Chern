@@ -1,6 +1,7 @@
 """ VAlgorithm
 """
 import os
+import shutil
 import subprocess
 
 from ..utils import csys
@@ -64,37 +65,61 @@ class VAlgorithm(VObject):
             elif status == "impressed":
                 status_color = "success"
 
-            status_str = colorize("["+status+"]", status_color)
-
-            if status == "impressed":
-                run_status = self.run_status()
-                if run_status != "unconnected":
-                    if run_status == "unsubmitted":
-                        status_color = "warning"
-                    elif run_status == "failed":
-                        status_color = "warning"
-                    else:
-                        status_color = "success"
-                        status_str += colorize("["+run_status+"]", status_color)
+            status_str = colorize("["+status+"]")
             print(colorize("**** STATUS:", "title0"), status_str)
 
+        self.print_files(self.path, excluded=[".chern", "chern.yaml", "README.md"])
 
+        environment = self.environment()
+        print(colorize("---- Environment:", "title0"), environment)
+
+        build_commands = self.build_commands()
+        if build_commands:
+            print(colorize("---- Build commands:", "title0"))
+            for command in build_commands:
+                print(command)
+
+        commands = self.commands()
+        if commands:
+            print(colorize("---- Commands:", "title0"))
+            for command in commands:
+                print(command)
+
+
+    def print_files(self, path, excluded=[]):
+        """ Print the files in the path """
         print(colorize("---- Files:", "title0"))
-        files = os.listdir(self.path)
-        for f in files:
-            if not f.startswith(".") and f != "README.md":
-                print(f)
+        files = [f for f in os.listdir(path) if not f.startswith(".") and f not in excluded]
+
+        if not files:
+            print("No files found.")
+            return
+
+        # Determine terminal width
+        terminal_width = shutil.get_terminal_size((80, 20)).columns
+        max_length = max(len(f) for f in files) + 2  # Padding
+        # Calculate number of columns
+        num_columns = max(1, terminal_width // max_length)
+        # Print files in columns
+        for i, f in enumerate(files):
+            print(f.ljust(max_length), end="\n" if (i + 1) % num_columns == 0 else "")
+        print()
 
     def commands(self):
         """ Get the commands from the yaml file """
         yaml_file = metadata.YamlFile(os.path.join(self.path, "chern.yaml"))
         return yaml_file.read_variable("commands", [])
 
+    def build_commands(self):
+        """ Get the build commands from the yaml file """
+        yaml_file = metadata.YamlFile(os.path.join(self.path, "chern.yaml"))
+        return yaml_file.read_variable("build", [])
+
     def environment(self):
         """ Get the environment
         """
         yaml_file = metadata.YamlFile(os.path.join(self.path, "chern.yaml"))
-        return yaml_file.read_variable("environment", {})
+        return yaml_file.read_variable("environment", "")
 
 def create_algorithm(path, use_template=False):
     """ Create an algorithm """
