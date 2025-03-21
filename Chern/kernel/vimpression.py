@@ -112,7 +112,7 @@ class VImpression():
 
         self.config_file.write_variable("current_path", obj.invariant_path())
 
-        if obj.object_type() == "task":
+        if obj.is_task_or_algorithm():
             alias_to_imp = {}
             alias_to_path = obj.config_file.read_variable("alias_to_path", {})
             for alias, path in alias_to_path.items(): # pylint: disable=unused-variable
