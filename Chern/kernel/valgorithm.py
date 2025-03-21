@@ -59,16 +59,10 @@ class VAlgorithm(VObject):
 
         if show_info.status:
             status = self.status()
-            status_color = ""
-            if status == "new":
-                status_color = "normal"
-            elif status == "impressed":
-                status_color = "success"
-
             status_str = colorize("["+status+"]")
             print(colorize("**** STATUS:", "title0"), status_str)
 
-        self.print_files(self.path, excluded=[".chern", "chern.yaml", "README.md"])
+        self.print_files(self.path, excluded=(".chern", "chern.yaml", "README.md"))
 
         environment = self.environment()
         print(colorize("---- Environment:", "title0"), environment)
@@ -86,7 +80,7 @@ class VAlgorithm(VObject):
                 print(command)
 
 
-    def print_files(self, path, excluded=[]):
+    def print_files(self, path, excluded=()):
         """ Print the files in the path """
         print(colorize("---- Files:", "title0"))
         files = [f for f in os.listdir(path) if not f.startswith(".") and f not in excluded]
