@@ -404,6 +404,6 @@ class ChernCommunicator():
             timeout=self.timeout
         )
         requests.get(
-                f"http://{url}/setjobstatus/{impression.uuid}/done",
+                f"http://{url}/setjobstatus/{impression.uuid}/archived",
                 timeout=self.timeout
         )
