@@ -319,6 +319,9 @@ class FileManagement(Core):
     def move_to(self, new_path):
         """ move to another path
         """
+        if not self.move_to_check(new_path):
+            return
+
         queue = self.sub_objects_recursively()
 
         # Make sure the related objects are all impressed
@@ -353,6 +356,12 @@ class FileManagement(Core):
         #     )
 
         shutil.rmtree(self.path)
+
+    def move_to_check(self, new_path):
+        if self.path.lower() == new_path.lower():
+            print("The source and destination paths are the same.")
+            return False
+        return True
 
     def rm(self):
         """

@@ -71,7 +71,7 @@ def cd(line):
         if os.path.relpath(line, csys.project_path()).startswith(".."):
             print("[ERROR] Unable to navigate to a location that is not within the project.")
             return
-        if not os.path.exists(line):
+        if not csys.exists(line):
             print("Directory not exists")
             return
         manager.switch_current_object(line)
@@ -92,7 +92,7 @@ def mv(source, destination):
         destination = os.path.normpath(csys.project_path() + destination.strip("@"))
     else:
         destination = os.path.abspath(destination)
-    if os.path.exists(destination):
+    if csys.exists(destination):
         destination += "/" + source
     if source.startswith("@/") or source == "@":
         source = os.path.normpath(csys.project_path() +destination.strip("@"))
@@ -149,7 +149,7 @@ def cp(source, destination):
 
     # Skip the case that the destination is already exists
     # unless the destination is a directory/project
-    if os.path.exists(destination):
+    if csys.exists(destination):
         if VObject(destination).is_task_or_algorithm():
             print("Destination is a task or algorithm")
             return
@@ -159,7 +159,7 @@ def cp(source, destination):
 
     # If the destination is a directory that already exists
     # the real destination should be the directory/base name of the source
-    if os.path.exists(destination):
+    if csys.exists(destination):
         if VObject(destination).object_type() == "directory" or VObject(destination).object_type() == "project":
             destination = os.path.join(destination, os.path.basename(source))
 
@@ -176,7 +176,7 @@ def cp(source, destination):
 
     # Skip the case that the destination is already exists
     # unless the destination is a directory/project
-    if os.path.exists(destination):
+    if csys.exists(destination):
         if VObject(destination).is_task_or_algorithm():
             print("Destination is a task or algorithm")
             return
@@ -260,7 +260,7 @@ def rm(line):
     if os.path.relpath(line, csys.project_path()).startswith(".."):
         print("Unable to remove directory outside the project")
         return
-    if not os.path.exists(line):
+    if not csys.exists(line):
         print("File not exists")
         return
     VObject(line).rm()
