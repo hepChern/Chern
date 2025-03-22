@@ -93,8 +93,30 @@ def refine_path(path, home):
 def exists(path):
     """ Check if the path exists
     """
-    return os.path.exists(path)
+    if not os.path.exists(path):
+        return False
 
+    # Normalize the path
+    path = os.path.abspath(path)
+    # Split into components
+    parts = path.split(os.sep)
+
+    # Handle root (e.g., '' or '/')
+    if not parts[0]:
+        current_path = os.sep
+        parts = parts[1:]
+    else:
+        current_path = parts[0]
+
+    for part in parts:
+        try:
+            entries = os.listdir(current_path)
+        except Exception:
+            return False
+        if part not in entries:
+            return False
+        current_path = os.path.join(current_path, part)
+    return True
 
 def mkdir(directory):
     """ Safely make directory
