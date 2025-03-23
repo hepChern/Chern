@@ -41,6 +41,11 @@ class JobManager(Core):
         # Open the browser to display the file
         cherncc.display(self.impression(), filename)
 
+    def impview(self):
+        """ Open browser to view the impression"""
+        cherncc = ChernCommunicator.instance()
+        cherncc.impview(self.impression())
+
     def export(self, filename, output_file):
         """ Export the file"""
         cherncc = ChernCommunicator.instance()
