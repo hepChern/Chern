@@ -365,7 +365,7 @@ class ChernShell(cmd.Cmd):
 
     def do_EOF(self, line):
         print("")
-        print("Thank you for using Chern")
+        print("Thank you for using CHERN")
         print("Contact Mingrui Zhao (mingrui.zhao@mail.labz0.org) for any questions")
         return True
 
