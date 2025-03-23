@@ -179,6 +179,11 @@ class ChernShell(cmd.Cmd):
         except Exception as e:
             print(e)
 
+    def complete_addalgorithm(self, text, line, begidx, endidx):
+        current_path = manager.c.path
+        filepath = csys.strip_path_string(line[13:])
+        return self.get_completions(current_path, filepath, line)
+
     def do_addinput(self, arg):
         try:
             obj1 = arg.split()[0]
