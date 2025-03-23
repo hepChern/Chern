@@ -280,6 +280,11 @@ def rm_file(file):
         return
     manager.c.rm_file(file)
 
+def mv_file(file, dest_file):
+    if manager.c.object_type() != "task" and manager.c.object_type() != "algorithm":
+        print("Unable to call mv_file if you are not in a task or algorithm.")
+        return
+    manager.c.move_file(file, dest_file)
 
 def add_source(line):
     # line = os.path.abspath(line)
@@ -396,6 +401,12 @@ def remove_runner(runner):
 def send(path):
     manager.c.send(path)
 
+def impview():
+    is_task = manager.c.is_task()
+    if not is_task:
+        print("Not able to view")
+        return
+    manager.current_object().impview()
 
 def edit_script(obj):
     path = os.path.join(os.environ["HOME"], ".chern", "config.yaml")
