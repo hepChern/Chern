@@ -463,3 +463,40 @@ class FileManagement(Core):
             csys.rm_tree(abspath)
         else:
             os.remove(abspath)
+
+    def move_file(self, file, dest_file):
+        """
+        Move the files within a task or an algorithm
+        """
+        if not self.is_task_or_algorithm():
+            print("This function is only available for task or algorithm.")
+            return
+
+        abspath = self.path + "/" + file
+
+        if not os.path.exists(abspath):
+            print("File does not exist.")
+            return
+
+        # protect: the file should not go out of the task directory
+        if self.relative_path(abspath).startswith(".."):
+            print("The file should not go out of the task directory.")
+            return
+
+        # protect: the file should not be the task directory
+        if self.relative_path(abspath) == ".":
+            print("The file should not be the task directory.")
+            return
+
+        # protect: should not remove the .chern and chern.yaml
+        if self.relative_path(abspath) in (".chern", "chern.yaml"):
+            print("The file should not be the .chern or chern.yaml.")
+            return
+
+        # check if the destination directory exists
+        dest = self.path + "/" + dest_file
+        if not os.path.exists(os.path.dirname(dest)):
+            print(f"Error: Destination directory '{os.path.dirname(dest)}' does not exist.")
+            return
+
+        csys.move(abspath, dest)
