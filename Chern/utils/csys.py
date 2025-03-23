@@ -236,6 +236,10 @@ def copy_tree(src, dst):
     """
     shutil.copytree(src, dst)
 
+def move(src, dst):
+    """ Move the directory
+    """
+    shutil.move(src, dst)
 
 def make_archive(filename, dir_name):
     """ Make the tar.gz file
