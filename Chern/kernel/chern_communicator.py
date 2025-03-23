@@ -304,6 +304,10 @@ class ChernCommunicator():
         subprocess.call(["open", f"http://{url}/export/{impression.uuid}/{filename}"
             ])
 
+    def impview(self, impression):
+        url = self.serverurl()
+        subprocess.call(["open", f"http://{url}/impview/{impression.uuid}"])
+
     def export(self, impression, filename, output):
         """ Export the file from the server """
         url = self.serverurl()
