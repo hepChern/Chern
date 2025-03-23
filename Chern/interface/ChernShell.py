@@ -364,8 +364,10 @@ class ChernShell(cmd.Cmd):
         pass
 
     def do_EOF(self, line):
+        print("")
+        print("Thank you for using Chern")
+        print("Contact Mingrui Zhao (mingrui.zhao@mail.labz0.org) for any questions")
         return True
-        pass
 
     def get_completions(self, current_path, filepath, line):
         path = os.path.join(current_path, filepath)
