@@ -358,14 +358,14 @@ class FileManagement(Core):
         shutil.rmtree(self.path)
 
     def move_to_check(self, new_path):
+        """ Check if the new path is valid for moving"""
         if self.path.lower() == new_path.lower():
             print("The source and destination paths are the same.")
             return False
         return True
 
     def rm(self):
-        """
-        Remove this object.
+        """ Remove this object.
         The important thing is to unalias.
         """
         queue = self.sub_objects_recursively()
