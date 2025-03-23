@@ -58,11 +58,21 @@ def test_init():
     os.chdir("..")
     prepare.remove_chern_project("demo_complex")
 
+def test_file():
+    print("------------")
+    print(Fore.BLUE+"Testing File Operation..."+Style.RESET)
+
+    obj_tsk = vtsk.VTask(os.getcwd()+"/tasks/taskAna1")
+    obj_tsk.mv(os.getcwd()+"/tasks/TASKANA1")
+
+    print(obj_tsk.invariant_path())
+
 
 
 if __name__ == "__main__":
     # warm_up()
     test_init()
     test_setting()
+    test_file()
     print("All tests passed!")
 
