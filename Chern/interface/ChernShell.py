@@ -99,6 +99,11 @@ class ChernShell(cmd.Cmd):
         except Exception as e:
             print(e)
 
+    def complete_cd(self, text, line, begidx, endidx):
+        current_path = manager.c.path
+        filepath = csys.strip_path_string(line[3:])
+        return self.get_completions(current_path, filepath, line)
+
     def do_mv(self, arg):
         """ Move directory or object
         """
@@ -183,6 +188,11 @@ class ChernShell(cmd.Cmd):
         except Exception as e:
             print(e)
 
+    def complete_addinput(self, text, line, begidx, endidx):
+        current_path = manager.c.path
+        filepath = csys.strip_path_string(line[8:])
+        return self.get_completions(current_path, filepath, line)
+
     def do_addparameter(self, arg):
         try:
             obj1 = arg.split()[0]
@@ -266,6 +276,14 @@ class ChernShell(cmd.Cmd):
         except Exception as e:
             print(e)
 
+    def do_mv_file(self, arg):
+        try:
+            file1 = arg.split()[0]
+            file2 = arg.split()[1]
+            shell.mv_file(file1, file2)
+        except Exception as e:
+            print(e)
+
 
     def do_edit_script(self, arg):
         try:
@@ -331,11 +349,34 @@ class ChernShell(cmd.Cmd):
         except Exception as e:
             print(e)
 
+    def do_impview(self, arg):
+        try:
+            shell.impview()
+        except Exception as e:
+            print(e)
+
     def emptyline(self):
         pass
 
     def do_EOF(self, line):
         return True
         pass
+
+    def get_completions(self, current_path, filepath, line):
+        path = os.path.join(current_path, filepath)
+        if os.path.exists(path):
+            listdir = os.listdir(path)
+            if line.endswith("/"):
+                return [f for f in listdir if f != ".chern"]
+            else:
+                return []
+        else:
+            basename = os.path.basename(path)
+            dirname = os.path.dirname(path)
+            if os.path.exists(dirname):
+                listdir = os.listdir(dirname)
+                completions = [f for f in listdir if f.startswith(basename) and f != ".chern"]
+                return completions
+
 
 
