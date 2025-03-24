@@ -85,6 +85,9 @@ class ImpressionManagement(Core):
                 if not filecmp.cmp(f"{self.path}/{dirpath}/{f}",
                                    f"{impression.path}/contents/{dirpath}/{f}"):
                     return False
+
+        # FIXME!!! Important!!!
+        # Need to check whether the alias is consistent
         return True
 
     def clean_impressions(self):
