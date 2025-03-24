@@ -302,7 +302,7 @@ class FileManagement(Core):
                 if self.relative_path(succ_object.path).startswith(".."):
                     new_object.add_arc_to(succ_object)
                     succ_object.remove_arc_from(self)
-                    alias = obj.path_to_alias(succ_object.invariant_path())
+                    alias = succ_object.path_to_alias(obj.invariant_path())
                     succ_object.remove_alias(alias)
                     succ_object.set_alias(alias, new_object.invariant_path())
 
