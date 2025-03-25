@@ -181,6 +181,13 @@ class ImpressionManagement(Core):
             if cid == consult_id:
                 return status
 
+        if not self.is_task_or_algorithm():
+            for sub_object in self.sub_objects():
+                status = sub_object.status(consult_id)
+                if status == "new":
+                    return "new"
+                return "impressed"
+
         if not self.is_impressed_fast():
             if consult_id:
                 consult_table[self.path] = (consult_id, "new")

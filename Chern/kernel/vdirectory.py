@@ -49,8 +49,7 @@ class VDirectory(VObject):
     def status(self, consult_id = None):
         """ Give the status of the object
         """
-        # FIXME: Implement the status of the directory
-        return "Not implemented yet"
+        return super().status(consult_id)
 
     def get_impressions(self):
         """ Get the impressions of the directory

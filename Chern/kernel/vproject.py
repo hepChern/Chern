@@ -49,8 +49,7 @@ class VProject(VObject):
 
     def status(self, consult_id=None):
         """ Get the status of the project"""
-        # FIXME: return
-        return "Further implementation is needed"
+        return super().status(consult_id)
 
 ######################################
 # Helper functions

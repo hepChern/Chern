@@ -87,16 +87,22 @@ class FileManagement(Core):
 
     def print_status(self):
         """ Print the status of the object"""
-        if not self.is_task_or_algorithm():
-            print("Printing the status is only available for task or algorithm.")
-            return
 
         print(f"Status of : {self.invariant_path()}")
-        if self.status() == "impressed":
-            print(f"Impression: {colorize('['+self.impression().uuid+']', 'success')}")
+        if self.is_task_or_algorithm():
+            if self.status() == "impressed":
+                print(f"Impression: {colorize('['+self.impression().uuid+']', 'success')}")
+            else:
+                print(f"Impression: {colorize('[new]')}")
+                return
         else:
-            print(f"Impression: {colorize('[new]')}")
-            return
+            if self.status() == "impressed":
+                print(f"All the subobjects are impressed.")
+            else:
+                print(f"Some subobjects are not impressed.")
+                for sub_object in self.sub_objects():
+                    if sub_object.status() == "new":
+                        print(f"Subobject {sub_object} is not impressed.")
 
         cherncc = ChernCommunicator.instance()
         dite_status = cherncc.dite_status()
@@ -106,10 +112,18 @@ class FileManagement(Core):
             print(f"DIET: {colorize('[unconnected]')}")
             return
 
-        deposited = cherncc.is_deposited(self.impression())
-        if deposited == "FALSE":
-            print("Impression not deposited in DIET")
-            return
+        if self.is_task_or_algorithm():
+            deposited = cherncc.is_deposited(self.impression())
+            if deposited == "FALSE":
+                print("Impression not deposited in DIET")
+                return
+
+        if not self.is_task_or_algorithm():
+            job_status = self.job_status()
+            print("Job status: ", job_status)
+            if job_status != "finished":
+                for sub_object in self.sub_objects():
+                    print(f"{sub_object} job status: {sub_object.job_status()}")
 
 
     def print_dite_status(self):

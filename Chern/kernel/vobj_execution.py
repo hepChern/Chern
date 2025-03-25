@@ -54,6 +54,19 @@ class ExecutionManagement(Core):
 
     def job_status(self, runner=None):
         """ Get the status of the job"""
+        if not self.is_task_or_algorithm():
+            sub_objects = self.sub_objects()
+            pending = False
+            for sub_object in sub_objects:
+                status = sub_object.job_status()
+                if status == "failed":
+                    return "failed"
+                if status != "finished":
+                    pending = True
+            if pending:
+                return "pending"
+            else:
+                return "finished"
         cherncc = ChernCommunicator.instance()
         if runner is None:
             return cherncc.job_status(self.impression())
