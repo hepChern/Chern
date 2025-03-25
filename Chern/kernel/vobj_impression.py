@@ -85,6 +85,8 @@ class ImpressionManagement(Core):
         for alias in alias_to_path.keys():
             if not impression.has_alias(alias):
                 return False
+            if not self.alias_to_impression(alias):
+                return False
             uuid1 = self.alias_to_impression(alias).uuid
             uuid2 = impression.alias_to_impression_uuid(alias)
             if uuid1 != uuid2:
