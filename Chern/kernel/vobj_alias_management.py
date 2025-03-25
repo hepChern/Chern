@@ -55,3 +55,8 @@ class AliasManagement(Core):
         alias_to_path[alias] = path
         self.config_file.write_variable("path_to_alias", path_to_alias)
         self.config_file.write_variable("alias_to_path", alias_to_path)
+
+    def get_alias_list(self):
+        """ Get the alias list."""
+        alias_to_path = self.config_file.read_variable("alias_to_path", {})
+        return alias_to_path.keys()

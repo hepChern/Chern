@@ -91,6 +91,18 @@ class VImpression():
         dependencies = [VImpression(uuid) for uuid in dependencies_uuid]
         return dependencies
 
+    def has_alias(self, alias):
+        """ Check if the impression has an alias
+        """
+        alias_to_imp = self.config_file.read_variable("alias_to_impression", {})
+        return alias in alias_to_imp
+
+    def alias_to_impression_uuid(self, alias):
+        """ Get the alias to impression mapping
+        """
+        alias_to_imp = self.config_file.read_variable("alias_to_impression", {})
+        return alias_to_imp.get(alias, "")
+
     def create(self, obj):
         """ Create this impression with a VObject file
         """

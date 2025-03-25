@@ -264,6 +264,11 @@ class ArcManagement(Core):
                   "the ``input'', which will cause a loop.")
             return
 
+        # if the obj is already an input, reject to add it
+        if self.has_predecessor(obj):
+            print("The input already exists.")
+            return
+
         if self.has_alias(alias):
             print("The alias already exists. "
                   "The original input and alias will be replaced.")

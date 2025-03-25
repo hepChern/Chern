@@ -80,14 +80,22 @@ class ImpressionManagement(Core):
         if file_list != impression.tree():
             return False
 
+        # FIXME Add the Unit Test for this part
+        alias_to_path = self.config_file.read_variable("alias_to_path", {}) 
+        for alias in alias_to_path.keys():
+            if not impression.has_alias(alias):
+                return False
+            uuid1 = self.alias_to_impression(alias).uuid
+            uuid2 = impression.alias_to_impression_uuid(alias)
+            if uuid1 != uuid2:
+                return False
+
+
         for dirpath, dirnames, filenames in file_list: # pylint: disable=unused-variable
             for f in filenames:
                 if not filecmp.cmp(f"{self.path}/{dirpath}/{f}",
                                    f"{impression.path}/contents/{dirpath}/{f}"):
                     return False
-
-        # FIXME!!! Important!!!
-        # Need to check whether the alias is consistent
         return True
 
     def clean_impressions(self):

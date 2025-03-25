@@ -155,7 +155,7 @@ class ChernShell(cmd.Cmd):
         except Exception as e:
             print(e)
 
-    def do_mktask(self, arg):
+    def do_create_task(self, arg):
         try:
             obj = arg.split()[0]
             shell.mktask(obj)
@@ -163,7 +163,7 @@ class ChernShell(cmd.Cmd):
         except Exception as e:
             print(e)
 
-    def do_mkalgorithm(self, arg):
+    def do_create_algorithm(self, arg):
         try:
             obj = arg.split()[0]
             shell.mkalgorithm(obj)
@@ -171,7 +171,7 @@ class ChernShell(cmd.Cmd):
         except Exception as e:
             print(e)
 
-    def do_addalgorithm(self, arg):
+    def do_add_algorithm(self, arg):
         try:
             obj = arg.split()[0]
             shell.add_algorithm(obj)
@@ -179,12 +179,12 @@ class ChernShell(cmd.Cmd):
         except Exception as e:
             print(e)
 
-    def complete_addalgorithm(self, text, line, begidx, endidx):
+    def complete_add_algorithm(self, text, line, begidx, endidx):
         current_path = manager.c.path
         filepath = csys.strip_path_string(line[13:])
         return self.get_completions(current_path, filepath, line)
 
-    def do_addinput(self, arg):
+    def do_add_input(self, arg):
         try:
             obj1 = arg.split()[0]
             obj2 = arg.split()[1]
@@ -193,12 +193,28 @@ class ChernShell(cmd.Cmd):
         except Exception as e:
             print(e)
 
-    def complete_addinput(self, text, line, begidx, endidx):
+    def complete_add_input(self, text, line, begidx, endidx):
         current_path = manager.c.path
         filepath = csys.strip_path_string(line[8:])
         return self.get_completions(current_path, filepath, line)
 
-    def do_addparameter(self, arg):
+    def do_remove_input(self, arg):
+        try:
+            obj = arg.split()[0]
+            shell.remove_input(obj)
+        except Exception as e:
+            print(e)
+
+    def complete_remove_input(self, text, line, begidx, endidx):
+        if not manager.c.is_task_or_algorithm():
+            return []
+        alias = manager.c.get_alias_list()
+        if text == "":
+            return [f for f in alias]
+        else:
+            return [f for f in alias if f.startswith(text)]
+
+    def do_add_parameter(self, arg):
         try:
             obj1 = arg.split()[0]
             obj2 = arg.split()[1]
@@ -207,7 +223,7 @@ class ChernShell(cmd.Cmd):
         except Exception as e:
             print(e)
 
-    def do_rmparameter(self, arg):
+    def do_remove_parameter(self, arg):
         try:
             obj = arg.split()[0]
             shell.rm_parameter(obj)
@@ -216,7 +232,7 @@ class ChernShell(cmd.Cmd):
             print(e)
 
 
-    def do_mkdata(self, arg):
+    def do_create_data(self, arg):
         try:
             obj = arg.split()[0]
             shell.mkdata(obj)

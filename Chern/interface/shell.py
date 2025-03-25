@@ -348,7 +348,7 @@ def rm_parameter(par):
 
 
 def remove_input(alias):
-    if manager.c.object_type() != "task":
+    if not manager.c.is_task_or_algorithm():
         print("Unable to call remove_input if you are not in a task.")
         return
     manager.c.remove_input(alias)
