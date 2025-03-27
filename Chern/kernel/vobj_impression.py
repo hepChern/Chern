@@ -32,6 +32,9 @@ class ImpressionManagement(Core):
         logger.debug("VObject impress: %s", self.path)
         object_type = self.object_type()
         if object_type not in ("task", "algorithm"):
+            sub_objects = self.sub_objects()
+            for sub_object in sub_objects:
+                sub_object.impress()
             return
         logger.debug("Check whether it is impressed with is_impressed_fast")
         if self.is_impressed_fast():
@@ -81,7 +84,7 @@ class ImpressionManagement(Core):
             return False
 
         # FIXME Add the Unit Test for this part
-        alias_to_path = self.config_file.read_variable("alias_to_path", {}) 
+        alias_to_path = self.config_file.read_variable("alias_to_path", {})
         for alias in alias_to_path.keys():
             if not impression.has_alias(alias):
                 return False
