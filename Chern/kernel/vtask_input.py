@@ -25,7 +25,8 @@ class InputManager(Core):
     def send(self, path):
         """ Send the data to the task"""
         md5 = csys.dir_md5(path)
-        self.set_input_md5(md5)
+        print("The md5 of the dir is: ", md5)
+        self.set_input_md5(path)
         self.impress()
         self.send_data(path)
 
