@@ -281,26 +281,49 @@ def remove_cache(file_path):
 
 
 # Checksum Functions
-def md5sum(filename, block_size=65536):
+# def md5sum(filename, block_size=65536):
+#     """ Get the md5sum of the file
+#     """
+#     md5 = hashlib.md5()
+#     with open(filename, 'rb') as file:
+#         for block in iter(lambda: file.read(block_size), b''):
+#             md5.update(block)
+#     return md5.hexdigest()
+#
+#
+# def dir_md5(directory_path):
+#     """ Get the md5sum of the directory
+#     """
+#     md5_hash = hashlib.md5()
+#
+#     for root, dirs, files in os.walk(directory_path): # pylint: disable=unused-variable
+#         for file in files:
+#             file_path = os.path.join(root, file)
+#             file_hash = md5sum(file_path)
+#             md5_hash.update(file_hash.encode('utf-8'))
+#
+#     return md5_hash.hexdigest()
+
+def md5sum(file_path):
     """ Get the md5sum of the file
     """
-    md5 = hashlib.md5()
-    with open(filename, 'rb') as file:
-        for block in iter(lambda: file.read(block_size), b''):
-            md5.update(block)
-    return md5.hexdigest()
-
+    hash_md5 = hashlib.md5()
+    with open(file_path, "rb") as f:
+        for chunk in iter(lambda: f.read(4096), b""):
+            hash_md5.update(chunk)
+    return hash_md5.hexdigest()
 
 def dir_md5(directory_path):
+    md5_hash = hashlib.md5()
     """ Get the md5sum of the directory
     """
-    md5_hash = hashlib.md5()
-
-    for root, dirs, files in os.walk(directory_path): # pylint: disable=unused-variable
+    for root, dirs, files in os.walk(directory_path):
+        dirs.sort()
+        files.sort()
         for file in files:
             file_path = os.path.join(root, file)
             file_hash = md5sum(file_path)
-            md5_hash.update(file_hash.encode('utf-8'))
+            md5_hash.update(file_hash.encode("utf-8"))
 
     return md5_hash.hexdigest()
 
