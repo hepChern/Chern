@@ -61,7 +61,7 @@ class ExecutionManagement(Core):
                 status = sub_object.job_status()
                 if status == "failed":
                     return "failed"
-                if status != "finished":
+                if status not in ("finished", "archived"):
                     pending = True
             if pending:
                 return "pending"
