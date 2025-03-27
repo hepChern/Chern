@@ -63,7 +63,7 @@ def test_file():
     print(Fore.BLUE+"Testing File Operation..."+Style.RESET)
 
     obj_tsk = vtsk.VTask(os.getcwd()+"/tasks/taskAna1")
-    obj_tsk.mv(os.getcwd()+"/tasks/TASKANA1")
+    obj_tsk.move_to(os.getcwd()+"/tasks/TASKANA1")
 
     print(obj_tsk.invariant_path())
 

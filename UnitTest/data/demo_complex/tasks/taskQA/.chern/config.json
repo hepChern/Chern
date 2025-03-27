@@ -1,1 +1,1 @@
-{"object_type": "task", "auto_download": true, "default_runner": "local", "predecessors": ["tasks/taskGen", "code/qa1"], "path_to_alias": {}, "alias_to_path": {}, "impression": "bd5a0de4da85451ab6a1e669588bdd66", "successors": []}
+{"object_type": "task", "auto_download": true, "default_runner": "local", "predecessors": ["tasks/taskGen", "code/qa1"], "path_to_alias": {}, "alias_to_path": {}, "impression": "85ac6384dabb4547838bf4a7226f82ca", "successors": [], "impressions": [], "output_md5s": {}, "output_md5": ""}

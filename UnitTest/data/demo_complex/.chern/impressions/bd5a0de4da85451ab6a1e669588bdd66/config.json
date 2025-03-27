@@ -1,1 +1,0 @@
-{"object_type": "task", "tree": [[".", ["QA"], ["chern.yaml"]], ["QA", [".chern"], []], ["QA/.chern", [], ["config.json"]]], "dependencies": ["dc078d6fd4a14459b7c14d6dcd884b07", "fc241051a5244c61adcbb3ab721ea988"], "current_path": "taskQA", "alias_to_impression": {"gen": "dc078d6fd4a14459b7c14d6dcd884b07"}, "parents": []}
