@@ -46,11 +46,6 @@ class VDirectory(VObject):
         """
         print(helpme.directory_helpme.get(command, "No such command, try ``helpme'' alone."))
 
-    def status(self, consult_id = None):
-        """ Give the status of the object
-        """
-        return super().status(consult_id)
-
     def get_impressions(self):
         """ Get the impressions of the directory
         """

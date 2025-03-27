@@ -50,7 +50,7 @@ class ImpressionManagement(Core):
         consult_table = CHERN_CACHE.impression_consult_table
         consult_table[self.path] = (-1, -1)
 
-    def is_impressed(self):
+    def is_impressed(self): # pylint: disable=too-many-return-statements
         """ Judge whether the file is impressed
         """
         logger.debug("VObject is_impressed in %s", self.path)

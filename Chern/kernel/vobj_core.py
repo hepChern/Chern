@@ -96,6 +96,10 @@ class Core(ABC):
     def sub_objects_recursively(self):
         """ Abstract method for future implementation"""
 
+    @abstractmethod
+    def sub_objects(self):
+        """ Abstract method for future implementation"""
+
     # Abstract methods, for arc management
     @abstractmethod
     def add_arc_from(self, obj):

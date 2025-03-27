@@ -47,10 +47,6 @@ class VProject(VObject):
             VObject(sub_object.path).clean_impressions()
         csys.rm_tree(self.path+"/.chern/impressions")
 
-    def status(self, consult_id=None):
-        """ Get the status of the project"""
-        return super().status(consult_id)
-
 ######################################
 # Helper functions
 def create_readme(project_path):

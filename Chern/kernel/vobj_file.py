@@ -86,7 +86,7 @@ class FileManagement(Core):
 
         print(colorize("**** STATUS:", "title0"), status_str)
 
-    def print_status(self):
+    def print_status(self): # pylint: disable=too-many-branches
         """ Print the status of the object"""
 
         print(f"Status of : {self.invariant_path()}")
@@ -100,7 +100,6 @@ class FileManagement(Core):
             if self.status() == "impressed":
                 print(f"All the subobjects are {colorize('impressed','success')}.")
             else:
-                print(self.status())
                 print(f"Some subobjects are {colorize('not impressed','normal')}.")
                 for sub_object in self.sub_objects():
                     print(sub_object.status())
