@@ -106,7 +106,6 @@ class VImpression():
     def create(self, obj):
         """ Create this impression with a VObject file
         """
-        print(f"Creating impression {self.uuid}")
         # Create an impression directory and copy the files to it
         file_list = csys.tree_excluded(obj.path)
         csys.mkdir(self.path+"/contents")
