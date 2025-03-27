@@ -9,6 +9,7 @@ from logging import getLogger
 
 from ..utils import csys
 from ..utils.pretty import colorize
+from ..utils import metadata
 from .vobj_core import Core
 
 from .chern_cache import ChernCache
@@ -103,6 +104,7 @@ class FileManagement(Core):
                 for sub_object in self.sub_objects():
                     if sub_object.status() == "new":
                         print(f"Subobject {sub_object} is not impressed.")
+                return
 
         cherncc = ChernCommunicator.instance()
         dite_status = cherncc.dite_status()
@@ -120,10 +122,17 @@ class FileManagement(Core):
 
         if not self.is_task_or_algorithm():
             job_status = self.job_status()
-            print("Job status: ", job_status)
-            if job_status != "finished":
-                for sub_object in self.sub_objects():
-                    print(f"{sub_object} job status: {sub_object.job_status()}")
+            print(f"{'Job status':<10}: {colorize('['+job_status+']')}")
+            print("---------------")
+            objects = []
+            for sub_object in self.sub_objects():
+                objects.append((str(sub_object), sub_object.job_status()))
+
+            max_width = max(len(name) for name, _ in objects)
+
+            for name, status in objects:
+                print(f"{name:<{max_width}}: {colorize('['+status+']')}")
+
 
 
     def print_dite_status(self):
@@ -158,8 +167,22 @@ class FileManagement(Core):
     def show_predecessors(self, predecessors, total):
         """ Show the predecessors of the object"""
         print(colorize("o--> Predecessors:", "title0"))
+
+        # Sort the predecessors by the alias
+        yaml_file = metadata.YamlFile(os.path.join(self.path, "chern.yaml"))
+        alias_list = yaml_file.read_variable("alias", [])
+        predecessors.sort(key=lambda x: alias_list.index(self.path_to_alias(x.invariant_path()))
+                          if self.path_to_alias(x.invariant_path()) in alias_list else -1)
+
         for index, pred_object in enumerate(predecessors):
             alias = self.path_to_alias(pred_object.invariant_path())
+            # FIXME: the following should be deleted after having the new version
+            yaml_file = metadata.YamlFile(os.path.join(self.path, "chern.yaml"))
+            alias_list = yaml_file.read_variable("alias", [])
+            if alias != '' and alias not in alias_list:
+                alias_list.append(alias)
+            yaml_file.write_variable("alias", alias_list)
+            # FIXME: end here
             order = f"[{total+index}]"
             pred_path = pred_object.invariant_path()
             obj_type = "("+pred_object.object_type()+")"
