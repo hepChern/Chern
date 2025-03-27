@@ -65,8 +65,7 @@ class ExecutionManagement(Core):
                     pending = True
             if pending:
                 return "pending"
-            else:
-                return "finished"
+            return "finished"
         cherncc = ChernCommunicator.instance()
         if runner is None:
             return cherncc.job_status(self.impression())
