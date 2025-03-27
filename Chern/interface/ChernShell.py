@@ -181,7 +181,7 @@ class ChernShell(cmd.Cmd):
 
     def complete_add_algorithm(self, text, line, begidx, endidx):
         current_path = manager.c.path
-        filepath = csys.strip_path_string(line[13:])
+        filepath = csys.strip_path_string(line[14:])
         return self.get_completions(current_path, filepath, line)
 
     def do_add_input(self, arg):
@@ -195,7 +195,7 @@ class ChernShell(cmd.Cmd):
 
     def complete_add_input(self, text, line, begidx, endidx):
         current_path = manager.c.path
-        filepath = csys.strip_path_string(line[8:])
+        filepath = csys.strip_path_string(line[9:])
         return self.get_completions(current_path, filepath, line)
 
     def do_remove_input(self, arg):
