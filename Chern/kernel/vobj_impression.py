@@ -189,7 +189,7 @@ class ImpressionManagement(Core):
                 status = sub_object.status(consult_id)
                 if status == "new":
                     return "new"
-                return "impressed"
+            return "impressed"
 
         if not self.is_impressed_fast():
             if consult_id:
