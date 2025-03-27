@@ -98,12 +98,14 @@ class FileManagement(Core):
                 return
         else:
             if self.status() == "impressed":
-                print(f"All the subobjects are impressed.")
+                print(f"All the subobjects are {colorize('impressed','success')}.")
             else:
-                print(f"Some subobjects are not impressed.")
+                print(self.status())
+                print(f"Some subobjects are {colorize('not impressed','normal')}.")
                 for sub_object in self.sub_objects():
+                    print(sub_object.status())
                     if sub_object.status() == "new":
-                        print(f"Subobject {sub_object} is not impressed.")
+                        print(f"Subobject {sub_object} is {colorize('not impressed','normal')}.")
                 return
 
         cherncc = ChernCommunicator.instance()
