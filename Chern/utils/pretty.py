@@ -18,9 +18,9 @@ def colorize(string, color=""):
     }
     if color == "":
         possible_status = {
-            "success": ["success", "done", "pass", "connected", "ok", "good", "succeed", "validated", "archived"],
-            "normal": ["normal", "info", "new"],
-            "running": ["running", "start"],
+            "success": ["success", "done", "pass", "connected", "ok", "good", "succeed", "validated", "archived", "finished"],
+            "normal": ["normal", "info", "new", "raw", "empty"],
+            "running": ["running", "start", "pending", "queued", "waiting"],
             "warning": ["warning", "error", "fail", "failed", "wrong", "incorrect", "bad", "unsuccessful"],
             "debug": ["debug"],
         }
