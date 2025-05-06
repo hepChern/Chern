@@ -192,31 +192,21 @@ def prologue():
     Author: Mingrui Zhao
             2013 - 2017
           @ Center of High Energy Physics, Tsinghua University
-            2017 - 2022
+            2017 - now
           @ Department of Nuclear Physics, China Institute of Atomic Energy
-            2023 - 2024
-          @ China Institute of Atomic Energy & Niels Bohr Institute
+            2020 - 2024
+          @ Niels Bohr Institute, Copenhagen University
     Email: mingrui.zhao@mail.labz0.org
 
-    I started the project when I was a undergraduate student
-          in Tsinghua University and working for LHCb collaboration.
-    And the software in LHCb is usually named after the Great name,
-          such as ``Gauss'' and ``Davinci''.
-    The term ``Chern''(陈) is a common surname in China
-           and it is usually written as ``Chen'' in English now.
-    The unusual spelling "Chern" is a transliteration
-          in the old Gwoyeu Romatzyh (GR) romanization
-          used in the early twentieth century China.
-    Nowadays, when written in the form of ``Chern'',
-          it usually refer to ``Shiing-Shen Chern'',
-    the great Chinese-American mathematician who made
-          fundamental contributions to differential geometry and topology.
-    The well-known ``Chern classes'', ``Chern–Gauss–Bonnet theorem''
-          and many others are named after him.
+    I started the project when I was a undergraduate student in Tsinghua University and working for LHCb collaboration.
+    And the software in LHCb is usually named after the Great name, such as ``Gauss'' and ``Davinci''.
+    The term ``Chern''(陈) is a common surname in China and it is usually written as ``Chen'' in English now.
+    The unusual spelling "Chern" is a transliteration in the old Gwoyeu Romatzyh (GR) romanization used in the early twentieth century China.
+    Nowadays, when written in the form of ``Chern'', it usually refer to ``Shiing-Shen Chern'',
+    the great Chinese-American mathematician who made fundamental contributions to differential geometry and topology.
+    The well-known ``Chern classes'', ``Chern–Gauss–Bonnet theorem'' and many others are named after him.
     This is the origin of the software name.
     """)
-
-
 @click.group()
 def cli_sh():
     """ Chern command line command
