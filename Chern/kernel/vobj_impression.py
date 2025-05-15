@@ -81,6 +81,8 @@ class ImpressionManagement(Core):
         logger.debug("Check the file change")
         # Check the file change: first to check the tree
         file_list = csys.tree_excluded(self.path)
+        print(file_list)
+        print(impression.tree())
         if file_list != impression.tree():
             return False
 
