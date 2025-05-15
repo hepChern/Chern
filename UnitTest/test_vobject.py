@@ -69,7 +69,7 @@ def test_core():
 
     print("#2 Test the copy_to")
     obj_folder = vobj.VObject(os.getcwd()+"/tasks")
-    obj_folder.copy_to("tasksDuplicate")
+    obj_folder.copy_to(os.getcwd()+"/tasksDuplicate")
     assert sorted([obj.invariant_path() for obj in obj_top.sub_objects()]) == sorted(['tasks', 'includes', 'code', 'tasksDuplicate'])
     assert vobj.VObject(os.getcwd()+"/tasksDuplicate").is_zombie() is False
     assert vobj.VObject(os.getcwd()+"/tasksDuplicate/taskAna1").is_impressed() is True
