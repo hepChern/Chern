@@ -69,7 +69,6 @@ class ImpressionManagement(Core):
         logger.debug("Check the dependencies is consistent "
                      "with the predecessors")
 
-        print("A")
         self_pred_impressions_uuid = [x.uuid for x in self.pred_impressions()]
         impr_pred_impressions_uuid = [
             x.uuid for x in impression.pred_impressions()
@@ -80,24 +79,28 @@ class ImpressionManagement(Core):
             return False
 
         logger.debug("Check the file change")
-        print("B")
         # Check the file change: first to check the tree
         file_list = csys.tree_excluded(self.path)
         if file_list != impression.tree():
             return False
 
+        print("Check this start: ")
         # FIXME Add the Unit Test for this part
         alias_to_path = self.config_file.read_variable("alias_to_path", {})
+        print("alias_to_path: ", alias_to_path)
         for alias in alias_to_path.keys():
             if not impression.has_alias(alias):
+                print("alias %s not in impression", alias)
                 return False
             if not self.alias_to_impression(alias):
+                print("alias %s not in self", alias)
                 return False
             uuid1 = self.alias_to_impression(alias).uuid
             uuid2 = impression.alias_to_impression_uuid(alias)
+            print("uuid1: ", uuid1)
+            print("uuid2: ", uuid2)
             if uuid1 != uuid2:
                 return False
-        print("C")
 
 
         for dirpath, dirnames, filenames in file_list: # pylint: disable=unused-variable
@@ -105,7 +108,6 @@ class ImpressionManagement(Core):
                 if not filecmp.cmp(f"{self.path}/{dirpath}/{f}",
                                    f"{impression.path}/contents/{dirpath}/{f}"):
                     return False
-        print("D")
         return True
 
     def clean_impressions(self):
