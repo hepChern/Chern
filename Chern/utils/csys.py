@@ -163,8 +163,8 @@ def tree_excluded(path):
     """
     file_tree = []
     for dirpath, dirnames, filenames in walk(path):
-        file_tree.append([dirpath, dirnames, filenames])
-    return file_tree
+        file_tree.append([dirpath, sorted(dirnames), sorted(filenames)])
+    return sorted(file_tree)
 
 
 def project_path(path=None):

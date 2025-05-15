@@ -81,26 +81,33 @@ class ImpressionManagement(Core):
         logger.debug("Check the file change")
         # Check the file change: first to check the tree
         file_list = csys.tree_excluded(self.path)
-        print(file_list)
-        print(impression.tree())
-        if file_list != impression.tree():
+        impression_tree = impression.tree()
+
+        # Check the file list is the same as the impression tree
+        # if file_list != impression.tree():
+        #     return False
+        for dirpath, dirnames, filenames in file_list:
+            dirnames.sort()
+            filenames.sort()
+        file_list.sort()
+        for dirpath, dirnames, filenames in impression_tree:
+            dirnames.sort()
+            filenames.sort()
+        impression_tree.sort()
+        if file_list != impression_tree:
+            logger.debug("File list: %s", file_list)
+            logger.debug("Impression tree: %s", impression_tree)
             return False
 
-        print("Check this start: ")
         # FIXME Add the Unit Test for this part
         alias_to_path = self.config_file.read_variable("alias_to_path", {})
-        print("alias_to_path: ", alias_to_path)
         for alias in alias_to_path.keys():
             if not impression.has_alias(alias):
-                print("alias %s not in impression", alias)
                 return False
             if not self.alias_to_impression(alias):
-                print("alias %s not in self", alias)
                 return False
             uuid1 = self.alias_to_impression(alias).uuid
             uuid2 = impression.alias_to_impression_uuid(alias)
-            print("uuid1: ", uuid1)
-            print("uuid2: ", uuid2)
             if uuid1 != uuid2:
                 return False
 
