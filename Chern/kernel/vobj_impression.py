@@ -68,6 +68,8 @@ class ImpressionManagement(Core):
 
         logger.debug("Check the dependencies is consistent "
                      "with the predecessors")
+
+        print("A")
         self_pred_impressions_uuid = [x.uuid for x in self.pred_impressions()]
         impr_pred_impressions_uuid = [
             x.uuid for x in impression.pred_impressions()
@@ -78,6 +80,7 @@ class ImpressionManagement(Core):
             return False
 
         logger.debug("Check the file change")
+        print("B")
         # Check the file change: first to check the tree
         file_list = csys.tree_excluded(self.path)
         if file_list != impression.tree():
@@ -94,6 +97,7 @@ class ImpressionManagement(Core):
             uuid2 = impression.alias_to_impression_uuid(alias)
             if uuid1 != uuid2:
                 return False
+        print("C")
 
 
         for dirpath, dirnames, filenames in file_list: # pylint: disable=unused-variable
@@ -101,6 +105,7 @@ class ImpressionManagement(Core):
                 if not filecmp.cmp(f"{self.path}/{dirpath}/{f}",
                                    f"{impression.path}/contents/{dirpath}/{f}"):
                     return False
+        print("D")
         return True
 
     def clean_impressions(self):
