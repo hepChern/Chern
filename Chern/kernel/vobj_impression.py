@@ -86,17 +86,7 @@ class ImpressionManagement(Core):
         # Check the file list is the same as the impression tree
         # if file_list != impression.tree():
         #     return False
-        for dirpath, dirnames, filenames in file_list:
-            dirnames.sort()
-            filenames.sort()
-        file_list.sort()
-        for dirpath, dirnames, filenames in impression_tree:
-            dirnames.sort()
-            filenames.sort()
-        impression_tree.sort()
-        if file_list != impression_tree:
-            logger.debug("File list: %s", file_list)
-            logger.debug("Impression tree: %s", impression_tree)
+        if csys.sorted_tree(file_list) != csys.sorted_tree(impression_tree):
             return False
 
         # FIXME Add the Unit Test for this part

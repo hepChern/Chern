@@ -166,6 +166,15 @@ def tree_excluded(path):
         file_tree.append([dirpath, sorted(dirnames), sorted(filenames)])
     return sorted(file_tree)
 
+def sorted_tree(tree):
+    """ Sort the tree
+    """
+    for dirpath, dirnames, filenames in tree:
+        dirnames.sort()
+        filenames.sort()
+    tree.sort()
+    return tree
+
 
 def project_path(path=None):
     """ Get the project path by searching for project.json
