@@ -1,5 +1,8 @@
 # pylint: disable=too-many-public-methods
 """ The Core of the VObject
+This module defines the abstract base class `Core` for VObjects,
+Total implemented methods: 10
+Unit tests: 8
 """
 import os
 from abc import ABC, abstractmethod
@@ -13,7 +16,7 @@ logger = getLogger("ChernLogger")
 class Core(ABC):
     """ The core of the VObject
     """
-    def __init__(self, path):
+    def __init__(self, path): # Unittest: DONE
         """ Initialize the VObject
         """
         logger.debug("VObject::Core.__init__")
@@ -21,18 +24,18 @@ class Core(ABC):
         self.config_file = metadata.ConfigFile(self.path+"/.chern/config.json")
         logger.debug("VObject::Core.__init__ done")
 
-    def __str__(self):
+    def __str__(self): # Unittest: DONE
         """ Define the behavior of print(vobject)
         """
         return self.invariant_path()
 
-    def __repr__(self):
+    def __repr__(self): # Unittest: DONE
         """ Define the behavior of print(vobject)
         """
         return self.invariant_path()
 
     # Path handling, type and status
-    def invariant_path(self):
+    def invariant_path(self): # Unittest: DONE
         """ The path relative to the project root.
         It is invariant when the project is moved.
         """
@@ -40,27 +43,27 @@ class Core(ABC):
         path = os.path.relpath(self.path, project_path)
         return path
 
-    def relative_path(self, path):
+    def relative_path(self, path): # Unittest: DONE
         """ Return a path relative to the path of this object
         """
         return os.path.relpath(path, self.path)
 
-    def object_type(self):
+    def object_type(self): # Unittest: DONE
         """ Return the type of the this object.
         """
         return self.config_file.read_variable("object_type", "")
 
-    def is_task(self):
+    def is_task(self): # Unittest: MISSING
         """ Judge whether it is a task.
         """
         return self.object_type() == "task"
 
-    def is_algorithm(self):
+    def is_algorithm(self): # Unittest: MISSING
         """ Judge whether it is an algorithm.
         """
         return self.object_type() == "algorithm"
 
-    def is_task_or_algorithm(self):
+    def is_task_or_algorithm(self): # Unittest: DONE
         """ Judge whether it is a task or an algorithm.
         """
         if self.object_type() == "task":
@@ -69,7 +72,7 @@ class Core(ABC):
             return True
         return False
 
-    def is_zombie(self):
+    def is_zombie(self): # Unittest: DONE
         """ Judge whether it is actually an object
         """
         return self.object_type() == ""
