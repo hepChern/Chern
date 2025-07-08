@@ -72,18 +72,6 @@ class FileManagement(Core):
         status_color = status_color_map.get(status, "")
         status_str = colorize(f"[{status}]", status_color)
 
-        # if status == "impressed":
-        #     run_status = self.job_status()
-        #     if run_status != "unconnected":
-        #         run_status_color_map = {
-        #             "unsubmitted": "warning",
-        #             "failed": "warning"
-        #         }
-        #         status_str += colorize(
-        #                 f"[{run_status}]",
-        #                 run_status_color_map.get(run_status, "success")
-        #         )
-
         print(colorize("**** STATUS:", "title0"), status_str)
 
     def print_status(self): # pylint: disable=too-many-branches
@@ -133,8 +121,6 @@ class FileManagement(Core):
 
             for name, status in objects:
                 print(f"{name:<{max_width}}: {colorize('['+status+']')}")
-
-
 
     def print_dite_status(self):
         """ Print the status of the DITE"""
@@ -202,7 +188,7 @@ class FileManagement(Core):
             print(f"{order} {obj_type:<12} {alias:>10}: @/{succ_path:<20}")
 
 
-    def copy_to_check(self, new_path):
+    def copy_to_check(self, new_path): # UnitTest: DONE
         """ Check if the new path is valid for copying
         """
         # Check if the destination directory exists
@@ -223,7 +209,7 @@ class FileManagement(Core):
 
         return True
 
-    def copy_to_deal_with_arcs(self, queue, new_path):
+    def copy_to_deal_with_arcs(self, queue, new_path): # UnitTest: DONE
         """ Deal with the arcs when copying
         """
         for obj in queue:
@@ -264,7 +250,7 @@ class FileManagement(Core):
                 if self.relative_path(succ_object.path).startswith(".."):
                     pass
 
-    def copy_to(self, new_path):
+    def copy_to(self, new_path): # UnitTest: DONE
         """ Copy the current objects and its containings to a new path.
         """
 
@@ -292,7 +278,7 @@ class FileManagement(Core):
             new_object = self.get_vobject(norm_path)
             new_object.impress()
 
-    def move_to_deal_with_arcs(self, queue, new_path):
+    def move_to_deal_with_arcs(self, queue, new_path): # UnitTest: DONE
         """ Deal with the arcs when moving
         """
         for obj in queue:
@@ -354,7 +340,7 @@ class FileManagement(Core):
                     obj.remove_arc_to(succ_object)
 
 
-    def move_to(self, new_path):
+    def move_to(self, new_path): # UnitTest: DONE
         """ move to another path
         """
         if not self.move_to_check(new_path):
@@ -378,31 +364,16 @@ class FileManagement(Core):
 
         self.move_to_deal_with_arcs(queue, new_path)
 
-        # Deal with the impression
-        # for obj in queue:
-        #     # Calculate the absolute path of the new directory
-        #     if obj.object_type() == "directory":
-        #         continue
-        #     norm_path = normpath(
-        #         join(new_path, self.relative_path(obj.path))
-        #     )
-        #     new_object = vobj.VObject(norm_path)
-
-        # if self.object_type() == "directory":
-        #     norm_path = normpath(
-        #         join(new_path, self.relative_path(obj.path))
-        #     )
-
         shutil.rmtree(self.path)
 
-    def move_to_check(self, new_path):
+    def move_to_check(self, new_path): # UnitTest: DONE
         """ Check if the new path is valid for moving"""
         if self.path.lower() == new_path.lower():
             print("The source and destination paths are the same.")
             return False
         return True
 
-    def rm(self):
+    def rm(self): # UnitTest: DONE
         """ Remove this object.
         The important thing is to unalias.
         """
@@ -422,7 +393,7 @@ class FileManagement(Core):
 
         shutil.rmtree(self.path)
 
-    def sub_objects(self):
+    def sub_objects(self): # UnitTest: DONE
         """ return a list of the sub_objects
         """
         sub_directories = os.listdir(self.path)
@@ -435,7 +406,7 @@ class FileManagement(Core):
                 sub_object_list.append(obj)
         return sub_object_list
 
-    def sub_objects_recursively(self):
+    def sub_objects_recursively(self): # UnitTest: DONE
         """ Return a list of all the sub_objects
         """
         queue = [self]
