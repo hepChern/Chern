@@ -334,7 +334,7 @@ class ChernCommunicator():
             r = requests.get(f"http://{url}/ditestatus", timeout=self.timeout)
             logger.debug(r)
         except Exception as e:
-            print(f"An error occurred: {e}")
+            # print(f"An error occurred: {e}")
             return "unconnected"
         status = r.text
         if status == "ok":
