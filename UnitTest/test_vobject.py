@@ -1,176 +1,151 @@
-import Chern.kernel.vobject as vobj
 import os
-import prepare
+import unittest
 from colored import Fore, Style
+import Chern.kernel.vobject as vobj
+import prepare
 
 
-def test_impression():
-    print("------------")
-    print(Fore.BLUE+"Testing impression..."+Style.RESET)
+class TestChernProject(unittest.TestCase):
 
-    print("#1 Test whether the change could be identified.")
-    prepare.create_chern_project("demo_genfit_new")
-    os.chdir("demo_genfit_new")
-    obj_gen = vobj.VObject(os.getcwd()+"/Gen")
-    obj_gentask = vobj.VObject(os.getcwd()+"/GenTask")
-    obj_fit = vobj.VObject(os.getcwd()+"/Fit")
-    obj_fitTask = vobj.VObject(os.getcwd()+"/FitTask")
+    def setUp(self):
+        self.cwd = os.getcwd()
 
-    assert obj_gen.is_impressed() is False
-    assert obj_gentask.is_impressed() is False
-    assert obj_fit.is_impressed() is True
-    assert obj_fitTask.is_impressed() is False
+    def tearDown(self):
+        os.chdir(self.cwd)
 
-    os.chdir("..")
-    prepare.remove_chern_project("demo_genfit_new")
+    def test_impression(self):
+        print(Fore.BLUE + "Testing impression..." + Style.RESET)
 
-    print("#2 Test whether the impression could be done.")
-    prepare.create_chern_project("demo_genfit_new")
-    os.chdir("demo_genfit_new")
-    obj_gen = vobj.VObject(os.getcwd()+"/Gen")
-    obj_gentask = vobj.VObject(os.getcwd()+"/GenTask")
-    obj_fit = vobj.VObject(os.getcwd()+"/Fit")
-    obj_fitTask = vobj.VObject(os.getcwd()+"/FitTask")
-    obj_fitTask.impress()
+        print("#1 Test whether the change could be identified.")
+        prepare.create_chern_project("demo_genfit_new")
+        os.chdir("demo_genfit_new")
+        obj_gen = vobj.VObject("Gen")
+        obj_gentask = vobj.VObject("GenTask")
+        obj_fit = vobj.VObject("Fit")
+        obj_fitTask = vobj.VObject("FitTask")
 
-    assert obj_gen.is_impressed() == True
-    assert obj_gentask.is_impressed() == True
-    assert obj_fit.is_impressed() == True
-    assert obj_fitTask.is_impressed() == True
+        self.assertFalse(obj_gen.is_impressed())
+        self.assertFalse(obj_gentask.is_impressed())
+        self.assertTrue(obj_fit.is_impressed())
+        self.assertFalse(obj_fitTask.is_impressed())
 
-    os.chdir("..")
-    prepare.remove_chern_project("demo_genfit_new")
+        os.chdir("..")
+        prepare.remove_chern_project("demo_genfit_new")
 
+        print("#2 Test whether the impression could be done.")
+        prepare.create_chern_project("demo_genfit_new")
+        os.chdir("demo_genfit_new")
+        obj_gen = vobj.VObject("Gen")
+        obj_gentask = vobj.VObject("GenTask")
+        obj_fit = vobj.VObject("Fit")
+        obj_fitTask = vobj.VObject("FitTask")
+        obj_fitTask.impress()
 
-def test_core():
-    print("------------")
-    print(Fore.BLUE+"Testing Core Commands..."+Style.RESET)
-    print(Fore.YELLOW+"[Warning] the illegal operations of the following commands are not tested.")
-    print("copy_to illegal: copy to a path that already exists.")
-    print("move_to illegal: move to a path that already exists.")
-    print("rm illegal: remove a path that does not exist.")
-    print(Style.RESET)
-    # Switch to the normal color
+        self.assertTrue(obj_gen.is_impressed())
+        self.assertTrue(obj_gentask.is_impressed())
+        self.assertTrue(obj_fit.is_impressed())
+        self.assertTrue(obj_fitTask.is_impressed())
 
-    # Need to test ls, copy_to, move_to, rm, sub_objects
-    # The test of ls is omitted here.
-    prepare.create_chern_project("demo_complex")
-    os.chdir("demo_complex")
+        os.chdir("..")
+        prepare.remove_chern_project("demo_genfit_new")
 
-    print("#1 Test the sub_objects")
-    obj_top = vobj.VObject(os.getcwd())
-    assert sorted([obj.invariant_path() for obj in obj_top.sub_objects()]) == sorted(['tasks', 'includes', 'code'])
+    def test_core(self):
+        print(Fore.BLUE + "Testing Core Commands..." + Style.RESET)
+        prepare.create_chern_project("demo_complex")
+        os.chdir("demo_complex")
 
-    obj_includes = vobj.VObject(os.getcwd()+"/includes")
-    assert sorted([obj.invariant_path() for obj in obj_includes.sub_objects()]) == sorted(['includes/inc', 'includes/inc2'])
+        obj_top = vobj.VObject(".")
+        self.assertEqual(
+            sorted(obj.invariant_path() for obj in obj_top.sub_objects()),
+            sorted(['tasks', 'includes', 'code'])
+        )
 
-    obj_task1 = vobj.VObject(os.getcwd()+"/tasks/taskAna2")
-    assert [obj.invariant_path() for obj in obj_task1.sub_objects()] == []
+        obj_includes = vobj.VObject("includes")
+        self.assertEqual(
+            sorted(obj.invariant_path() for obj in obj_includes.sub_objects()),
+            sorted(['includes/inc', 'includes/inc2'])
+        )
 
-    print("#2 Test the copy_to")
-    obj_folder = vobj.VObject(os.getcwd()+"/tasks")
-    obj_folder.copy_to(os.getcwd()+"/tasksDuplicate")
-    assert sorted([obj.invariant_path() for obj in obj_top.sub_objects()]) == sorted(['tasks', 'includes', 'code', 'tasksDuplicate'])
-    assert vobj.VObject(os.getcwd()+"/tasksDuplicate").is_zombie() is False
-    assert vobj.VObject(os.getcwd()+"/tasksDuplicate/taskAna1").is_impressed() is True
-    assert vobj.VObject(os.getcwd()+"/tasksDuplicate/taskAna2").is_impressed() is True
-    assert vobj.VObject(os.getcwd()+"/tasksDuplicate/taskQA").is_impressed() is True
-    assert vobj.VObject(os.getcwd()+"/tasksDuplicate/taskGen").is_impressed() is True
-    # Check the successors and predecessors
-    obj_task1 = vobj.VObject(os.getcwd()+"/tasksDuplicate/taskAna1")
-    assert [obj.invariant_path() for obj in obj_task1.successors()] == ['tasksDuplicate/taskAna2']
-    assert [obj.invariant_path() for obj in obj_task1.predecessors()] == ['tasksDuplicate/taskGen']
+        obj_task1 = vobj.VObject("tasks/taskAna2")
+        self.assertEqual(obj_task1.sub_objects(), [])
 
-    # Record the impression of the tasks
-    imp_taskAna1 = vobj.VObject(os.getcwd()+"/tasks/taskAna1").impression().__str__()
-    imp_taskAna2 = vobj.VObject(os.getcwd()+"/tasks/taskAna2").impression().__str__()
-    imp_taskQA = vobj.VObject(os.getcwd()+"/tasks/taskQA").impression().__str__()
-    imp_taskGen = vobj.VObject(os.getcwd()+"/tasks/taskGen").impression().__str__()
-    obj_folder = vobj.VObject(os.getcwd()+"/tasks")
-    obj_folder.move_to("tasksMoved")
-    # ['includes', 'code', 'tasksMoved', 'tasksDuplicate']
-    assert sorted([obj.invariant_path() for obj in obj_top.sub_objects()]) == sorted(['includes', 'code', 'tasksMoved', 'tasksDuplicate'])
-    assert vobj.VObject(os.getcwd()+"/tasksMoved").is_zombie() is False
-    assert vobj.VObject(os.getcwd()+"/tasksMoved/taskAna1").is_impressed() is True
-    assert vobj.VObject(os.getcwd()+"/tasksMoved/taskAna2").is_impressed() is True
-    assert vobj.VObject(os.getcwd()+"/tasksMoved/taskQA").is_impressed() is True
-    assert vobj.VObject(os.getcwd()+"/tasksMoved/taskGen").is_impressed() is True
-    # Check the impression not changed after moving
-    assert vobj.VObject(os.getcwd()+"/tasksMoved/taskAna1").impression().__str__() == imp_taskAna1
-    assert vobj.VObject(os.getcwd()+"/tasksMoved/taskAna2").impression().__str__() == imp_taskAna2
-    assert vobj.VObject(os.getcwd()+"/tasksMoved/taskQA").impression().__str__() == imp_taskQA
-    assert vobj.VObject(os.getcwd()+"/tasksMoved/taskGen").impression().__str__() == imp_taskGen
-    # Check the successors and predecessors
-    obj_task1 = vobj.VObject(os.getcwd()+"/tasksMoved/taskAna1")
-    # ['tasksMoved/taskAna2']
-    # ['tasksMoved/taskGen', 'code/ana1']
-    assert [obj.invariant_path() for obj in obj_task1.successors()] == ['tasksMoved/taskAna2']
-    assert sorted([obj.invariant_path() for obj in obj_task1.predecessors()]) == sorted(['tasksMoved/taskGen', 'code/ana1'])
+        obj_folder = vobj.VObject("tasks")
+        obj_folder.copy_to("tasksDuplicate")
 
-    obj_folder = vobj.VObject(os.getcwd()+"/tasksMoved")
-    obj_folder.rm()
-    assert sorted([obj.invariant_path() for obj in obj_top.sub_objects()]) == sorted(['includes', 'code', 'tasksDuplicate'])
-    assert vobj.VObject(os.getcwd()+"/tasksMoved").is_zombie() is True
-    assert vobj.VObject(os.getcwd()+"/tasksMoved/taskAna1").is_zombie() is True
-    # Check the impression could still be found after removing
-    # in demo_complex/.chern/impressions
-    assert os.path.exists(os.getcwd()+"/.chern/impressions/{0}".format(imp_taskAna1))
-    assert [obj.invariant_path() for obj in vobj.VObject(os.getcwd()+"/code/ana1").successors()] == []
+        self.assertIn('tasksDuplicate', [obj.invariant_path() for obj in obj_top.sub_objects()])
+        self.assertFalse(vobj.VObject("tasksDuplicate").is_zombie())
 
-    os.chdir("..")
-    prepare.remove_chern_project("demo_complex")
+        for task in ["taskAna1", "taskAna2", "taskQA", "taskGen"]:
+            self.assertTrue(vobj.VObject(f"tasksDuplicate/{task}").is_impressed())
 
+        obj_task1 = vobj.VObject("tasksDuplicate/taskAna1")
+        self.assertEqual([obj.invariant_path() for obj in obj_task1.successors()], ['tasksDuplicate/taskAna2'])
+        self.assertEqual([obj.invariant_path() for obj in obj_task1.predecessors()], ['tasksDuplicate/taskGen'])
 
-def test_init():
-    print("------------")
-    print(Fore.BLUE+"Testing Init Commands..."+Style.RESET)
+        imp_taskAna1 = str(vobj.VObject("tasks/taskAna1").impression())
+        imp_taskAna2 = str(vobj.VObject("tasks/taskAna2").impression())
+        imp_taskQA = str(vobj.VObject("tasks/taskQA").impression())
+        imp_taskGen = str(vobj.VObject("tasks/taskGen").impression())
 
-    prepare.create_chern_project("demo_complex")
-    os.chdir("demo_complex")
-    obj_top = vobj.VObject(os.getcwd())
-    obj_alg = vobj.VObject(os.getcwd()+"/code/ana1")
-    obj_tsk = vobj.VObject(os.getcwd()+"/tasks/taskAna1")
-    obj_err = vobj.VObject(os.getcwd()+"/NotExists")
+        obj_folder.move_to("tasksMoved")
+        self.assertIn('tasksMoved', [obj.invariant_path() for obj in obj_top.sub_objects()])
 
-    assert obj_top.__str__() == "."
-    assert obj_alg.__str__() == "code/ana1"
-    assert obj_tsk.__str__() == "tasks/taskAna1"
-    assert obj_err.__str__() == "NotExists"
+        for task, imp in zip(["taskAna1", "taskAna2", "taskQA", "taskGen"], 
+                             [imp_taskAna1, imp_taskAna2, imp_taskQA, imp_taskGen]):
+            self.assertTrue(vobj.VObject(f"tasksMoved/{task}").is_impressed())
+            self.assertEqual(str(vobj.VObject(f"tasksMoved/{task}").impression()), imp)
 
-    assert obj_top.__repr__() == "."
-    assert obj_alg.__repr__() == "code/ana1"
-    assert obj_tsk.__repr__() == "tasks/taskAna1"
-    assert obj_err.__repr__() == "NotExists"
+        obj_task1 = vobj.VObject("tasksMoved/taskAna1")
+        self.assertEqual([obj.invariant_path() for obj in obj_task1.successors()], ['tasksMoved/taskAna2'])
+        self.assertEqual(
+            sorted(obj.invariant_path() for obj in obj_task1.predecessors()),
+            sorted(['tasksMoved/taskGen', 'code/ana1'])
+        )
 
-    assert obj_top.invariant_path() == "."
-    assert obj_alg.invariant_path() == "code/ana1"
-    assert obj_tsk.invariant_path() == "tasks/taskAna1"
-    assert obj_err.invariant_path() == "NotExists"
+        vobj.VObject("tasksMoved").rm()
+        self.assertNotIn("tasksMoved", [obj.invariant_path() for obj in obj_top.sub_objects()])
+        self.assertTrue(vobj.VObject("tasksMoved").is_zombie())
+        self.assertTrue(vobj.VObject("tasksMoved/taskAna1").is_zombie())
+        self.assertTrue(os.path.exists(f".chern/impressions/{imp_taskAna1}"))
+        self.assertEqual(vobj.VObject("code/ana1").successors(), [])
 
-    assert obj_top.object_type() == "project"
-    assert obj_alg.object_type() == "algorithm"
-    assert obj_tsk.object_type() == "task"
-    assert obj_err.object_type() == ""
+        os.chdir("..")
+        prepare.remove_chern_project("demo_complex")
 
-    assert obj_top.is_zombie() is False
-    assert obj_alg.is_zombie() is False
-    assert obj_tsk.is_zombie() is False
-    assert obj_err.is_zombie() is True
+    def test_init(self):
+        print(Fore.BLUE + "Testing Init Commands..." + Style.RESET)
 
-    print(obj_alg.is_task_or_algorithm())
-    assert obj_top.is_task_or_algorithm() is False
-    assert obj_alg.is_task_or_algorithm() is True
-    assert obj_tsk.is_task_or_algorithm() is True
-    assert obj_err.is_task_or_algorithm() is False
+        prepare.create_chern_project("demo_complex")
+        os.chdir("demo_complex")
 
-    os.chdir("..")
-    prepare.remove_chern_project("demo_complex")
+        obj_top = vobj.VObject(".")
+        obj_alg = vobj.VObject("code/ana1")
+        obj_tsk = vobj.VObject("tasks/taskAna1")
+        obj_err = vobj.VObject("NotExists")
+
+        for obj, name in [(obj_top, "."), (obj_alg, "code/ana1"), (obj_tsk, "tasks/taskAna1"), (obj_err, "NotExists")]:
+            self.assertEqual(str(obj), name)
+            self.assertEqual(repr(obj), name)
+            self.assertEqual(obj.invariant_path(), name)
+
+        self.assertEqual(obj_top.object_type(), "project")
+        self.assertEqual(obj_alg.object_type(), "algorithm")
+        self.assertEqual(obj_tsk.object_type(), "task")
+        self.assertEqual(obj_err.object_type(), "")
+
+        self.assertFalse(obj_top.is_zombie())
+        self.assertFalse(obj_alg.is_zombie())
+        self.assertFalse(obj_tsk.is_zombie())
+        self.assertTrue(obj_err.is_zombie())
+
+        self.assertFalse(obj_top.is_task_or_algorithm())
+        self.assertTrue(obj_alg.is_task_or_algorithm())
+        self.assertTrue(obj_tsk.is_task_or_algorithm())
+        self.assertFalse(obj_err.is_task_or_algorithm())
+
+        os.chdir("..")
+        prepare.remove_chern_project("demo_complex")
 
 
 if __name__ == "__main__":
-    # warm_up()
-    test_init()
-    test_core()
-    test_impression()
-    print("All tests passed!")
-
+    unittest.main(verbosity=2)
