@@ -2,8 +2,10 @@ import os
 import unittest
 from colored import Fore, Style
 import Chern.kernel.vobject as vobj
+from Chern.kernel.chern_cache import ChernCache
 import prepare
 
+CHERN_CACHE = ChernCache.instance()
 
 class TestChernProject(unittest.TestCase):
 
@@ -29,8 +31,18 @@ class TestChernProject(unittest.TestCase):
         self.assertTrue(obj_fit.is_impressed())
         self.assertFalse(obj_fitTask.is_impressed())
 
+        self.assertEqual(obj_gen.status(), "new")
+        self.assertEqual(obj_gentask.status(), "new")
+        self.assertEqual(obj_fit.status(), "impressed")
+        self.assertEqual(obj_fitTask.status(), "new")
+
+        self.assertEqual(str(obj_fit.impression()), "7d70b48cea88412791a48e8996cf365e")
+        self.assertEqual(str(obj_gen.impression()), "8927389570404d57a9efb6a202b4c065")
+
+
         os.chdir("..")
         prepare.remove_chern_project("demo_genfit_new")
+        CHERN_CACHE.__init__()
 
         print("#2 Test whether the impression could be done.")
         prepare.create_chern_project("demo_genfit_new")
@@ -41,13 +53,48 @@ class TestChernProject(unittest.TestCase):
         obj_fitTask = vobj.VObject("FitTask")
         obj_fitTask.impress()
 
+        self.assertEqual(obj_gen.status(), "impressed")
+        self.assertEqual(obj_gentask.status(), "impressed")
+        self.assertEqual(obj_fit.status(), "impressed")
+        self.assertEqual(obj_fitTask.status(), "impressed")
+
+        self.assertTrue(obj_gen.is_impressed_fast())
+        self.assertTrue(obj_gentask.is_impressed_fast())
+        self.assertTrue(obj_fit.is_impressed_fast())
+        self.assertTrue(obj_fitTask.is_impressed_fast())
+
         self.assertTrue(obj_gen.is_impressed())
         self.assertTrue(obj_gentask.is_impressed())
         self.assertTrue(obj_fit.is_impressed())
         self.assertTrue(obj_fitTask.is_impressed())
 
+        list1 = [str(x) for x in obj_fitTask.pred_impressions()]
+        list2 = [str(x) for x in sorted([obj_fit.impression(), obj_gentask.impression()], key=lambda x: x.uuid)]
+        self.assertEqual(list1, list2)
+
         os.chdir("..")
         prepare.remove_chern_project("demo_genfit_new")
+        CHERN_CACHE.__init__()
+
+    def test_clean(self):
+        print(Fore.BLUE + "Testing Clean Commands..." + Style.RESET)
+        prepare.create_chern_project("demo_genfit_new")
+        os.chdir("demo_genfit_new")
+        obj_gen = vobj.VObject("Gen")
+        obj_gentask = vobj.VObject("GenTask")
+        obj_fit = vobj.VObject("Fit")
+        obj_fitTask = vobj.VObject("FitTask")
+        obj_fitTask.impress()
+
+        obj_fitTask.clean_impressions()
+        self.assertEqual(obj_gen.status(), "impressed")
+        self.assertEqual(obj_gentask.status(), "impressed")
+        self.assertEqual(obj_fit.status(), "impressed")
+        self.assertEqual(obj_fitTask.status(), "new")
+
+        os.chdir("..")
+        prepare.remove_chern_project("demo_genfit_new")
+        CHERN_CACHE.__init__()
 
     def test_core(self):
         print(Fore.BLUE + "Testing Core Commands..." + Style.RESET)
@@ -90,7 +137,7 @@ class TestChernProject(unittest.TestCase):
         obj_folder.move_to("tasksMoved")
         self.assertIn('tasksMoved', [obj.invariant_path() for obj in obj_top.sub_objects()])
 
-        for task, imp in zip(["taskAna1", "taskAna2", "taskQA", "taskGen"], 
+        for task, imp in zip(["taskAna1", "taskAna2", "taskQA", "taskGen"],
                              [imp_taskAna1, imp_taskAna2, imp_taskQA, imp_taskGen]):
             self.assertTrue(vobj.VObject(f"tasksMoved/{task}").is_impressed())
             self.assertEqual(str(vobj.VObject(f"tasksMoved/{task}").impression()), imp)
@@ -111,6 +158,7 @@ class TestChernProject(unittest.TestCase):
 
         os.chdir("..")
         prepare.remove_chern_project("demo_complex")
+        CHERN_CACHE.__init__()
 
     def test_init(self):
         print(Fore.BLUE + "Testing Init Commands..." + Style.RESET)
@@ -143,8 +191,20 @@ class TestChernProject(unittest.TestCase):
         self.assertTrue(obj_tsk.is_task_or_algorithm())
         self.assertFalse(obj_err.is_task_or_algorithm())
 
+
+        self.assertFalse(obj_top.is_task())
+        self.assertFalse(obj_alg.is_task())
+        self.assertTrue(obj_tsk.is_task())
+        self.assertFalse(obj_err.is_task())
+
+        self.assertFalse(obj_top.is_algorithm())
+        self.assertTrue(obj_alg.is_algorithm())
+        self.assertFalse(obj_tsk.is_algorithm())
+        self.assertFalse(obj_err.is_algorithm())
+
         os.chdir("..")
         prepare.remove_chern_project("demo_complex")
+        CHERN_CACHE.__init__()
 
 
 if __name__ == "__main__":

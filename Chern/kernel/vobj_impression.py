@@ -16,7 +16,7 @@ logger = getLogger("ChernLogger")
 class ImpressionManagement(Core):
     """ Class for impression management
     """
-    def impress(self):
+    def impress(self): # UnitTest: DONE
         """ Create an impression.
         The impressions are store in a directory .chern/impressions/[uuid]
         It is organized as following:
@@ -28,7 +28,7 @@ class ImpressionManagement(Core):
         The object_type is also saved in the json file.
         The tree and the dependencies are sorted via name.
         """
-        print(f"Impressing: {self.path}")
+        # print(f"Impressing: {self.path}")
         logger.debug("VObject impress: %s", self.path)
         object_type = self.object_type()
         if object_type not in ("task", "algorithm"):
@@ -50,7 +50,7 @@ class ImpressionManagement(Core):
         consult_table = CHERN_CACHE.impression_consult_table
         consult_table[self.path] = (-1, -1)
 
-    def is_impressed(self): # pylint: disable=too-many-return-statements
+    def is_impressed(self): # pylint: disable=too-many-return-statements # UnitTest: DONE
         """ Judge whether the file is impressed
         """
         logger.debug("VObject is_impressed in %s", self.path)
@@ -109,7 +109,7 @@ class ImpressionManagement(Core):
                     return False
         return True
 
-    def clean_impressions(self):
+    def clean_impressions(self): # UnitTest: DONE
         """ Clean the impressions of the object,
         this is used only when it is copied to a new place and
         needed to remove impression information.
@@ -134,7 +134,7 @@ class ImpressionManagement(Core):
         self.config_file.write_variable("predecessors", [])
         self.config_file.write_variable("successors", [])
 
-    def is_impressed_fast(self):
+    def is_impressed_fast(self): # UnitTest: DONE
         """ Judge whether the file is impressed, with timestamp
         """
         logger.debug("VObject is_impressed_fast")
@@ -159,7 +159,7 @@ class ImpressionManagement(Core):
         consult_table[self.path] = (time.time(), is_impressed)
         return is_impressed
 
-    def pred_impressions(self):
+    def pred_impressions(self): # UnitTest: DONE
         """ Get the impression dependencies
         """
         # FIXME An assumption is that all the predcessor's are impressed,
@@ -170,7 +170,7 @@ class ImpressionManagement(Core):
             dependencies.append(pred.impression())
         return sorted(dependencies, key=lambda x: x.uuid)
 
-    def impression(self):
+    def impression(self): # UnitTest: DONE
         """ Get the impression of the current object
         """
         uuid = self.config_file.read_variable("impression", "")
@@ -178,7 +178,7 @@ class ImpressionManagement(Core):
             return None
         return VImpression(uuid)
 
-    def status(self, consult_id=None):
+    def status(self, consult_id=None): # UnitTest: DONE
         """ Consult the status of the object
             There should be only two status locally: new|impressed
         """

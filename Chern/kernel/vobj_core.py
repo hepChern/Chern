@@ -53,12 +53,12 @@ class Core(ABC):
         """
         return self.config_file.read_variable("object_type", "")
 
-    def is_task(self): # Unittest: MISSING
+    def is_task(self): # Unittest: DONE
         """ Judge whether it is a task.
         """
         return self.object_type() == "task"
 
-    def is_algorithm(self): # Unittest: MISSING
+    def is_algorithm(self): # Unittest: DONE
         """ Judge whether it is an algorithm.
         """
         return self.object_type() == "algorithm"

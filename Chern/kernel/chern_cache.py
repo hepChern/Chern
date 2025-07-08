@@ -11,7 +11,7 @@ class ChernCache:
     """
     ins = None  # Singleton instance
 
-    def __init__(self):
+    def __init__(self): # UnitTest: DONE
         self.local_config_path = csys.local_config_path()
         self.consult_table = {}
         self.impression_consult_table = {}
@@ -19,7 +19,7 @@ class ChernCache:
         self.status_consult_table = {}
 
     @classmethod
-    def instance(cls):
+    def instance(cls): # UnitTest: DONE
         """Returns the singleton instance of ChernCache."""
         if cls.ins is None:
             cls.ins = ChernCache()
