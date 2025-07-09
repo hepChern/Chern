@@ -96,6 +96,34 @@ class TestChernProject(unittest.TestCase):
         prepare.remove_chern_project("demo_genfit_new")
         CHERN_CACHE.__init__()
 
+    def test_alias(self):
+        print(Fore.BLUE + "Testing Alias Commands..." + Style.RESET)
+        prepare.create_chern_project("demo_genfit_new")
+        os.chdir("demo_genfit_new")
+        obj_gen = vobj.VObject("Gen")
+        obj_gentask = vobj.VObject("GenTask")
+        obj_fit = vobj.VObject("Fit")
+        obj_fitTask = vobj.VObject("FitTask")
+        # obj_fitTask.impress()
+
+        self.assertEqual([x for x in obj_fitTask.get_alias_list()], ['gen'])
+        self.assertEqual(obj_fitTask.alias_to_path("gen"), "GenTask")
+        self.assertEqual(obj_fitTask.path_to_alias("GenTask"), "gen")
+        self.assertEqual(str(obj_fitTask.alias_to_impression("gen")), "539d17968ab344e5ade4638c232bd29f")
+        self.assertTrue(obj_fitTask.has_alias("gen"))
+        self.assertFalse(obj_fitTask.has_alias("non_existing_alias"))
+
+        obj_fitTask.set_alias("new_alias", "GenTask")
+        self.assertEqual([x for x in obj_fitTask.get_alias_list()], ['gen'])
+        obj_fitTask.remove_alias("gen")
+        self.assertEqual([x for x in obj_fitTask.get_alias_list()], [])
+        obj_fitTask.set_alias("new_alias", "GenTask")
+        self.assertEqual([x for x in obj_fitTask.get_alias_list()], ['new_alias'])
+
+        os.chdir("..")
+        prepare.remove_chern_project("demo_genfit_new")
+        CHERN_CACHE.__init__()
+
     def test_core(self):
         print(Fore.BLUE + "Testing Core Commands..." + Style.RESET)
         prepare.create_chern_project("demo_complex")
