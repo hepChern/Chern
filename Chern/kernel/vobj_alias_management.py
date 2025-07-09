@@ -51,12 +51,12 @@ class AliasManagement(Core):
         if alias == "":
             return
         if self.has_alias(alias):
-            logger.warning(f"Alias '{alias}' already exists. Will not overwrite.")
+            logger.warning("Alias '%s' already exists. Will not overwrite.", alias)
             return
         path_to_alias = self.config_file.read_variable("path_to_alias", {})
         alias_to_path = self.config_file.read_variable("alias_to_path", {})
         if path_to_alias.get(path, "") != "":
-            logger.warning(f"Path '{path}' already has an alias. Will not overwrite.")
+            logger.warning("Path '%s' already has an alias. Will not overwrite.", alias)
             return
         path_to_alias[path] = alias
         alias_to_path[alias] = path
