@@ -28,7 +28,6 @@ class ImpressionManagement(Core):
         The object_type is also saved in the json file.
         The tree and the dependencies are sorted via name.
         """
-        # print(f"Impressing: {self.path}")
         logger.debug("VObject impress: %s", self.path)
         object_type = self.object_type()
         if object_type not in ("task", "algorithm"):
@@ -38,7 +37,7 @@ class ImpressionManagement(Core):
             return
         logger.debug("Check whether it is impressed with is_impressed_fast")
         if self.is_impressed_fast():
-            print("Already impressed.")
+            logger.warning("Already impressed: %s", self.path)
             return
         for pred in self.predecessors():
             if not pred.is_impressed_fast():

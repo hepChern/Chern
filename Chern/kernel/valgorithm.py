@@ -66,7 +66,6 @@ class VAlgorithm(VObject):
             message.add(status_str)
             message.add("\n")
 
-        # Append message from print_files()
         message.append(self.print_files(self.path, excluded=(".chern", "chern.yaml", "README.md")))
 
         environment = self.environment()
