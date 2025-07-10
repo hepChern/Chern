@@ -257,7 +257,7 @@ class ChernCommunicator():
         return self.config_file.read_variable("serverurl", "localhost:5000")
 
     # This is to check the status of the impression on any machine
-    def status(self, impression):
+    def status(self, impression): # UnitTest: DONE
         """ Get the status of the impression """
         url = self.serverurl()
         try:
@@ -272,7 +272,7 @@ class ChernCommunicator():
             return "unconnected"
         return r.text
 
-    def run_status(self, impression, machine="local"):
+    def run_status(self, impression, machine="local"): # UnitTest: DONE
         """ Get the run status of the impression """
         url = self.serverurl()
         try:
@@ -287,7 +287,7 @@ class ChernCommunicator():
             return "unconnected"
         return r.text
 
-    def collect(self, impression):
+    def collect(self, impression): # UnitTest: DONE
         """ Collect the impression from the server """
         url = self.serverurl()
         r = requests.get(
@@ -309,7 +309,7 @@ class ChernCommunicator():
         url = self.serverurl()
         subprocess.call(["open", f"http://{url}/impview/{impression.uuid}"])
 
-    def export(self, impression, filename, output):
+    def export(self, impression, filename, output): # UnitTest: DONE
         """ Export the file from the server """
         url = self.serverurl()
         r = requests.get(
@@ -350,7 +350,7 @@ class ChernCommunicator():
         w += "\n"
         return w
 
-    def output_files(self, impression, machine="local"):
+    def output_files(self, impression, machine="local"): # UnitTest: DONE
         """ Get the output files of the impression """
         url = self.serverurl()
         if machine == "none":
@@ -366,7 +366,7 @@ class ChernCommunicator():
         )
         return r.text.split()
 
-    def get_file(self, impression, filename):
+    def get_file(self, impression, filename): # UnitTest: DONE
         """ Get the file from the server """
         url = self.serverurl()
         path = requests.get(
@@ -375,7 +375,7 @@ class ChernCommunicator():
         ).text
         return path
 
-    def deposit_with_data(self, impression, path):
+    def deposit_with_data(self, impression, path): # UnitTest: DONE
         """ Deposit the impression with additional data """
         tmpdir = "/tmp"
         tarname = tmpdir + "/" + impression.uuid + ".tar.gz"
