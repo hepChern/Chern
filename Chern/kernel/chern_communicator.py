@@ -312,19 +312,14 @@ class ChernCommunicator():
     def export(self, impression, filename, output):
         """ Export the file from the server """
         url = self.serverurl()
-        # requests.get(
-        #         f"http://{url}/machine_id/{machine}",
-        #         timeout=self.timeout
-        # ).text
         r = requests.get(
                 f"http://{url}/export/{impression.uuid}/{filename}",
                 timeout=self.timeout
         )
-        # What we get is the file, save the file to the output
         with open(output, "wb") as f:
             f.write(r.content)
 
-    def dite_status(self):
+    def dite_status(self): # UnitTest: DONE
         """ Get the status of the DITE """
         logger.debug("ChernCommunicator/dite_status")
         url = self.serverurl()
@@ -341,7 +336,7 @@ class ChernCommunicator():
             return "ok"
         return "unconnected"
 
-    def dite_info(self):
+    def dite_info(self): # UnitTest: DONE
         """ Get the information of the DITE """
         w = ""
         w += colorize("DITE URL: ", "title0")

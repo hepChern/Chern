@@ -9,8 +9,8 @@ Chern/kernel/helpme.py
 Chern/kernel/valgorithm.py
 Chern/kernel/vdirectory.py
 Chern/kernel/vimpression.py
-Chern/kernel/vobj_alias_management.py
-Chern/kernel/vobj_arc_management.py
+DONE: Chern/kernel/vobj_alias_management.py
+DONE: Chern/kernel/vobj_arc_management.py
 DONE: Chern/kernel/vobj_core.py
 Chern/kernel/vobj_execution.py
 DONE: Chern/kernel/vobj_file.py

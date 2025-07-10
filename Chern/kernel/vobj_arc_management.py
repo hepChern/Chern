@@ -127,19 +127,19 @@ class ArcManagement(Core):
             predecessors.append(self.get_vobject(f"{project_path}/{path}"))
         return predecessors
 
-    def has_successor(self, obj):
+    def has_successor(self, obj): # UnitTest: DONE
         """ Judge whether the object has the specific successor
         """
         succ_str = self.config_file.read_variable("successors", [])
         return obj.invariant_path() in succ_str
 
-    def has_predecessor(self, obj):
+    def has_predecessor(self, obj): # UnitTest: DONE
         """ Judge whether the object has the specific predecessor
         """
         pred_str = self.config_file.read_variable("predecessors", [])
         return obj.invariant_path() in pred_str
 
-    def has_predecessor_recursively(self, obj):
+    def has_predecessor_recursively(self, obj): # UnitTest: DONE
         """ Judge whether the object has the specific predecessor recursively
         """
         # The object itself is the predecessor of itself

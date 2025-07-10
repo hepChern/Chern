@@ -22,17 +22,17 @@ class TestChernProject(unittest.TestCase):
         prepare.create_chern_project("demo_genfit_new")
         os.chdir("demo_genfit_new")
         obj_gen = vobj.VObject("Gen")
-        obj_gentask = vobj.VObject("GenTask")
+        obj_genTask = vobj.VObject("GenTask")
         obj_fit = vobj.VObject("Fit")
         obj_fitTask = vobj.VObject("FitTask")
 
         self.assertFalse(obj_gen.is_impressed())
-        self.assertFalse(obj_gentask.is_impressed())
+        self.assertFalse(obj_genTask.is_impressed())
         self.assertTrue(obj_fit.is_impressed())
         self.assertFalse(obj_fitTask.is_impressed())
 
         self.assertEqual(obj_gen.status(), "new")
-        self.assertEqual(obj_gentask.status(), "new")
+        self.assertEqual(obj_genTask.status(), "new")
         self.assertEqual(obj_fit.status(), "impressed")
         self.assertEqual(obj_fitTask.status(), "new")
 
@@ -48,28 +48,28 @@ class TestChernProject(unittest.TestCase):
         prepare.create_chern_project("demo_genfit_new")
         os.chdir("demo_genfit_new")
         obj_gen = vobj.VObject("Gen")
-        obj_gentask = vobj.VObject("GenTask")
+        obj_genTask = vobj.VObject("GenTask")
         obj_fit = vobj.VObject("Fit")
         obj_fitTask = vobj.VObject("FitTask")
         obj_fitTask.impress()
 
         self.assertEqual(obj_gen.status(), "impressed")
-        self.assertEqual(obj_gentask.status(), "impressed")
+        self.assertEqual(obj_genTask.status(), "impressed")
         self.assertEqual(obj_fit.status(), "impressed")
         self.assertEqual(obj_fitTask.status(), "impressed")
 
         self.assertTrue(obj_gen.is_impressed_fast())
-        self.assertTrue(obj_gentask.is_impressed_fast())
+        self.assertTrue(obj_genTask.is_impressed_fast())
         self.assertTrue(obj_fit.is_impressed_fast())
         self.assertTrue(obj_fitTask.is_impressed_fast())
 
         self.assertTrue(obj_gen.is_impressed())
-        self.assertTrue(obj_gentask.is_impressed())
+        self.assertTrue(obj_genTask.is_impressed())
         self.assertTrue(obj_fit.is_impressed())
         self.assertTrue(obj_fitTask.is_impressed())
 
         list1 = [str(x) for x in obj_fitTask.pred_impressions()]
-        list2 = [str(x) for x in sorted([obj_fit.impression(), obj_gentask.impression()], key=lambda x: x.uuid)]
+        list2 = [str(x) for x in sorted([obj_fit.impression(), obj_genTask.impression()], key=lambda x: x.uuid)]
         self.assertEqual(list1, list2)
 
         os.chdir("..")
@@ -81,14 +81,14 @@ class TestChernProject(unittest.TestCase):
         prepare.create_chern_project("demo_genfit_new")
         os.chdir("demo_genfit_new")
         obj_gen = vobj.VObject("Gen")
-        obj_gentask = vobj.VObject("GenTask")
+        obj_genTask = vobj.VObject("GenTask")
         obj_fit = vobj.VObject("Fit")
         obj_fitTask = vobj.VObject("FitTask")
         obj_fitTask.impress()
 
         obj_fitTask.clean_impressions()
         self.assertEqual(obj_gen.status(), "impressed")
-        self.assertEqual(obj_gentask.status(), "impressed")
+        self.assertEqual(obj_genTask.status(), "impressed")
         self.assertEqual(obj_fit.status(), "impressed")
         self.assertEqual(obj_fitTask.status(), "new")
 
@@ -101,7 +101,7 @@ class TestChernProject(unittest.TestCase):
         prepare.create_chern_project("demo_genfit_new")
         os.chdir("demo_genfit_new")
         obj_gen = vobj.VObject("Gen")
-        obj_gentask = vobj.VObject("GenTask")
+        obj_genTask = vobj.VObject("GenTask")
         obj_fit = vobj.VObject("Fit")
         obj_fitTask = vobj.VObject("FitTask")
         # obj_fitTask.impress()
@@ -119,6 +119,45 @@ class TestChernProject(unittest.TestCase):
         self.assertEqual([x for x in obj_fitTask.get_alias_list()], [])
         obj_fitTask.set_alias("new_alias", "GenTask")
         self.assertEqual([x for x in obj_fitTask.get_alias_list()], ['new_alias'])
+
+        os.chdir("..")
+        prepare.remove_chern_project("demo_genfit_new")
+        CHERN_CACHE.__init__()
+
+    def test_arc_management(self):
+        print(Fore.BLUE + "Testing Arc Management Commands..." + Style.RESET)
+        prepare.create_chern_project("demo_genfit_new")
+        os.chdir("demo_genfit_new")
+        obj_gen = vobj.VObject("Gen")
+        obj_genTask = vobj.VObject("GenTask")
+        obj_fit = vobj.VObject("Fit")
+        obj_fitTask = vobj.VObject("FitTask")
+
+        self.assertTrue(obj_fitTask.has_predecessor(obj_genTask))
+        self.assertTrue(obj_fitTask.has_predecessor_recursively(obj_gen))
+        self.assertTrue(obj_genTask.has_successor(obj_fitTask))
+        self.assertFalse(obj_fitTask.has_predecessor(obj_gen))
+
+        obj_fitTask.remove_input("gen")
+        CHERN_CACHE.__init__()
+
+        self.assertFalse(obj_fitTask.has_predecessor(obj_genTask))
+        self.assertFalse(obj_fitTask.has_predecessor_recursively(obj_gen))
+        self.assertFalse(obj_genTask.has_successor(obj_fitTask))
+        self.assertFalse(obj_fitTask.has_predecessor(obj_gen))
+
+        os.chdir("..")
+        prepare.remove_chern_project("demo_genfit_new")
+        CHERN_CACHE.__init__()
+
+    def test_execution(self):
+        print(Fore.BLUE + "Testing Execution Commands..." + Style.RESET)
+        prepare.create_chern_project("demo_genfit_new")
+        os.chdir("demo_genfit_new")
+        obj_gen = vobj.VObject("Gen")
+        obj_genTask = vobj.VObject("GenTask")
+        obj_fit = vobj.VObject("Fit")
+        obj_fitTask = vobj.VObject("FitTask")
 
         os.chdir("..")
         prepare.remove_chern_project("demo_genfit_new")
