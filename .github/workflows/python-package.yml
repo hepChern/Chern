@@ -34,6 +34,4 @@ jobs:
     - name: Unit test
       run: |
         cd UnitTest
-        python test_utils.py
-        python test_vobject.py
-        python test_cherncommunicator.py
+        python -m pytest *.py
