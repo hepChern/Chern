@@ -4,9 +4,9 @@
 N/A: Chern/kernel/VERSION
 N/A: Chern/kernel/__init__.py
 DONE: Chern/kernel/chern_cache.py
-Chern/kernel/chern_communicator.py
-Chern/kernel/helpme.py
-Chern/kernel/valgorithm.py
+DONE: Chern/kernel/chern_communicator.py
+N/A: Chern/kernel/helpme.py
+DONE: Chern/kernel/valgorithm.py
 Chern/kernel/vdirectory.py
 Chern/kernel/vimpression.py
 DONE: Chern/kernel/vobj_alias_management.py
@@ -17,10 +17,10 @@ DONE: Chern/kernel/vobj_file.py
 DONE: Chern/kernel/vobj_impression.py
 Chern/kernel/vobject.py
 Chern/kernel/vproject.py
-Chern/kernel/vtask.py
-Chern/kernel/vtask_core.py
-Chern/kernel/vtask_file.py
-Chern/kernel/vtask_input.py
-Chern/kernel/vtask_job.py
-Chern/kernel/vtask_setting.py
+DONE: Chern/kernel/vtask.py
+DONE: Chern/kernel/vtask_core.py
+DONE: Chern/kernel/vtask_file.py
+DONE: Chern/kernel/vtask_input.py
+DONE: Chern/kernel/vtask_job.py
+DONE: Chern/kernel/vtask_setting.py
 ```

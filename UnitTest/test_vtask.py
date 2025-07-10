@@ -1,6 +1,6 @@
 import os
 import unittest
-from unittest.mock import patch, MagicMock, ANY
+from unittest.mock import patch, MagicMock, ANY, mock_open
 from colored import Fore, Style
 import Chern.kernel.vtask as vtsk
 from Chern.kernel.chern_cache import ChernCache
@@ -968,4 +968,809 @@ class TestChernVTask(unittest.TestCase):
         os.chdir("..")
         prepare.remove_chern_project("demo_complex")
         CHERN_CACHE.__init__()
+
+    def test_setting_manager_read_methods(self):
+        """Test SettingManager read methods inherited by VTask"""
+        print(Fore.BLUE + "Testing SettingManager Read Methods..." +
+              Style.RESET)
+
+        prepare.create_chern_project("demo_complex")
+        os.chdir("demo_complex")
+        obj_tsk = vtsk.VTask(os.getcwd() + "/tasks/taskAna1")
+
+        # Test environment method
+        with patch('Chern.utils.metadata.YamlFile') as mock_yaml:
+            mock_yaml_instance = MagicMock()
+            mock_yaml.return_value = mock_yaml_instance
+            mock_yaml_instance.read_variable.return_value = "ubuntu:20.04"
+            
+            environment = obj_tsk.environment()
+            
+            # Verify method calls
+            mock_yaml.assert_called_once_with(
+                os.path.join(obj_tsk.path, "chern.yaml")
+            )
+            mock_yaml_instance.read_variable.assert_called_once_with(
+                "environment", ""
+            )
+            self.assertEqual(environment, "ubuntu:20.04")
+
+        # Test memory_limit method
+        with patch('Chern.utils.metadata.YamlFile') as mock_yaml:
+            mock_yaml_instance = MagicMock()
+            mock_yaml.return_value = mock_yaml_instance
+            mock_yaml_instance.read_variable.return_value = "1Gi"
+            
+            memory_limit = obj_tsk.memory_limit()
+            
+            # Verify method calls
+            mock_yaml.assert_called_once_with(
+                os.path.join(obj_tsk.path, "chern.yaml")
+            )
+            mock_yaml_instance.read_variable.assert_called_once_with(
+                "kubernetes_memory_limit", ""
+            )
+            self.assertEqual(memory_limit, "1Gi")
+
+        # Test parameters method
+        test_params = {"param1": "value1", "param2": "value2"}
+        with patch('Chern.utils.metadata.YamlFile') as mock_yaml:
+            mock_yaml_instance = MagicMock()
+            mock_yaml.return_value = mock_yaml_instance
+            mock_yaml_instance.read_variable.return_value = test_params
+            
+            params_list, params_dict = obj_tsk.parameters()
+            
+            # Verify method calls
+            mock_yaml.assert_called_once_with(
+                os.path.join(obj_tsk.path, "chern.yaml")
+            )
+            mock_yaml_instance.read_variable.assert_called_once_with(
+                "parameters", {}
+            )
+            self.assertEqual(sorted(params_list), ["param1", "param2"])
+            self.assertEqual(params_dict, test_params)
+
+        # Test auto_download method
+        with patch.object(obj_tsk, 'config_file') as mock_config:
+            mock_config.read_variable.return_value = False
+            
+            auto_download = obj_tsk.auto_download()
+            
+            # Verify method calls
+            mock_config.read_variable.assert_called_once_with(
+                "auto_download", True
+            )
+            self.assertFalse(auto_download)
+
+        # Test default_runner method
+        with patch.object(obj_tsk, 'config_file') as mock_config:
+            mock_config.read_variable.return_value = "remote"
+            
+            default_runner = obj_tsk.default_runner()
+            
+            # Verify method calls
+            mock_config.read_variable.assert_called_once_with(
+                "default_runner", "local"
+            )
+            self.assertEqual(default_runner, "remote")
+
+        os.chdir("..")
+        prepare.remove_chern_project("demo_complex")
+        CHERN_CACHE.__init__()
+
+    def test_setting_manager_parameter_methods(self):
+        """Test SettingManager parameter modification methods"""
+        print(Fore.BLUE + "Testing SettingManager Parameter Methods..." +
+              Style.RESET)
+
+        prepare.create_chern_project("demo_complex")
+        os.chdir("demo_complex")
+        obj_tsk = vtsk.VTask(os.getcwd() + "/tasks/taskAna1")
+
+        # Test add_parameter method
+        existing_params = {"existing_param": "existing_value"}
+        with patch('Chern.utils.metadata.YamlFile') as mock_yaml:
+            mock_yaml_instance = MagicMock()
+            mock_yaml.return_value = mock_yaml_instance
+            mock_yaml_instance.read_variable.return_value = existing_params
+            
+            obj_tsk.add_parameter("new_param", "new_value")
+            
+            # Verify read and write calls
+            mock_yaml_instance.read_variable.assert_called_once_with(
+                "parameters", {}
+            )
+            expected_params = {
+                "existing_param": "existing_value",
+                "new_param": "new_value"
+            }
+            mock_yaml_instance.write_variable.assert_called_once_with(
+                "parameters", expected_params
+            )
+
+        # Test add_parameter method with empty parameters
+        with patch('Chern.utils.metadata.YamlFile') as mock_yaml:
+            mock_yaml_instance = MagicMock()
+            mock_yaml.return_value = mock_yaml_instance
+            mock_yaml_instance.read_variable.return_value = {}
+            
+            obj_tsk.add_parameter("first_param", "first_value")
+            
+            # Verify write call
+            expected_params = {"first_param": "first_value"}
+            mock_yaml_instance.write_variable.assert_called_once_with(
+                "parameters", expected_params
+            )
+
+        # Test remove_parameter method - existing parameter
+        existing_params = {
+            "param1": "value1",
+            "param2": "value2",
+            "param3": "value3"
+        }
+        with patch('Chern.utils.metadata.YamlFile') as mock_yaml:
+            mock_yaml_instance = MagicMock()
+            mock_yaml.return_value = mock_yaml_instance
+            mock_yaml_instance.read_variable.return_value = existing_params
+            
+            obj_tsk.remove_parameter("param2")
+            
+            # Verify read and write calls
+            mock_yaml_instance.read_variable.assert_called_once_with(
+                "parameters", {}
+            )
+            expected_params = {"param1": "value1", "param3": "value3"}
+            mock_yaml_instance.write_variable.assert_called_once_with(
+                "parameters", expected_params
+            )
+
+        # Test remove_parameter method - non-existing parameter
+        existing_params = {"param1": "value1"}
+        with patch('Chern.utils.metadata.YamlFile') as mock_yaml, \
+             patch('Chern.kernel.vtask_setting.logger') as mock_logger:
+            
+            mock_yaml_instance = MagicMock()
+            mock_yaml.return_value = mock_yaml_instance
+            mock_yaml_instance.read_variable.return_value = existing_params
+            
+            obj_tsk.remove_parameter("non_existent_param")
+            
+            # Should log warning and not call write_variable
+            mock_logger.warning.assert_called_once()
+            # Check that warning was called with correct format and parameter
+            warning_args = mock_logger.warning.call_args[0]
+            self.assertEqual(len(warning_args), 2)
+            self.assertIn("Parameter '%s' not found", warning_args[0])
+            self.assertEqual(warning_args[1], "non_existent_param")
+            mock_yaml_instance.write_variable.assert_not_called()
+
+        os.chdir("..")
+        prepare.remove_chern_project("demo_complex")
+        CHERN_CACHE.__init__()
+
+    def test_setting_manager_setter_methods(self):
+        """Test SettingManager setter methods"""
+        print(Fore.BLUE + "Testing SettingManager Setter Methods..." +
+              Style.RESET)
+
+        prepare.create_chern_project("demo_complex")
+        os.chdir("demo_complex")
+        obj_tsk = vtsk.VTask(os.getcwd() + "/tasks/taskAna1")
+
+        # Test set_auto_download method
+        with patch.object(obj_tsk, 'config_file') as mock_config:
+            obj_tsk.set_auto_download(False)
+            
+            mock_config.write_variable.assert_called_once_with(
+                "auto_download", False
+            )
+
+        # Test set_default_runner method
+        with patch.object(obj_tsk, 'config_file') as mock_config:
+            obj_tsk.set_default_runner("kubernetes")
+            
+            mock_config.write_variable.assert_called_once_with(
+                "default_runner", "kubernetes"
+            )
+
+        # Test set_environment method
+        with patch('Chern.utils.metadata.YamlFile') as mock_yaml:
+            mock_yaml_instance = MagicMock()
+            mock_yaml.return_value = mock_yaml_instance
+            
+            obj_tsk.set_environment("python:3.9")
+            
+            # Verify method calls
+            mock_yaml.assert_called_once_with(
+                os.path.join(obj_tsk.path, "chern.yaml")
+            )
+            mock_yaml_instance.write_variable.assert_called_once_with(
+                "environment", "python:3.9"
+            )
+
+        # Test set_memory_limit method
+        with patch('Chern.utils.metadata.YamlFile') as mock_yaml:
+            mock_yaml_instance = MagicMock()
+            mock_yaml.return_value = mock_yaml_instance
+            
+            obj_tsk.set_memory_limit("2Gi")
+            
+            # Verify method calls
+            mock_yaml.assert_called_once_with(
+                os.path.join(obj_tsk.path, "chern.yaml")
+            )
+            mock_yaml_instance.write_variable.assert_called_once_with(
+                "kubernetes_memory_limit", "2Gi"
+            )
+
+        os.chdir("..")
+        prepare.remove_chern_project("demo_complex")
+        CHERN_CACHE.__init__()
+
+    def test_setting_manager_validation_methods(self):
+        """Test SettingManager validation methods"""
+        print(Fore.BLUE + "Testing SettingManager Validation Methods..." +
+              Style.RESET)
+
+        prepare.create_chern_project("demo_complex")
+        os.chdir("demo_complex")
+        obj_tsk = vtsk.VTask(os.getcwd() + "/tasks/taskAna1")
+
+        # Test env_validated method - rawdata environment
+        with patch.object(obj_tsk, 'environment', return_value='rawdata'):
+            result = obj_tsk.env_validated()
+            self.assertTrue(result)
+
+        # Test env_validated method - algorithm with script environment
+        mock_algorithm = MagicMock()
+        mock_algorithm.environment.return_value = "script"
+        
+        with patch.object(obj_tsk, 'environment', return_value='python:3.9'), \
+             patch.object(obj_tsk, 'algorithm', return_value=mock_algorithm):
+            
+            result = obj_tsk.env_validated()
+            self.assertTrue(result)
+
+        # Test env_validated method - matching algorithm environment
+        mock_algorithm = MagicMock()
+        mock_algorithm.environment.return_value = "python:3.9"
+        
+        with patch.object(obj_tsk, 'environment', return_value='python:3.9'), \
+             patch.object(obj_tsk, 'algorithm', return_value=mock_algorithm):
+            
+            result = obj_tsk.env_validated()
+            self.assertTrue(result)
+
+        # Test env_validated method - non-matching algorithm environment
+        mock_algorithm = MagicMock()
+        mock_algorithm.environment.return_value = "ubuntu:20.04"
+        
+        with patch.object(obj_tsk, 'environment', return_value='python:3.9'), \
+             patch.object(obj_tsk, 'algorithm', return_value=mock_algorithm):
+            
+            result = obj_tsk.env_validated()
+            self.assertFalse(result)
+
+        # Test env_validated method - no algorithm
+        with patch.object(obj_tsk, 'environment', return_value='python:3.9'), \
+             patch.object(obj_tsk, 'algorithm', return_value=None):
+            
+            result = obj_tsk.env_validated()
+            self.assertFalse(result)
+
+        # Test validated method - env_validated returns True
+        with patch.object(obj_tsk, 'env_validated', return_value=True):
+            result = obj_tsk.validated()
+            self.assertTrue(result)
+
+        # Test validated method - env_validated returns False
+        with patch.object(obj_tsk, 'env_validated', return_value=False):
+            result = obj_tsk.validated()
+            self.assertFalse(result)
+
+        os.chdir("..")
+        prepare.remove_chern_project("demo_complex")
+        CHERN_CACHE.__init__()
+
+    def test_setting_manager_integration(self):
+        """Test SettingManager integration with real YAML files"""
+        print(Fore.BLUE + "Testing SettingManager Integration..." +
+              Style.RESET)
+
+        prepare.create_chern_project("demo_complex")
+        os.chdir("demo_complex")
+        obj_tsk = vtsk.VTask(os.getcwd() + "/tasks/taskAna1")
+
+        # Test reading actual values from YAML file
+        original_env = obj_tsk.environment()
+        self.assertIsInstance(original_env, str)
+
+        original_memory = obj_tsk.memory_limit()
+        self.assertIsInstance(original_memory, str)
+
+        original_params = obj_tsk.parameters()
+        self.assertIsInstance(original_params[0], list)
+        self.assertIsInstance(original_params[1], dict)
+
+        # Test adding and reading parameters
+        obj_tsk.add_parameter("test_integration_param", "test_value")
+        params_list, params_dict = obj_tsk.parameters()
+        
+        self.assertIn("test_integration_param", params_list)
+        self.assertEqual(params_dict["test_integration_param"], "test_value")
+
+        # Test removing parameters
+        obj_tsk.remove_parameter("test_integration_param")
+        params_list, params_dict = obj_tsk.parameters()
+        
+        self.assertNotIn("test_integration_param", params_list)
+        self.assertNotIn("test_integration_param", params_dict)
+
+        # Test setting and reading environment
+        obj_tsk.set_environment("test_environment")
+        new_env = obj_tsk.environment()
+        self.assertEqual(new_env, "test_environment")
+
+        # Test setting and reading memory limit
+        obj_tsk.set_memory_limit("512Mi")
+        new_memory = obj_tsk.memory_limit()
+        self.assertEqual(new_memory, "512Mi")
+
+        # Test config file settings
+        original_auto_download = obj_tsk.auto_download()
+        obj_tsk.set_auto_download(not original_auto_download)
+        new_auto_download = obj_tsk.auto_download()
+        self.assertEqual(new_auto_download, not original_auto_download)
+
+        original_runner = obj_tsk.default_runner()
+        obj_tsk.set_default_runner("test_runner")
+        new_runner = obj_tsk.default_runner()
+        self.assertEqual(new_runner, "test_runner")
+
+        os.chdir("..")
+        prepare.remove_chern_project("demo_complex")
+        CHERN_CACHE.__init__()
+
+    def test_setting_manager_error_handling(self):
+        """Test SettingManager error handling scenarios"""
+        print(Fore.BLUE + "Testing SettingManager Error Handling..." +
+              Style.RESET)
+
+        prepare.create_chern_project("demo_complex")
+        os.chdir("demo_complex")
+        obj_tsk = vtsk.VTask(os.getcwd() + "/tasks/taskAna1")
+
+        # Test environment method with YAML file error
+        with patch('Chern.utils.metadata.YamlFile') as mock_yaml:
+            mock_yaml.side_effect = Exception("YAML file error")
+            
+            with self.assertRaises(Exception):
+                obj_tsk.environment()
+
+        # Test memory_limit method with YAML read error
+        with patch('Chern.utils.metadata.YamlFile') as mock_yaml:
+            mock_yaml_instance = MagicMock()
+            mock_yaml.return_value = mock_yaml_instance
+            mock_yaml_instance.read_variable.side_effect = Exception(
+                "Read error"
+            )
+            
+            with self.assertRaises(Exception):
+                obj_tsk.memory_limit()
+
+        # Test parameters method with YAML read error
+        with patch('Chern.utils.metadata.YamlFile') as mock_yaml:
+            mock_yaml_instance = MagicMock()
+            mock_yaml.return_value = mock_yaml_instance
+            mock_yaml_instance.read_variable.side_effect = Exception(
+                "Parameters read error"
+            )
+            
+            with self.assertRaises(Exception):
+                obj_tsk.parameters()
+
+        # Test add_parameter with YAML write error
+        with patch('Chern.utils.metadata.YamlFile') as mock_yaml:
+            mock_yaml_instance = MagicMock()
+            mock_yaml.return_value = mock_yaml_instance
+            mock_yaml_instance.read_variable.return_value = {}
+            mock_yaml_instance.write_variable.side_effect = Exception(
+                "Write error"
+            )
+            
+            with self.assertRaises(Exception):
+                obj_tsk.add_parameter("test_param", "test_value")
+
+        # Test set_environment with YAML write error
+        with patch('Chern.utils.metadata.YamlFile') as mock_yaml:
+            mock_yaml_instance = MagicMock()
+            mock_yaml.return_value = mock_yaml_instance
+            mock_yaml_instance.write_variable.side_effect = Exception(
+                "Environment write error"
+            )
+            
+            with self.assertRaises(Exception):
+                obj_tsk.set_environment("test_env")
+
+        # Test auto_download with config file error
+        with patch.object(obj_tsk, 'config_file') as mock_config:
+            mock_config.read_variable.side_effect = Exception(
+                "Config read error"
+            )
+            
+            with self.assertRaises(Exception):
+                obj_tsk.auto_download()
+
+        # Test set_auto_download with config file write error
+        with patch.object(obj_tsk, 'config_file') as mock_config:
+            mock_config.write_variable.side_effect = Exception(
+                "Config write error"
+            )
+            
+            with self.assertRaises(Exception):
+                obj_tsk.set_auto_download(True)
+
+        os.chdir("..")
+        prepare.remove_chern_project("demo_complex")
+        CHERN_CACHE.__init__()
+
+    def test_vtask_specific_methods(self):
+        """Test VTask-specific methods not covered by other managers"""
+        print(Fore.BLUE + "Testing VTask Specific Methods..." + Style.RESET)
+
+        prepare.create_chern_project("demo_complex")
+        os.chdir("demo_complex")
+        obj_tsk = vtsk.VTask(os.getcwd() + "/tasks/taskAna1")
+
+        # Test output_files method
+        output_files = obj_tsk.output_files()
+        self.assertEqual(output_files, [])
+
+        # Test get_file method
+        test_filename = "test_output.txt"
+        with patch.object(ChernCommunicator, 'instance') as mock_instance:
+            mock_communicator = MagicMock()
+            mock_instance.return_value = mock_communicator
+            mock_communicator.get_file.return_value = "/path/to/file"
+            
+            result = obj_tsk.get_file(test_filename)
+            
+            mock_communicator.get_file.assert_called_once_with(
+                "local", ANY, test_filename
+            )
+            self.assertEqual(result, "/path/to/file")
+
+        # Test get_task method
+        test_path = "/path/to/task"
+        result_task = obj_tsk.get_task(test_path)
+        self.assertIsInstance(result_task, vtsk.VTask)
+
+        os.chdir("..")
+        prepare.remove_chern_project("demo_complex")
+        CHERN_CACHE.__init__()
+
+    def test_vtask_view_method(self):
+        """Test VTask view method"""
+        print(Fore.BLUE + "Testing VTask view method..." + Style.RESET)
+
+        prepare.create_chern_project("demo_complex")
+        os.chdir("demo_complex")
+        obj_tsk = vtsk.VTask(os.getcwd() + "/tasks/taskAna1")
+
+        # Test view method with local file that exists
+        test_filename = "local:test_file.txt"
+        mock_file_path = "/path/to/test_file.txt"
+        
+        with patch.object(obj_tsk, 'get_file') as mock_get_file, \
+             patch('Chern.utils.csys.exists') as mock_exists, \
+             patch('Chern.kernel.vtask.open_subprocess') as \
+             mock_open_subprocess:
+            
+            mock_get_file.return_value = mock_file_path
+            mock_exists.return_value = True
+            
+            obj_tsk.view(test_filename)
+            
+            # Verify method calls
+            mock_get_file.assert_called_once_with("local:test_file.txt")
+            mock_exists.assert_called_once_with(mock_file_path)
+            mock_open_subprocess.assert_called_once_with(
+                f"open {mock_file_path}"
+            )
+
+        # Test view method with local file that doesn't exist
+        with patch.object(obj_tsk, 'get_file') as mock_get_file, \
+             patch('Chern.utils.csys.exists') as mock_exists, \
+             patch('builtins.print') as mock_print:
+            
+            mock_get_file.return_value = mock_file_path
+            mock_exists.return_value = False
+            
+            obj_tsk.view(test_filename)
+            
+            # Should print error message
+            mock_print.assert_called_once()
+            error_msg = mock_print.call_args[0][0]
+            self.assertIn("do not exists", error_msg)
+            self.assertIn(mock_file_path, error_msg)
+
+        # Test view method with non-local filename
+        non_local_filename = "remote_file.txt"
+        
+        with patch.object(obj_tsk, 'get_file') as mock_get_file, \
+             patch('Chern.utils.csys.exists') as mock_exists:
+            
+            obj_tsk.view(non_local_filename)
+            
+            # Should not call get_file or exists for non-local files
+            mock_get_file.assert_not_called()
+            mock_exists.assert_not_called()
+
+        os.chdir("..")
+        prepare.remove_chern_project("demo_complex")
+        CHERN_CACHE.__init__()
+
+    def test_vtask_printed_status_method(self):
+        """Test VTask printed_status method"""
+        print(Fore.BLUE + "Testing VTask printed_status method..." +
+              Style.RESET)
+
+        prepare.create_chern_project("demo_complex")
+        os.chdir("demo_complex")
+        obj_tsk = vtsk.VTask(os.getcwd() + "/tasks/taskAna1")
+
+        # Test printed_status when not impressed
+        with patch.object(obj_tsk, 'status') as mock_status, \
+             patch('Chern.kernel.vobject.VObject.printed_status') as mock_super:
+            
+            mock_status.return_value = "new"
+            mock_message = MagicMock()
+            mock_super.return_value = mock_message
+            
+            result = obj_tsk.printed_status()
+            
+            # Should return early without communicator calls
+            mock_super.assert_called_once()
+            self.assertEqual(result, mock_message)
+
+        # Test printed_status when impressed - rawdata environment
+        with patch.object(obj_tsk, 'status') as mock_status, \
+             patch.object(obj_tsk, 'environment') as mock_environment, \
+             patch.object(ChernCommunicator, 'instance') as mock_instance, \
+             patch('Chern.kernel.vobject.VObject.printed_status') as mock_super:
+            
+            mock_status.return_value = "impressed"
+            mock_environment.return_value = "rawdata"
+            
+            mock_communicator = MagicMock()
+            mock_instance.return_value = mock_communicator
+            mock_communicator.job_status.return_value = "running"
+            mock_communicator.output_files.return_value = [
+                "file1.txt", "file2.dat"
+            ]
+            
+            mock_message = MagicMock()
+            mock_super.return_value = mock_message
+            
+            result = obj_tsk.printed_status()
+            
+            # Verify method calls
+            mock_communicator.job_status.assert_called_once_with(ANY)
+            mock_communicator.output_files.assert_called_once_with(ANY, "none")
+            
+            # Verify message additions
+            self.assertTrue(mock_message.add.called)
+            add_calls = [call[0][0] for call in mock_message.add.call_args_list]
+            self.assertTrue(any("Job status:" in str(call) for call in add_calls))
+            self.assertTrue(any("Sample files" in str(call) for call in add_calls))
+
+        # Test printed_status when impressed - normal environment with workflow
+        with patch.object(obj_tsk, 'status') as mock_status, \
+             patch.object(obj_tsk, 'environment') as mock_environment, \
+             patch.object(ChernCommunicator, 'instance') as mock_instance, \
+             patch('Chern.kernel.vobject.VObject.printed_status') as mock_super:
+            
+            mock_status.return_value = "impressed"
+            mock_environment.return_value = "python:3.9"
+            
+            mock_communicator = MagicMock()
+            mock_instance.return_value = mock_communicator
+            mock_communicator.job_status.return_value = "finished"
+            mock_communicator.workflow.return_value = ["kubernetes", "workflow123"]
+            mock_communicator.output_files.return_value = ["output.txt"]
+            
+            mock_message = MagicMock()
+            mock_super.return_value = mock_message
+            
+            result = obj_tsk.printed_status()
+            
+            # Verify workflow-related calls
+            mock_communicator.workflow.assert_called_once_with(ANY)
+            mock_communicator.output_files.assert_called_once_with(ANY, "kubernetes")
+            
+            # Verify message additions
+            add_calls = [call[0][0] for call in mock_message.add.call_args_list]
+            self.assertTrue(any("Workflow:" in str(call) for call in add_calls))
+            self.assertTrue(any("Output files" in str(call) for call in add_calls))
+
+        # Test printed_status when impressed - undefined workflow
+        with patch.object(obj_tsk, 'status') as mock_status, \
+             patch.object(obj_tsk, 'environment') as mock_environment, \
+             patch.object(ChernCommunicator, 'instance') as mock_instance, \
+             patch('Chern.kernel.vobject.VObject.printed_status') as mock_super:
+            
+            mock_status.return_value = "impressed"
+            mock_environment.return_value = "python:3.9"
+            
+            mock_communicator = MagicMock()
+            mock_instance.return_value = mock_communicator
+            mock_communicator.job_status.return_value = "failed"
+            mock_communicator.workflow.return_value = ["UNDEFINED"]
+            
+            mock_message = MagicMock()
+            mock_super.return_value = mock_message
+            
+            result = obj_tsk.printed_status()
+            
+            # Should add workflow not defined error
+            add_calls = [call[0][0] for call in mock_message.add.call_args_list]
+            self.assertTrue(any("Workflow not defined" in str(call) for call in add_calls))
+
+        os.chdir("..")
+        prepare.remove_chern_project("demo_complex")
+        CHERN_CACHE.__init__()
+
+    # def test_create_task_function(self):
+    #     """Test create_task function"""
+    #     print(Fore.BLUE + "Testing create_task function..." + Style.RESET)
+
+    #     # Test creating task in project directory
+    #     test_path = "test_task"
+    #     
+    #     with patch('Chern.utils.csys.strip_path_string') as mock_strip, \
+    #          patch('os.path.abspath') as mock_abspath, \
+    #          patch('Chern.kernel.vobject.VObject') as mock_vobject, \
+    #          patch('Chern.utils.csys.mkdir') as mock_mkdir, \
+    #          patch('Chern.utils.metadata.ConfigFile') as mock_config_file, \
+    #          patch('Chern.utils.metadata.YamlFile') as mock_yaml_file, \
+    #          patch('builtins.open', mock_open()) as mock_file:
+    #         
+    #         mock_strip.return_value = test_path
+    #         mock_abspath.return_value = "/parent/path"
+    #         
+    #         # Mock parent object as project
+    #         mock_parent = MagicMock()
+    #         mock_parent.object_type.return_value = "project"
+    #         mock_vobject.return_value = mock_parent
+    #         
+    #         # Mock config and yaml files
+    #         mock_config_instance = MagicMock()
+    #         mock_config_file.return_value = mock_config_instance
+    #         mock_yaml_instance = MagicMock()
+    #         mock_yaml_file.return_value = mock_yaml_instance
+    #         
+    #         # Mock task object
+    #         mock_task = MagicMock()
+    #         mock_task.invariant_path.return_value = "test_task"
+    #         mock_vobject.side_effect = [mock_parent, mock_task]
+    #         
+    #         vtsk.create_task(test_path)
+    #         
+    #         # Verify method calls
+    #         mock_strip.assert_called_once_with(test_path)
+    #         mock_mkdir.assert_called_once_with(f"{test_path}/.chern")
+    #         
+    #         # Verify config file writes
+    #         config_calls = mock_config_instance.write_variable.call_args_list
+    #         self.assertEqual(len(config_calls), 3)
+    #         self.assertEqual(config_calls[0][0], ("object_type", "task"))
+    #         self.assertEqual(config_calls[1][0], ("auto_download", True))
+    #         self.assertEqual(config_calls[2][0], ("default_runner", "local"))
+    #         
+    #         # Verify yaml file writes
+    #         yaml_calls = mock_yaml_instance.write_variable.call_args_list
+    #         self.assertEqual(len(yaml_calls), 2)
+    #         expected_env = ("environment", "reanahub/reana-env-root6:6.18.04")
+    #         self.assertEqual(yaml_calls[0][0], expected_env)
+    #         expected_memory = ("kubernetes_memory_limit", "256Mi")
+    #         self.assertEqual(yaml_calls[1][0], expected_memory)
+    #         
+    #         # Verify README file was written
+    #         mock_file.assert_called_once_with(
+    #             f"{test_path}/.chern/README.md", "w", encoding="utf-8"
+    #         )
+
+    #     # Test creating task in non-project/directory parent
+    #     with patch('Chern.utils.csys.strip_path_string') as mock_strip, \
+    #          patch('os.path.abspath') as mock_abspath, \
+    #          patch('Chern.kernel.vobject.VObject') as mock_vobject:
+    #         
+    #         mock_strip.return_value = test_path
+    #         mock_abspath.return_value = "/parent/path"
+    #         
+    #         # Mock parent object as non-project/directory
+    #         mock_parent = MagicMock()
+    #         mock_parent.object_type.return_value = "task"
+    #         mock_vobject.return_value = mock_parent
+    #         
+    #         # Should return early without creating anything
+    #         result = vtsk.create_task(test_path)
+    #         self.assertIsNone(result)
+
+    # def test_create_data_function(self):
+    #     """Test create_data function"""
+    #     print(Fore.BLUE + "Testing create_data function..." + Style.RESET)
+
+    #     test_path = "test_data"
+    #     
+    #     with patch('Chern.utils.csys.strip_path_string') as mock_strip, \
+    #          patch('os.path.abspath') as mock_abspath, \
+    #          patch('Chern.kernel.vobject.VObject') as mock_vobject, \
+    #          patch('Chern.utils.csys.mkdir') as mock_mkdir, \
+    #          patch('Chern.utils.metadata.ConfigFile') as mock_config_file, \
+    #          patch('Chern.utils.metadata.YamlFile') as mock_yaml_file, \
+    #          patch('builtins.open', mock_open()) as mock_file:
+    #         
+    #         mock_strip.return_value = test_path
+    #         mock_abspath.return_value = "/parent/path"
+    #         
+    #         # Mock parent object as directory
+    #         mock_parent = MagicMock()
+    #         mock_parent.object_type.return_value = "directory"
+    #         mock_vobject.return_value = mock_parent
+    #         
+    #         # Mock config and yaml files
+    #         mock_config_instance = MagicMock()
+    #         mock_config_file.return_value = mock_config_instance
+    #         mock_yaml_instance = MagicMock()
+    #         mock_yaml_file.return_value = mock_yaml_instance
+    #         
+    #         # Mock task object
+    #         mock_task = MagicMock()
+    #         mock_task.invariant_path.return_value = "test_data"
+    #         mock_vobject.side_effect = [mock_parent, mock_task]
+    #         
+    #         vtsk.create_data(test_path)
+    #         
+    #         # Verify method calls
+    #         mock_strip.assert_called_once_with(test_path)
+    #         mock_mkdir.assert_called_once_with(f"{test_path}/.chern")
+    #         
+    #         # Verify config file writes (only object_type for data)
+    #         mock_config_instance.write_variable.assert_called_once_with(
+    #             "object_type", "task"
+    #         )
+    #         
+    #         # Verify yaml file writes (rawdata environment and empty uuid)
+    #         yaml_calls = mock_yaml_instance.write_variable.call_args_list
+    #         self.assertEqual(len(yaml_calls), 2)
+    #         self.assertEqual(yaml_calls[0][0], ("environment", "rawdata"))
+    #         self.assertEqual(yaml_calls[1][0], ("uuid", ""))
+    #         
+    #         # Verify README file was written
+    #         mock_file.assert_called_once_with(
+    #             f"{test_path}/.chern/README.md", "w", encoding="utf-8"
+    #         )
+
+    #     # Test creating data in non-project/directory parent
+    #     with patch('Chern.utils.csys.strip_path_string') as mock_strip, \
+    #          patch('os.path.abspath') as mock_abspath, \
+    #          patch('Chern.kernel.vobject.VObject') as mock_vobject:
+    #         
+    #         mock_strip.return_value = test_path
+    #         mock_abspath.return_value = "/parent/path"
+    #         
+    #         # Mock parent object as non-project/directory
+    #         mock_parent = MagicMock()
+    #         mock_parent.object_type.return_value = "algorithm"
+    #         mock_vobject.return_value = mock_parent
+    #         
+    #         # Should return early without creating anything
+    #         result = vtsk.create_data(test_path)
+    #         self.assertIsNone(result)
+
+
+if __name__ == '__main__':
+    unittest.main(verbosity=2)
 
