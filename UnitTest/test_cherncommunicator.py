@@ -18,8 +18,8 @@ class TestChernCommunicator(unittest.TestCase):
     @patch("Chern.kernel.chern_communicator.requests.get")  # Patch at the location where it's used
     def test_dite_status(self, mock_get):
         print(Fore.BLUE + "Testing Dite Status..." + Style.RESET)
-        prepare.create_chern_project("demo_genfit_new")
-        os.chdir("demo_genfit_new")
+        prepare.create_chern_project("demo_complex")
+        os.chdir("demo_complex")
         obj_gen = vobj.VObject("Gen")
         obj_genTask = vobj.VObject("GenTask")
         obj_fit = vobj.VObject("Fit")
@@ -46,7 +46,7 @@ class TestChernCommunicator(unittest.TestCase):
         self.assertEqual(status, "unconnected")
 
         os.chdir("..")
-        prepare.remove_chern_project("demo_genfit_new")
+        prepare.remove_chern_project("demo_complex")
         CHERN_CACHE.__init__()
 
 
@@ -413,5 +413,344 @@ class TestChernCommunicator(unittest.TestCase):
         prepare.remove_chern_project("demo_genfit_new")
         CHERN_CACHE.__init__()
 
-if __name__ == "__main__":
-    unittest.main(verbosity=2)
+    @patch("Chern.kernel.chern_communicator.requests.get")
+    @patch("Chern.kernel.chern_communicator.requests.post")
+    @patch("Chern.kernel.chern_communicator.open", new_callable=mock_open,
+           read_data=b"filedata")
+    def test_submit(self, mock_open_fn, mock_post, mock_get):
+        print(Fore.BLUE + "Testing Submit..." + Style.RESET)
+        prepare.create_chern_project("demo_genfit_new")
+        os.chdir("demo_genfit_new")
+
+        # Setup mock impression
+        class FakeImpression:
+            uuid = "abc123"
+            tarfile = "/path/to/impression.tar"
+            path = "/path/to/impression"
+
+        impression = FakeImpression()
+
+        self.comm = ChernCommunicator()
+        self.comm.serverurl = MagicMock(return_value="localhost:8080")
+
+        # Mock responses
+        mock_get.return_value = MagicMock(text="machine123")
+        mock_post.return_value = MagicMock()
+
+        # Call submit method
+        self.comm.submit(impression, machine="local")
+
+        # Verify get call for machine_id
+        mock_get.assert_any_call(
+            "http://localhost:8080/machine_id/local", timeout=10
+        )
+        # Verify get call for run
+        mock_get.assert_any_call(
+            "http://localhost:8080/run/abc123/machine123", timeout=10
+        )
+
+        # Verify post call for upload
+        mock_post.assert_called_once()
+        args, kwargs = mock_post.call_args
+        self.assertIn("http://localhost:8080/upload", args[0])
+
+        os.chdir("..")
+        prepare.remove_chern_project("demo_genfit_new")
+        CHERN_CACHE.__init__()
+
+    @patch("Chern.kernel.chern_communicator.requests.post")
+    @patch("Chern.kernel.chern_communicator.open", new_callable=mock_open,
+           read_data=b"filedata")
+    def test_deposit(self, mock_open_fn, mock_post):
+        print(Fore.BLUE + "Testing Deposit..." + Style.RESET)
+        prepare.create_chern_project("demo_genfit_new")
+        os.chdir("demo_genfit_new")
+
+        # Setup mock impression
+        class FakeImpression:
+            uuid = "abc123"
+            tarfile = "/path/to/impression.tar"
+            path = "/path/to/impression"
+
+        impression = FakeImpression()
+
+        self.comm = ChernCommunicator()
+        self.comm.serverurl = MagicMock(return_value="localhost:8080")
+
+        # Call deposit method
+        self.comm.deposit(impression)
+
+        # Verify post call
+        mock_post.assert_called_once()
+        args, kwargs = mock_post.call_args
+        self.assertIn("http://localhost:8080/upload", args[0])
+
+        os.chdir("..")
+        prepare.remove_chern_project("demo_genfit_new")
+        CHERN_CACHE.__init__()
+
+    @patch("Chern.kernel.chern_communicator.requests.get")
+    def test_is_deposited(self, mock_get):
+        print(Fore.BLUE + "Testing Is Deposited..." + Style.RESET)
+        prepare.create_chern_project("demo_genfit_new")
+        os.chdir("demo_genfit_new")
+
+        # Setup mock impression
+        class FakeImpression:
+            uuid = "abc123"
+
+        impression = FakeImpression()
+
+        self.comm = ChernCommunicator()
+        self.comm.serverurl = MagicMock(return_value="localhost:8080")
+
+        # Test successful case
+        mock_get.reset_mock()
+        mock_get.return_value = MagicMock(text="TRUE")
+        result = self.comm.is_deposited(impression)
+        
+        mock_get.assert_called_once_with(
+            "http://localhost:8080/deposited/abc123", timeout=10
+        )
+        self.assertEqual(result, "TRUE")
+
+        # Test exception case
+        mock_get.reset_mock()
+        mock_get.side_effect = Exception("Connection error")
+        result = self.comm.is_deposited(impression)
+        self.assertEqual(result, "FALSE")
+
+        os.chdir("..")
+        prepare.remove_chern_project("demo_genfit_new")
+        CHERN_CACHE.__init__()
+
+    @patch("Chern.kernel.chern_communicator.requests.get")
+    def test_kill(self, mock_get):
+        print(Fore.BLUE + "Testing Kill..." + Style.RESET)
+        prepare.create_chern_project("demo_genfit_new")
+        os.chdir("demo_genfit_new")
+
+        # Setup mock impression
+        class FakeImpression:
+            uuid = "abc123"
+
+        impression = FakeImpression()
+
+        self.comm = ChernCommunicator()
+        self.comm.serverurl = MagicMock(return_value="localhost:8080")
+
+        # Test successful case
+        mock_get.reset_mock()
+        mock_get.return_value = MagicMock(text="killed")
+        result = self.comm.kill(impression)
+        
+        mock_get.assert_called_once_with(
+            "http://localhost:8080/kill/abc123", timeout=10
+        )
+        self.assertEqual(result, "killed")
+
+        # Test exception case
+        mock_get.reset_mock()
+        mock_get.side_effect = Exception("Connection error")
+        result = self.comm.kill(impression)
+        self.assertEqual(result, "unconnected")
+
+        os.chdir("..")
+        prepare.remove_chern_project("demo_genfit_new")
+        CHERN_CACHE.__init__()
+
+    @patch("Chern.kernel.chern_communicator.requests.get")
+    def test_runners(self, mock_get):
+        print(Fore.BLUE + "Testing Runners..." + Style.RESET)
+        prepare.create_chern_project("demo_genfit_new")
+        os.chdir("demo_genfit_new")
+
+        self.comm = ChernCommunicator()
+        self.comm.serverurl = MagicMock(return_value="localhost:8080")
+
+        # Test successful case
+        mock_get.reset_mock()
+        mock_get.return_value = MagicMock(text="runner1 runner2 runner3")
+        result = self.comm.runners()
+        
+        mock_get.assert_called_once_with(
+            "http://localhost:8080/runners", timeout=10
+        )
+        self.assertEqual(result, ["runner1", "runner2", "runner3"])
+
+        # Test exception case
+        mock_get.reset_mock()
+        mock_get.side_effect = Exception("Connection error")
+        result = self.comm.runners()
+        self.assertEqual(result, ["unconnected to DITE"])
+
+        os.chdir("..")
+        prepare.remove_chern_project("demo_genfit_new")
+        CHERN_CACHE.__init__()
+
+    @patch("Chern.kernel.chern_communicator.requests.post")
+    def test_register_runner(self, mock_post):
+        print(Fore.BLUE + "Testing Register Runner..." + Style.RESET)
+        prepare.create_chern_project("demo_genfit_new")
+        os.chdir("demo_genfit_new")
+
+        self.comm = ChernCommunicator()
+        self.comm.serverurl = MagicMock(return_value="localhost:8080")
+
+        # Call register_runner method
+        self.comm.register_runner("new_runner", "http://runner.url",
+                                  "token123")
+
+        # Verify post call
+        mock_post.assert_called_once_with(
+            "http://localhost:8080/registerrunner",
+            data={'runner': 'new_runner', 'url': 'http://runner.url',
+                  'token': 'token123'},
+            timeout=10
+        )
+
+        os.chdir("..")
+        prepare.remove_chern_project("demo_genfit_new")
+        CHERN_CACHE.__init__()
+
+    @patch("Chern.kernel.chern_communicator.requests.get")
+    def test_sample_status(self, mock_get):
+        print(Fore.BLUE + "Testing Sample Status..." + Style.RESET)
+        prepare.create_chern_project("demo_genfit_new")
+        os.chdir("demo_genfit_new")
+
+        # Setup mock impression
+        class FakeImpression:
+            uuid = "abc123"
+
+        impression = FakeImpression()
+
+        self.comm = ChernCommunicator()
+        self.comm.serverurl = MagicMock(return_value="localhost:8080")
+
+        # Test successful case
+        mock_get.reset_mock()
+        mock_get.return_value = MagicMock(text="sample_status_ok")
+        result = self.comm.sample_status(impression)
+        
+        mock_get.assert_called_once_with(
+            "http://localhost:8080/samplestatus/abc123", timeout=10
+        )
+        self.assertEqual(result, "sample_status_ok")
+
+        # Test exception case
+        mock_get.reset_mock()
+        mock_get.side_effect = Exception("Connection error")
+        result = self.comm.sample_status(impression)
+        self.assertEqual(result, "unconnected to DITE")
+
+        os.chdir("..")
+        prepare.remove_chern_project("demo_genfit_new")
+        CHERN_CACHE.__init__()
+
+    @patch("Chern.kernel.chern_communicator.subprocess.call")
+    def test_display(self, mock_subprocess):
+        print(Fore.BLUE + "Testing Display..." + Style.RESET)
+        prepare.create_chern_project("demo_genfit_new")
+        os.chdir("demo_genfit_new")
+
+        # Setup mock impression
+        class FakeImpression:
+            uuid = "abc123"
+
+        impression = FakeImpression()
+
+        self.comm = ChernCommunicator()
+        self.comm.serverurl = MagicMock(return_value="localhost:8080")
+
+        # Call display method
+        self.comm.display(impression, "output.html")
+
+        # Verify subprocess call
+        mock_subprocess.assert_called_once_with([
+            "open",
+            "http://localhost:8080/export/abc123/output.html"
+        ])
+
+        os.chdir("..")
+        prepare.remove_chern_project("demo_genfit_new")
+        CHERN_CACHE.__init__()
+
+    @patch("Chern.kernel.chern_communicator.subprocess.call")
+    def test_impview(self, mock_subprocess):
+        print(Fore.BLUE + "Testing Impview..." + Style.RESET)
+        prepare.create_chern_project("demo_genfit_new")
+        os.chdir("demo_genfit_new")
+
+        # Setup mock impression
+        class FakeImpression:
+            uuid = "abc123"
+
+        impression = FakeImpression()
+
+        self.comm = ChernCommunicator()
+        self.comm.serverurl = MagicMock(return_value="localhost:8080")
+
+        # Call impview method
+        self.comm.impview(impression)
+
+        # Verify subprocess call
+        mock_subprocess.assert_called_once_with([
+            "open",
+            "http://localhost:8080/impview/abc123"
+        ])
+
+        os.chdir("..")
+        prepare.remove_chern_project("demo_genfit_new")
+        CHERN_CACHE.__init__()
+
+    def test_add_host_and_serverurl(self):
+        print(Fore.BLUE + "Testing Add Host and ServerURL..." + Style.RESET)
+        prepare.create_chern_project("demo_complex")
+        os.chdir("demo_complex")
+
+        self.comm = ChernCommunicator()
+        
+        # Get the current serverurl (might be from config)
+        current_url = self.comm.serverurl()
+        self.assertIsInstance(current_url, str)
+        self.assertIn(":", current_url)  # Should contain port
+
+        # Test add_host
+        new_url = "newserver:8080"
+        self.comm.add_host(new_url)
+        
+        # Verify the URL was updated
+        updated_url = self.comm.serverurl()
+        self.assertEqual(updated_url, new_url)
+
+        os.chdir("..")
+        prepare.remove_chern_project("demo_complex")
+        CHERN_CACHE.__init__()
+
+    @patch("Chern.kernel.chern_communicator.requests.get")
+    def test_get_file_fixed(self, mock_get):
+        print(Fore.BLUE + "Testing Get File (Fixed)..." + Style.RESET)
+        prepare.create_chern_project("demo_genfit_new")
+        os.chdir("demo_genfit_new")
+
+        self.comm = ChernCommunicator()
+        self.comm.serverurl = MagicMock(return_value="localhost:8080")
+
+        # Mock the response for get_file
+        mock_get.reset_mock()
+        mock_response = MagicMock()
+        mock_response.text = "/path/to/file"
+        mock_get.return_value = mock_response
+
+        result = self.comm.get_file("impression123", "output.txt")
+
+        mock_get.assert_called_once_with(
+            "http://localhost:8080/getfile/impression123/output.txt",
+            timeout=10
+        )
+        self.assertEqual(result, "/path/to/file")
+
+        os.chdir("..")
+        prepare.remove_chern_project("demo_genfit_new")
+        CHERN_CACHE.__init__()

@@ -7,6 +7,7 @@ import prepare
 
 CHERN_CACHE = ChernCache.instance()
 
+
 class TestChernProject(unittest.TestCase):
 
     def setUp(self):
