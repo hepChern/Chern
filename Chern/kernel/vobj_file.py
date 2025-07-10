@@ -8,7 +8,6 @@ from dataclasses import dataclass
 from logging import getLogger
 
 from ..utils import csys
-from ..utils.pretty import colorize
 from ..utils.message import Message
 from ..utils import metadata
 from .vobj_core import Core
@@ -41,25 +40,28 @@ class FileManagement(Core):
 
         logger.debug("VObject ls: %s", self.invariant_path())
 
-        self.print_dite_status()
+        message = self.printed_dite_status()
 
         if show_info.readme:
-            print(colorize("README:", "comment"))
-            print(colorize(self.readme(), "comment"))
+            message.add("README: \n", "comment")
+            message.add(self.readme(), "comment")
+            message.add("\n")
 
         sub_objects = self.sub_objects()
         if show_info.sub_objects:
-            self.show_sub_objects(sub_objects, show_info)
+            message.append(self.show_sub_objects(sub_objects, show_info))
 
         total = len(sub_objects)
         predecessors = self.predecessors()
         if predecessors and show_info.predecessors:
-            self.show_predecessors(predecessors, total)
+            message.append(self.show_predecessors(predecessors, total))
 
         total += len(predecessors)
         successors = self.successors()
         if successors and show_info.successors:
-            self.show_successors(successors, total)
+            message.append(self.show_successors(successors, total))
+
+        return message
 
     def show_status(self):
         """ Show the status of the task.
@@ -71,9 +73,12 @@ class FileManagement(Core):
         }
 
         status_color = status_color_map.get(status, "")
-        status_str = colorize(f"[{status}]", status_color)
 
-        print(colorize("**** STATUS:", "title0"), status_str)
+        message = Message()
+        message.add("**** STATUS: ", "title0")
+        message.add(f"[{status}]", status_color)
+        message.add("\n")
+        return message
 
     def printed_status(self): # pylint: disable=too-many-branches
         """ Printed the status of the object"""
@@ -142,23 +147,26 @@ class FileManagement(Core):
                 message.add(f"[{status}]")
         return message
 
-    def print_dite_status(self):
+    def printed_dite_status(self):
         """ Print the status of the DITE"""
         cherncc = ChernCommunicator.instance()
-        hosts_status = colorize(">>>> DITE: ", "title0")
+        message = Message()
+        message.add(">>>> DITE: ", "title0")
         status = cherncc.dite_status()
         if status == "ok":
-            hosts_status += colorize("[connected] ", "success")
+            message.add("[connected]", "success")
         elif status == "unconnected":
-            hosts_status += colorize("[unconnected] ", "warning")
-        print(hosts_status)
+            message.add("[unconnected]", "warning")
+        message.add("\n")
+        return message
 
     def show_sub_objects(self, sub_objects, show_info):
         """ Show the sub_objects"""
+        message = Message()
         sub_objects = self.sub_objects()
         sub_objects.sort(key=lambda x: (x.object_type(), x.path))
         if sub_objects:
-            print(colorize(">>>> Subobjects:", "title0"))
+            message.add(">>>> Subobjects:\n", "title0")
 
         for index, sub_object in enumerate(sub_objects):
             sub_path = self.relative_path(sub_object.path)
@@ -166,38 +174,54 @@ class FileManagement(Core):
                 # FIXME
                 status = "[FIXME]"
                 color_tag = self.color_tag(status)
-                print(f"{f'[{index}]'} {f'({sub_object.object_type()})':<12} "
-                      f"{sub_path:>20} ({colorize(status, color_tag)})")
+                message.add(f"[{index}] {f'({sub_object.object_type()})':<12} "
+                            f"{sub_path:>20} ")
+                message.add(f"({status})", color_tag)
+                message.add("\n")
             else:
-                print(f"[{index}] {f'({sub_object.object_type()})':<12} {sub_path:>20}")
+                message.add(f"[{index}] {f'({sub_object.object_type()})':<12} {sub_path:>20}\n")
+        return message
 
     def show_predecessors(self, predecessors, total):
         """ Show the predecessors of the object"""
-        print(colorize("o--> Predecessors:", "title0"))
+        message = Message()
 
-        # Sort the predecessors by the alias
+        # Header
+        message.add("o--> Predecessors:\n", "title0")
+
+        # Sort the predecessors by alias
         yaml_file = metadata.YamlFile(os.path.join(self.path, "chern.yaml"))
         alias_list = yaml_file.read_variable("alias", [])
-        predecessors.sort(key=lambda x: alias_list.index(self.path_to_alias(x.invariant_path()))
-                          if self.path_to_alias(x.invariant_path()) in alias_list else -1)
+        predecessors.sort(
+            key=lambda x: alias_list.index(self.path_to_alias(x.invariant_path()))
+            if self.path_to_alias(x.invariant_path()) in alias_list
+            else -1,
+        )
 
+        # Emit each predecessor
         for index, pred_object in enumerate(predecessors):
             alias = self.path_to_alias(pred_object.invariant_path())
-            # FIXME: the following should be deleted after having the new version
+
+            # --- temporary alias‑list patch (delete after new version) ---
             yaml_file = metadata.YamlFile(os.path.join(self.path, "chern.yaml"))
             alias_list = yaml_file.read_variable("alias", [])
-            if alias != '' and alias not in alias_list:
+            if alias and alias not in alias_list:
                 alias_list.append(alias)
             yaml_file.write_variable("alias", alias_list)
-            # FIXME: end here
-            order = f"[{total+index}]"
+            # -------------------------------------------------------------
+
+            order     = f"[{total + index}]"
+            obj_type  = f"({pred_object.object_type()})"
             pred_path = pred_object.invariant_path()
-            obj_type = "("+pred_object.object_type()+")"
-            print(f"{order} {obj_type:<12} {alias:>10}: @/{pred_path:<20}")
+            line = f"{order} {obj_type:<12} {alias:>10}: @/{pred_path:<20}\n"
+            message.add(line)
+
+        return message
 
     def show_successors(self, successors, total):
         """ Show the successors of the object"""
-        print(colorize("-->o Successors:", "title0"))
+        message = Message()
+        message.add("-->o Successors:\n", "title0")
         for index, succ_object in enumerate(successors):
             alias = self.path_to_alias(succ_object.invariant_path())
             order = f"[{total+index}]"
@@ -205,8 +229,8 @@ class FileManagement(Core):
                 succ_object.invariant_path()
             )
             obj_type = f"({succ_object.object_type()})"
-            print(f"{order} {obj_type:<12} {alias:>10}: @/{succ_path:<20}")
-
+            message.add(f"{order} {obj_type:<12} {alias:>10}: @/{succ_path:<20}\n")
+        return message
 
     def copy_to_check(self, new_path): # UnitTest: DONE
         """ Check if the new path is valid for copying
@@ -214,17 +238,17 @@ class FileManagement(Core):
         # Check if the destination directory exists
         destination_dir = os.path.dirname(new_path)
         if not os.path.exists(destination_dir) and destination_dir:
-            print(f"Error: Destination directory '{destination_dir}' does not exist.")
+            logger.warning("Warning: Destination directory '%s' does not exist.", destination_dir)
             return False
 
         # Check if source and destination paths are the same
         if os.path.abspath(self.path) == os.path.abspath(new_path):
-            print("Error: Source and destination paths are the same.")
+            logger.warning("Warning: Source and destination paths are the same.")
             return False
 
         # Check if the destination path already exists
         if os.path.exists(new_path):
-            print(f"Error: Destination path '{new_path}' already exists.")
+            logger.warning("Warning: Destination path '%s' already exists.", new_path)
             return False
 
         return True

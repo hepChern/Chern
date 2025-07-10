@@ -9,7 +9,6 @@ from abc import abstractmethod
 from logging import getLogger
 
 from . import helpme
-from ..utils.pretty import colorize
 from ..utils.message import Message
 from .vobject import VObject
 from .vobj_file import LsParameters
@@ -30,91 +29,95 @@ class Core(VObject):
     def ls(self, show_info=LsParameters()):
         """ List the information of the task.
         """
-        super().ls(show_info)
+        message = super().ls(show_info)
 
-        self.show_parameters()
+        message.append(self.show_parameters())
 
-        if show_info.status:
-            self.show_status()
-
-        # if self.is_submitted():
-        #   self.show_submission()
+        # if show_info.status:
+        #    message.append(self.show_status())
 
         if self.algorithm() is not None:
-            self.show_algorithm()
+            message.append(self.show_algorithm())
+
+        return message
 
     def show_parameters(self):
         """ Show the parameters of the task.
         """
         parameters, values = self.parameters()
-        if parameters != []:
-            print(colorize("---- Parameters:", "title0"))
-        for parameter in parameters:
-            print(parameter, end=" = ")
-            print(values[parameter])
+        message = Message()
+
+        if parameters:
+            message.add("---- Parameters:\n", "title0")
+            for parameter in parameters:
+                message.add(f"{parameter} = {values[parameter]}\n")
 
         if self.environment() == "rawdata":
-            print(colorize("---- Input data:", "title0"), self.input_md5())
+            message.add("---- Input data: ", "title0")
+            message.add(f"{self.input_md5()}")
+            message.add("\n")
 
-        print(colorize("---- Environment:", "title0"), self.environment())
-        print(colorize("---- Memory limit:", "title0"), self.memory_limit())
-        if self.validated():
-            print(colorize("---- Validated:", "title0"), colorize("true"))
-        else:
-            print(colorize("---- Validated:", "title0"), colorize("false"))
+        message.add("Environment: ", "title0")
+        message.add(f"{self.environment()}")
+        message.add("\n")
 
-        print(colorize("---- Auto download:", "title0"), self.auto_download())
-        print(colorize("---- Default runner:", "title0"), self.default_runner())
+        message.add("Memory limit: ", "title0")
+        message.add(f"{self.memory_limit()}")
+        message.add("\n")
+
+        validated_str = "true" if self.validated() else "false"
+        message.add("Validated: ", "title0")
+        message.add(f"{validated_str}")
+        message.add("\n")
+
+        message.add("Auto download: ", "title0")
+        message.add(f"{self.auto_download()}")
+        message.add("\n")
+
+        message.add("Default runner: ", "title0")
+        message.add(f"{self.default_runner()}")
+        message.add("\n")
+
+
+        return message
 
     def show_algorithm(self):
         """ Show the algorithm of the task.
         """
-        print(colorize("---- Algorithm files:", "title0"))
+        message = Message()
+
+        message.add("---- Algorithm files:\n", "title0")
+
         files = os.listdir(self.algorithm().path)
-        if files == []:
-            return
-        files.sort()
-        max_len = max(len(s) for s in files)
+        if not files:
+            return message
+
+        files = sorted(f for f in files
+            if not f.startswith(".") and f not in ["README.md", "chern.yaml"])
+        if not files:
+            return message
+
+        max_len = max(len(f) for f in files)
         columns = os.get_terminal_size().columns
-        nfiles = columns // (max_len+4+11)
-        count = 0
-        for f in files:
-            count += 1
-            if f.startswith("."):
-                continue
-            if f == "README.md":
-                continue
-            if f == "chern.yaml":
-                continue
-            print(f"algorithm:{f:<{max_len+4}}", end="")
-            if count % nfiles == 0:
-                print("")
-        if count % nfiles != 0:
-            print("")
-        print(colorize("---- Commands:", "title0"))
+        nfiles = max(1, columns // (max_len + 4 + 11))  # Avoid division by zero
+        line = ""
+
+        for i, f in enumerate(files, start=1):
+            line += f"algorithm:{f:<{max_len+4}}"
+            if i % nfiles == 0:
+                message.add(line + "\n")
+                line = ""
+        if line:
+            message.add(line + "\n")
+
+        message.add("---- Commands:\n", "title0")
         for command in self.algorithm().commands():
             parameters, values = self.parameters()
             for parameter in parameters:
-                parname = "${" + parameter + "}"
-                command = command.replace(parname, values[parameter])
-            print(command)
+                command = command.replace("${" + parameter + "}", values[parameter])
+            message.add(command + "\n")
 
-    def show_submission(self):
-        """ Show the submission of the task.
-        """
-        print(colorize("---- Files:", "title0"))
-        files = self.output_files()
-        if files != []:
-            files.sort()
-            max_len = max(len(s) for s in files)
-            columns = os.get_terminal_size().columns
-            nfiles = columns // (max_len+4+7)
-            for i, f in enumerate(files):
-                if not f.startswith(".") and f != "README.md":
-                    print(f"local:{f:<{max_len+4}}", end="")
-                    if (i+1) % nfiles == 0:
-                        print("")
-            print("")
+        return message
 
     @abstractmethod
     def get_task(self, path):

@@ -26,7 +26,8 @@ class ChernShell(cmd.Cmd):
 
     def do_ls(self, arg):
         try:
-            manager.current_object().ls()
+            message = manager.current_object().ls()
+            print(message.colored())
         except Exception as e:
             print(e)
 

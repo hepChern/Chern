@@ -5,7 +5,6 @@ import shutil
 import subprocess
 
 from ..utils import csys
-from ..utils.pretty import colorize
 from ..utils import metadata
 from ..utils.message import Message
 
@@ -58,49 +57,60 @@ class VAlgorithm(VObject):
     def ls(self, show_info=LsParameters()):
         """ list the infomation.
         """
-        super().ls(show_info)
+        message = super().ls(show_info)
 
         if show_info.status:
             status = self.status()
-            status_str = colorize("["+status+"]")
-            print(colorize("**** STATUS:", "title0"), status_str)
+            status_str = f"[{status}]"
+            message.add("**** STATUS: ", "title0")
+            message.add(status_str)
+            message.add("\n")
 
-        self.print_files(self.path, excluded=(".chern", "chern.yaml", "README.md"))
+        # Append message from print_files()
+        message.append(self.print_files(self.path, excluded=(".chern", "chern.yaml", "README.md")))
 
         environment = self.environment()
-        print(colorize("---- Environment:", "title0"), environment)
+        message.add(f"---- Environment: {environment}\n", "title0")
 
         build_commands = self.build_commands()
         if build_commands:
-            print(colorize("---- Build commands:", "title0"))
+            message.add("---- Build commands:\n", "title0")
             for command in build_commands:
-                print(command)
+                message.add(command + "\n")
 
         commands = self.commands()
         if commands:
-            print(colorize("---- Commands:", "title0"))
+            message.add("---- Commands:\n", "title0")
             for command in commands:
-                print(command)
+                message.add(command + "\n")
+
+        return message
 
 
     def print_files(self, path, excluded=()):
         """ Print the files in the path """
-        print(colorize("---- Files:", "title0"))
+        message = Message()
+        message.add("---- Files:\n", "title0")
+
         files = [f for f in os.listdir(path) if not f.startswith(".") and f not in excluded]
-
         if not files:
-            print("No files found.")
-            return
+            message.add("No files found.\n")
+            return message
 
-        # Determine terminal width
         terminal_width = shutil.get_terminal_size((80, 20)).columns
-        max_length = max(len(f) for f in files) + 2  # Padding
-        # Calculate number of columns
+        max_length = max(len(f) for f in files) + 2  # padding
         num_columns = max(1, terminal_width // max_length)
-        # Print files in columns
+
+        line = ""
         for i, f in enumerate(files):
-            print(f.ljust(max_length), end="\n" if (i + 1) % num_columns == 0 else "")
-        print()
+            line += f.ljust(max_length)
+            if (i + 1) % num_columns == 0:
+                message.add(line + "\n")
+                line = ""
+        if line:
+            message.add(line + "\n")
+
+        return message
 
     def commands(self):
         """ Get the commands from the yaml file """
