@@ -32,6 +32,7 @@
 import os
 from ..utils import csys
 from ..utils import metadata
+from ..utils.message import Message
 from .vobject import VObject
 from .vtask import VTask
 from .valgorithm import VAlgorithm
@@ -44,7 +45,9 @@ class VDirectory(VObject):
     def helpme(self, command):
         """ Print the helpme of this directory
         """
-        print(helpme.directory_helpme.get(command, "No such command, try ``helpme'' alone."))
+        message = Message()
+        message.add(helpme.directory_helpme.get(command, "No such command, try ``helpme'' alone."))
+        return message
 
     def get_impressions(self):
         """ Get the impressions of the directory

@@ -78,7 +78,7 @@ class SettingManager(Core):
         parameters_file = metadata.YamlFile(join(self.path, "chern.yaml"))
         parameters = parameters_file.read_variable("parameters", {})
         if parameter not in parameters.keys():
-            print("Parameter not found")
+            logger.warning("Parameter '%s' not found in parameters file", parameter)
             return
         parameters.pop(parameter)
         parameters_file.write_variable("parameters", parameters)

@@ -7,6 +7,7 @@ import subprocess
 from ..utils import csys
 from ..utils.pretty import colorize
 from ..utils import metadata
+from ..utils.message import Message
 
 from .chern_cache import ChernCache
 from .chern_communicator import ChernCommunicator
@@ -23,15 +24,17 @@ class VAlgorithm(VObject):
 
     def helpme(self, command):
         """ Helpme function """
-        print(helpme.algorithm_helpme.get(command, "No such command, try ``helpme'' alone."))
+        message = Message()
+        message.add(helpme.algorithm_helpme.get(command, "No such command, try ``helpme'' alone."))
+        return message
 
-    def print_status(self):
+    def printed_status(self):
         """ Print the status """
-        super().print_status()
+        message = super().printed_status()
         cherncc = ChernCommunicator.instance()
         workflow_check = cherncc.workflow(self.impression())
         if workflow_check == "UNDEFINED":
-            print("Workflow not defined")
+            message.add("Workflow not defined\n")
 
     def run_status(self):
         """ Asking for the remote status

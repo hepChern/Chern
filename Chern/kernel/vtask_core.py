@@ -10,6 +10,7 @@ from logging import getLogger
 
 from . import helpme
 from ..utils.pretty import colorize
+from ..utils.message import Message
 from .vobject import VObject
 from .vobj_file import LsParameters
 
@@ -22,7 +23,9 @@ class Core(VObject):
     def helpme(self, command):
         """ Print help message for the command.
         """
-        print(helpme.task_helpme.get(command, "No such command, try ``helpme'' alone."))
+        message = Message()
+        message.add(helpme.task_helpme.get(command, "No such command, try ``helpme'' alone."))
+        return message
 
     def ls(self, show_info=LsParameters()):
         """ List the information of the task.

@@ -53,7 +53,10 @@ class JobManager(Core):
             self.impression(), filename, output_file
             )
         if output_file_path == "NOTFOUND":
-            print(f"File {filename} not found")
+            logger.error(
+                "File %s not found in the job %s",
+                filename, self.impression()
+            )
 
     def send_data(self, path):
         """ Send data to the job"""

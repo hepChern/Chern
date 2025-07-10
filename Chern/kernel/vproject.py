@@ -5,6 +5,7 @@
 import os
 from ..utils import metadata
 from ..utils import csys
+from ..utils.message import Message
 from .vobject import VObject
 from .chern_communicator import ChernCommunicator
 from . import helpme
@@ -14,8 +15,10 @@ class VProject(VObject):
     """
 
     def helpme(self, command):
-        """ Print the help message"""
-        print(helpme.project_helpme.get(command, "No such command, try ``helpme'' alone."))
+        """ get the help message"""
+        message = Message()
+        message.add(helpme.project_helpme.get(command, "No such command, try ``helpme'' alone."))
+        return message
 
     def get_impressions(self):
         """ Get all the impressions of the project"""
@@ -32,13 +35,11 @@ class VProject(VObject):
         """ Submit the project to the server"""
         cherncc = ChernCommunicator.instance()
         self.deposit()
-        print("Submit the project")
         impressions = self.get_impressions()
         cherncc.execute(impressions, runner)
 
     def clean_impressions(self):
         """ Clean all the impressions of the project"""
-        print("Clean all the impressions")
         clean_confirmed = input("Are you sure to clean all the impressions? [y/n]")
         if clean_confirmed != "y":
             return

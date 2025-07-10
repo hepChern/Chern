@@ -255,7 +255,7 @@ class ChernShell(cmd.Cmd):
 
     def do_helpme(self, arg):
         try:
-            manager.current_object().helpme(arg)
+            print(manager.current_object().helpme(arg).colored())
         except Exception as e:
             print(e)
 

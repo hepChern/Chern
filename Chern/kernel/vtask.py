@@ -88,7 +88,6 @@ from os.path import join
 
 from ..utils import metadata
 from ..utils import csys
-from ..utils.pretty import colorize
 from ..utils.csys import open_subprocess
 
 from .chern_cache import ChernCache
@@ -130,41 +129,49 @@ class VTask(InputManager, SettingManager, FileManager, JobManager):
             with open_subprocess(f"open {path}"):
                 pass
 
-    def print_status(self):
+    def printed_status(self):
         """ Print the status of the task
         """
-        super().print_status()
+        message = super().printed_status()
 
         if self.status() != "impressed":
-            return
+            return message
 
         cherncc = ChernCommunicator.instance()
         job_status = cherncc.job_status(self.impression())
-        print(f"Job status: {colorize('['+job_status+']', 'success')}")
+        message.add("Job status: ")
+        message.add(f"{'['+job_status+']'}", "success")
+        message.add("\n")
 
         environment = self.environment()
         if environment == "rawdata":
             files = cherncc.output_files(self.impression(), "none")
-            print("Sample files (collected on DIET):")
+            message.add("Sample files (collected on DIET):\n", "title0")
             for f in files:
-                print(f"    {f}")
-            return
+                message.add(f"    {f}\n")
+            return message
 
         workflow_check = cherncc.workflow(self.impression())
         if workflow_check[0] == "UNDEFINED":
-            print("Workflow not defined")
-            return
+            message.add("Workflow not defined", "error")
+            message.add("\n")
+            return message
 
         if environment != "rawdata":
-            print(colorize("**** WORKFLOW:", "title0"))
+            message.add("**** Workflow: ", "title0")
+            message.add("\n")
             runner = workflow_check[0]
             workflow = workflow_check[1]
-            print(f"Workflow: {colorize('['+runner+']')}{colorize('['+workflow+']')}")
+            message.add("Workflow: ")
+            message.add(f"[{runner}]", "success")
+            message.add(f"[{workflow}]", "success")
+            message.add("\n")
 
             files = cherncc.output_files(self.impression(), runner)
-            print("Output files (collected on DIET):")
+            message.add("Output files (collected on DIET):\n", "title0")
             for f in files:
-                print(f"    {f}")
+                message.add(f"    {f}\n")
+        return message
 
     def get_task(self, path):
         """ Get the task from the path

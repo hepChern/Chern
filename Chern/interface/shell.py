@@ -299,7 +299,7 @@ def jobs(line):
     manager.c.jobs()
 
 def status():
-    manager.current_object().print_status()
+    print(manager.current_object().printed_status().colored())
 
 def import_file(filename):
     if manager.c.object_type() != "task" and manager.c.object_type() != "algorithm":

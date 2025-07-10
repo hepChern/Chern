@@ -9,6 +9,7 @@ from logging import getLogger
 
 from ..utils import csys
 from ..utils.pretty import colorize
+from ..utils.message import Message
 from ..utils import metadata
 from .vobj_core import Core
 
@@ -74,45 +75,62 @@ class FileManagement(Core):
 
         print(colorize("**** STATUS:", "title0"), status_str)
 
-    def print_status(self): # pylint: disable=too-many-branches
-        """ Print the status of the object"""
+    def printed_status(self): # pylint: disable=too-many-branches
+        """ Printed the status of the object"""
 
-        print(f"Status of : {self.invariant_path()}")
+        message = Message()
+
+        message.add(f"Status of : {self.invariant_path()}\n")
         if self.is_task_or_algorithm():
             if self.status() == "impressed":
-                print(f"Impression: {colorize('['+self.impression().uuid+']', 'success')}")
+                message.add("Impression: ")
+                message.add(f"{'['+self.impression().uuid+']'}", 'success')
+                message.add("\n")
             else:
-                print(f"Impression: {colorize('[new]')}")
-                return
+                message.add("Impression: ")
+                message.add("[new]")
+                message.add("\n")
+                return message
         else:
             if self.status() == "impressed":
-                print(f"All the subobjects are {colorize('impressed','success')}.")
+                message.add("All the subobjects are ")
+                message.add("[impressed]", 'success')
+                message.add(".\n")
             else:
-                print(f"Some subobjects are {colorize('not impressed','normal')}.")
+                message.add("Some subobjects are ")
+                message.add("[not impressed]", 'normal')
+                message.add(".\n")
                 for sub_object in self.sub_objects():
-                    print(sub_object.status())
+                    message.add(sub_object.status())
                     if sub_object.status() == "new":
-                        print(f"Subobject {sub_object} is {colorize('not impressed','normal')}.")
-                return
+                        message.add(f"Subobject {sub_object} is ")
+                        message.add("[not impressed]", 'normal')
+                        message.add("\n")
+                return message
 
         cherncc = ChernCommunicator.instance()
         dite_status = cherncc.dite_status()
         if dite_status == "ok":
-            print(f"DIET: {colorize('[connected]')}")
+            message.add("DITE: ")
+            message.add("[connected]")
+            message.add("\n")
         else:
-            print(f"DIET: {colorize('[unconnected]')}")
-            return
+            message.add("DITE: ")
+            message.add("[unconnected]", "warning")
+            message.add("\n")
+            return message
 
         if self.is_task_or_algorithm():
             deposited = cherncc.is_deposited(self.impression())
             if deposited == "FALSE":
-                print("Impression not deposited in DIET")
-                return
+                message.add("Impression not deposited in DITE\n")
+                return message
 
         if not self.is_task_or_algorithm():
             job_status = self.job_status()
-            print(f"{'Job status':<10}: {colorize('['+job_status+']')}")
-            print("---------------")
+            message.add(f"{'Job status':<10}: ")
+            message.add(f"{'['+job_status+']'}\n")
+            message.add("---------------\n")
             objects = []
             for sub_object in self.sub_objects():
                 objects.append((str(sub_object), sub_object.job_status()))
@@ -120,7 +138,9 @@ class FileManagement(Core):
             max_width = max(len(name) for name, _ in objects)
 
             for name, status in objects:
-                print(f"{name:<{max_width}}: {colorize('['+status+']')}")
+                message.add(f"{name:<{max_width}}: ")
+                message.add(f"[{status}]")
+        return message
 
     def print_dite_status(self):
         """ Print the status of the DITE"""
