@@ -145,6 +145,7 @@ class FileManagement(Core):
             for name, status in objects:
                 message.add(f"{name:<{max_width}}: ")
                 message.add(f"[{status}]")
+                message.add("\n")
         return message
 
     def printed_dite_status(self):
