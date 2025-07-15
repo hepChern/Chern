@@ -92,15 +92,14 @@ from logging import getLogger
 from typing import TYPE_CHECKING
 
 from ..utils import metadata
-
-if TYPE_CHECKING:
-    from .vobj_file import LsParameters
-
 from .vobj_arc_management import ArcManagement
 from .vobj_alias_management import AliasManagement
 from .vobj_impression import ImpressionManagement
 from .vobj_execution import ExecutionManagement
 from .vobj_file import FileManagement
+
+if TYPE_CHECKING:
+    from .vobj_file import LsParameters
 
 
 logger = getLogger("ChernLogger")

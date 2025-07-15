@@ -7,7 +7,7 @@ Unit tests: 8
 import os
 from abc import ABC, abstractmethod
 from logging import getLogger
-from typing import TYPE_CHECKING, Optional, List
+from typing import TYPE_CHECKING, Optional
 
 from ..utils import csys
 from ..utils import metadata

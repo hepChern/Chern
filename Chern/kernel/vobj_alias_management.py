@@ -2,7 +2,7 @@
 """
 import os
 from logging import getLogger
-from typing import Dict, List, TYPE_CHECKING
+from typing import List, TYPE_CHECKING
 
 from Chern.utils import csys
 from ..utils import metadata

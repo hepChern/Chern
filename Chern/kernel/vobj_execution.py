@@ -1,7 +1,7 @@
 """ This module provides the ExecutionManagement class.
 """
 from logging import getLogger
-from typing import Optional, List, TYPE_CHECKING
+from typing import Optional, TYPE_CHECKING
 
 from .chern_communicator import ChernCommunicator
 from .vobj_core import Core

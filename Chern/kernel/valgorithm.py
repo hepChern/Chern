@@ -3,7 +3,7 @@
 import os
 import shutil
 import subprocess
-from typing import List, Tuple, Optional
+from typing import List, Tuple
 
 from ..utils import csys
 from ..utils import metadata
@@ -36,13 +36,13 @@ class VAlgorithm(VObject):
         if workflow_check == "UNDEFINED":
             message.add("Workflow not defined\n")
 
-    def run_status(self):
+    def run_status(self) -> str:
         """ Asking for the remote status
         """
         cherncc = ChernCommunicator.instance()
         return cherncc.status(self.impression())
 
-    def is_submitted(self, runner="local"):
+    def is_submitted(self, runner: str = "local") -> bool:
         """ Judge whether submitted or not. Return a True or False.
         [FIXME: incomplete]
         """
@@ -50,12 +50,12 @@ class VAlgorithm(VObject):
             return False
         return False
 
-    def resubmit(self, runner="local"):
+    def resubmit(self, runner: str = "local") -> None:
         """ Resubmit """
         # FIXME: fixit later
 
 
-    def ls(self, show_info=LsParameters()):
+    def ls(self, show_info: LsParameters = LsParameters()) -> Message:
         """ list the infomation.
         """
         message = super().ls(show_info)
@@ -87,7 +87,7 @@ class VAlgorithm(VObject):
         return message
 
 
-    def print_files(self, path, excluded=()):
+    def print_files(self, path: str, excluded: Tuple[str, ...] = ()) -> Message:
         """ Print the files in the path """
         message = Message()
         message.add("---- Files:\n", "title0")
@@ -112,23 +112,23 @@ class VAlgorithm(VObject):
 
         return message
 
-    def commands(self):
+    def commands(self) -> List[str]:
         """ Get the commands from the yaml file """
         yaml_file = metadata.YamlFile(os.path.join(self.path, "chern.yaml"))
         return yaml_file.read_variable("commands", [])
 
-    def build_commands(self):
+    def build_commands(self) -> List[str]:
         """ Get the build commands from the yaml file """
         yaml_file = metadata.YamlFile(os.path.join(self.path, "chern.yaml"))
         return yaml_file.read_variable("build", [])
 
-    def environment(self):
+    def environment(self) -> str:
         """ Get the environment
         """
         yaml_file = metadata.YamlFile(os.path.join(self.path, "chern.yaml"))
         return yaml_file.read_variable("environment", "")
 
-def create_algorithm(path, use_template=False):
+def create_algorithm(path: str, use_template: bool = False) -> None:
     """ Create an algorithm """
     path = csys.strip_path_string(path)
     os.mkdir(path)

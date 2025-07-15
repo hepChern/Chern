@@ -6,20 +6,19 @@ from os.path import normpath
 import shutil
 from dataclasses import dataclass
 from logging import getLogger
-from typing import List, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 from ..utils import csys
 from ..utils.message import Message
 from ..utils import metadata
 from .vobj_core import Core
+from .chern_cache import ChernCache
+from .chern_communicator import ChernCommunicator
 
 if TYPE_CHECKING:
     from .vobject import VObject
 
-from .chern_cache import ChernCache
-from .chern_communicator import ChernCommunicator
 CHERN_CACHE = ChernCache.instance()
-
 logger = getLogger("ChernLogger")
 
 
