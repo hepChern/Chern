@@ -106,7 +106,6 @@ class FileManagement(Core):
                 message.add("[not impressed]", 'normal')
                 message.add(".\n")
                 for sub_object in self.sub_objects():
-                    message.add(sub_object.status())
                     if sub_object.status() == "new":
                         message.add(f"Subobject {sub_object} is ")
                         message.add("[not impressed]", 'normal')
