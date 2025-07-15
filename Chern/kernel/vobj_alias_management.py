@@ -4,7 +4,7 @@ import os
 from logging import getLogger
 from typing import List, TYPE_CHECKING
 
-from Chern.utils import csys
+from ..utils import csys
 from ..utils import metadata
 from .vobj_core import Core
 

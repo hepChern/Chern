@@ -2,14 +2,13 @@
 This is the top class for project manager
 """
 import os
-from subprocess import call, PIPE
-from typing import Optional, Union, TYPE_CHECKING
-from Chern.utils import metadata
-from Chern.utils import csys
-import Chern.kernel.valgorithm as valg #as _VAlgorithm
-import Chern.kernel.vtask as vtsk #as _VTask
-import Chern.kernel.vdirectory as vdir
-import Chern.kernel.vproject as vproj
+from typing import TYPE_CHECKING, Optional, List
+from ..utils import metadata
+from ..utils import csys
+from ..kernel import valgorithm as valg  # as _VAlgorithm
+from ..kernel import vtask as vtsk  # as _VTask
+from ..kernel import vdirectory as vdir
+from ..kernel import vproject as vproj
 
 if TYPE_CHECKING:
     from Chern.kernel.vobject import VObject
@@ -26,7 +25,7 @@ def create_object_instance(path: str) -> 'VObject':
                      "project":vproj.VProject}
     return vobject_class[object_type](path)
 
-class ChernProjectManager(object):
+class ChernProjectManager:
     """ ChernManager class
     """
     instance = None
@@ -44,12 +43,13 @@ class ChernProjectManager(object):
         self.init_global_config()
 
     def init_global_config(self) -> None:
+        """Initialize global configuration directory and paths."""
         chern_config_path = os.environ.get("HOME") +"/.Chern"
         if not os.path.exists(chern_config_path):
             os.mkdir(chern_config_path)
         self.global_config_path = csys.strip_path_string(chern_config_path) + "/config.json"
 
-    def get_current_project(self):
+    def get_current_project(self) -> Optional[str]:
         """ Get the name of the current working project.
         If there isn't a working project, return None
         """
@@ -57,24 +57,24 @@ class ChernProjectManager(object):
         current_project = global_config_file.read_variable("current_project")
         if current_project is None:
             return None
-        else:
-            projects_path = global_config_file.read_variable("projects_path")
-            path = projects_path.get(current_project, "no_place|")
-            if path == "no_place|":
-                projects_path[current_project] = "no_place|"
-            if not os.path.exists(path):
-                projects_path.pop(current_project)
-                if projects_path != {}:
-                    current_project = list(projects_path.keys())[0]
-                else:
-                    current_project = None
-                global_config_file.write_variable("current_project", current_project)
-                global_config_file.write_variable("projects_path", projects_path)
-                return self.get_current_project()
+        
+        projects_path = global_config_file.read_variable("projects_path")
+        path = projects_path.get(current_project, "no_place|")
+        if path == "no_place|":
+            projects_path[current_project] = "no_place|"
+        if not os.path.exists(path):
+            projects_path.pop(current_project)
+            if projects_path != {}:
+                current_project = list(projects_path.keys())[0]
             else:
-                return current_project
+                current_project = None
+            global_config_file.write_variable("current_project", current_project)
+            global_config_file.write_variable("projects_path", projects_path)
+            return self.get_current_project()
+        
+        return current_project
 
-    def get_all_projects(self):
+    def get_all_projects(self) -> List[str]:
         """ Get the list of all the projects.
         If there is not a list create one.
         """
@@ -82,7 +82,7 @@ class ChernProjectManager(object):
         projects_path = global_config_file.read_variable("projects_path")
         return list(projects_path.keys())
 
-    def ls_projects(self):
+    def ls_projects(self) -> None:
         """
         ls projects
         """
@@ -90,7 +90,7 @@ class ChernProjectManager(object):
         for project_name in projects_list:
             print(project_name)
 
-    def get_project_path(self, project_name):
+    def get_project_path(self, project_name: str) -> str:
         """ Get The path of a specific project.
         You must be sure that the project exists.
         This function don't check it.
@@ -99,7 +99,7 @@ class ChernProjectManager(object):
         projects_path = global_config_file.read_variable("projects_path")
         return projects_path[project_name]
 
-    def switch_project(self, project_name):
+    def switch_project(self, project_name: str) -> None:
         """ Switch the current project
 
         """
@@ -115,13 +115,16 @@ class ChernProjectManager(object):
             return
         self.c = create_object_instance(path)
 
-    def switch_current_object(self, path):
+    def switch_current_object(self, path: str) -> None:
+        """Switch the current object to the one at the given path."""
         self.c = create_object_instance(path)
 
-    def current_object(self):
+    def current_object(self) -> 'VObject':
+        """Get the current object instance from the current working directory."""
         path = os.getcwd()
         return create_object_instance(path)
 
 
-def get_manager():
+def get_manager() -> ChernProjectManager:
+    """Get the singleton ChernProjectManager instance."""
     return ChernProjectManager.get_manager()

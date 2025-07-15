@@ -1,84 +1,99 @@
+"""
+Shell interface module for Chern project management.
+
+This module provides command-line interface functions for managing
+projects, tasks, algorithms, and directories within the Chern system.
+"""
 import os
-from Chern.utils import csys
-from Chern.kernel.vobject import VObject
-from Chern.utils.csys import debug
-from Chern.interface.ChernManager import get_manager
-from Chern.interface.ChernManager import create_object_instance
-import shutil
-from Chern.kernel.vtask import create_task
-from Chern.kernel.vtask import create_data
-from Chern.kernel.valgorithm import create_algorithm
-from Chern.kernel.vdirectory import create_directory
-from Chern.utils.pretty import color_print
-from Chern.utils.pretty import colorize
-from Chern.utils import metadata
-from Chern.kernel.chern_communicator import ChernCommunicator
 import subprocess
 
-import time
+from ..utils import csys
+from ..kernel.vobject import VObject
+from ..interface.ChernManager import get_manager
+from ..kernel.vtask import create_task
+from ..kernel.vtask import create_data
+from ..kernel.valgorithm import create_algorithm
+from ..kernel.vdirectory import create_directory
+from ..utils.pretty import color_print
+from ..utils.pretty import colorize
+from ..utils import metadata
+from ..kernel.chern_communicator import ChernCommunicator
 
-manager = get_manager()
+MANAGER = get_manager()
 
 
-def cd_project(line):
-    manager.switch_project(line)
-    os.chdir(manager.c.path)
+def cd_project(line: str) -> None:
+    """Switch to a different project and change directory to its path."""
+    MANAGER.switch_project(line)
+    os.chdir(MANAGER.c.path)
 
 
-def shell_cd_project(line):
+def shell_cd_project(line: str) -> None:
+    """Switch to a different project and print the new path."""
     cd_project(line)
-    print(manager.c.path)
+    print(MANAGER.c.path)
 
 
-def cd(line):
+def cd(line: str) -> None:
     """
     Change the directory.
     The standalone Chern.cd command is protected.
     """
     line = line.rstrip("\n")
     if line.isdigit():
-        index = int(line)
-        sub_objects = manager.c.sub_objects()
-        successors = manager.c.successors()
-        predecessors = manager.c.predecessors()
-        total = len(sub_objects)
-        if index < total:
-            sub_objects.sort(key=lambda x:(x.object_type(), x.path))
-            cd(manager.c.relative_path(sub_objects[index].path))
-            return
-        index -= total
-        total = len(predecessors)
-        if index < total:
-            cd(manager.c.relative_path(predecessors[index].path))
-            return
-        index -= total
-        total = len(successors)
-        if index < total:
-            cd(manager.c.relative_path(successors[index].path))
-            return
-        else:
-            color_print("Out of index", "remind")
-            return
+        _cd_by_index(int(line))
     else:
-        # cd can be used to change directory using absolute path
-        line = csys.special_path_string(line)
-        if line.startswith("@/") or line == "@":
-            line = csys.project_path() + line.strip("@")
-        else:
-            line = os.path.abspath(line)
-
-        # Check available
-        if os.path.relpath(line, csys.project_path()).startswith(".."):
-            print("[ERROR] Unable to navigate to a location that is not within the project.")
-            return
-        if not csys.exists(line):
-            print("Directory not exists")
-            return
-        manager.switch_current_object(line)
-        os.chdir(manager.c.path)
+        _cd_by_path(line)
 
 
-def mv(source, destination):
+def _cd_by_index(index: int) -> None:
+    """Change directory by numeric index."""
+    sub_objects = MANAGER.c.sub_objects()
+    successors = MANAGER.c.successors()
+    predecessors = MANAGER.c.predecessors()
+    total = len(sub_objects)
+
+    if index < total:
+        sub_objects.sort(key=lambda x: (x.object_type(), x.path))
+        cd(MANAGER.c.relative_path(sub_objects[index].path))
+        return
+
+    index -= total
+    total = len(predecessors)
+    if index < total:
+        cd(MANAGER.c.relative_path(predecessors[index].path))
+        return
+
+    index -= total
+    total = len(successors)
+    if index < total:
+        cd(MANAGER.c.relative_path(successors[index].path))
+        return
+
+    color_print("Out of index", "remind")
+
+
+def _cd_by_path(line: str) -> None:
+    """Change directory by path string."""
+    # cd can be used to change directory using absolute path
+    line = csys.special_path_string(line)
+    if line.startswith("@/") or line == "@":
+        line = csys.project_path() + line.strip("@")
+    else:
+        line = os.path.abspath(line)
+
+    # Check available
+    if os.path.relpath(line, csys.project_path()).startswith(".."):
+        print("[ERROR] Unable to navigate to a location that is not within the project.")
+        return
+    if not csys.exists(line):
+        print("Directory not exists")
+        return
+    MANAGER.switch_current_object(line)
+    os.chdir(MANAGER.c.path)
+
+
+def mv(source: str, destination: str) -> None:
     """
     Move or rename file. Will keep the link relationship.
     mv SOURCE DEST
@@ -102,26 +117,8 @@ def mv(source, destination):
     VObject(source).move_to(destination)
 
 
-def cp(source, destination):
-    """
-    Move or rename file. Will keep the link relationship.
-    mv SOURCE DEST
-    or
-    mv SOURCE DIRECTORY
-    BECAREFULL!!
-    mv SOURCE1 SOURCE2 SOURCE3 ... DIRECTORY is not supported
-    use loop instead
-    """
-    # With in a task, cp is used to copy the file to the destination
-    if manager.c.object_type() == "task":
-        manager.c.cp(source, destination)
-        return
-
-    # With in a algorithm, cp is used to copy the file to the destination
-    if manager.c.object_type() == "algorithm":
-        manager.c.cp(source, destination)
-        return
-
+def _normalize_paths(source: str, destination: str) -> tuple[str, str]:
+    """Normalize source and destination paths."""
     if source.startswith("@/") or source == "@":
         source = os.path.normpath(csys.project_path() + source.strip("@"))
     else:
@@ -132,126 +129,134 @@ def cp(source, destination):
     else:
         destination = os.path.abspath(destination)
 
+    return source, destination
+
+
+def _validate_copy_operation(source: str, destination: str) -> bool:
+    """Validate if copy operation is allowed. Returns True if valid."""
     # Skip if the destination is outside the project
     if os.path.relpath(destination, csys.project_path()).startswith(".."):
         print("Destination is outside the project")
-        return
+        return False
 
-    # Skip the case that the souce is the same as the destination
+    # Skip the case that the source is the same as the destination
     if source == destination:
         print("Source is the same as destination")
-        return
+        return False
 
     # Skip the case that the destination is a subdirectory of the source
     if not os.path.relpath(destination, source).startswith(".."):
         print("Destination is a subdirectory of source")
-        return
+        return False
 
-    # Skip the case that the destination is already exists
-    # unless the destination is a directory/project
+    # Skip the case that the destination already exists and is restricted
     if csys.exists(destination):
-        if VObject(destination).is_task_or_algorithm():
+        dest_obj = VObject(destination)
+        if dest_obj.is_task_or_algorithm():
             print("Destination is a task or algorithm")
-            return
-        if VObject(destination).is_zombie():
+            return False
+        if dest_obj.is_zombie():
             print("Illegal to copy")
-            return
+            return False
 
-    # If the destination is a directory that already exists
-    # the real destination should be the directory/base name of the source
+    return True
+
+
+def _adjust_destination_path(source: str, destination: str) -> str:
+    """Adjust destination path if it's an existing directory."""
     if csys.exists(destination):
-        if VObject(destination).object_type() == "directory" or VObject(destination).object_type() == "project":
-            destination = os.path.join(destination, os.path.basename(source))
+        dest_obj = VObject(destination)
+        if dest_obj.object_type() in ("directory", "project"):
+            return os.path.join(destination, os.path.basename(source))
+    return destination
 
-    # Do the legal judgement again
-    # Skip the case that the souce is the same as the destination
-    if source == destination:
-        print("Source is the same as destination")
+
+def cp(source: str, destination: str) -> None:
+    """
+    Copy file or directory. Will handle Chern object relationships.
+    cp SOURCE DEST
+    or
+    cp SOURCE DIRECTORY
+    """
+    # Within a task or algorithm, use object-specific copy
+    if MANAGER.c.object_type() in ("task", "algorithm"):
+        MANAGER.c.cp(source, destination)
         return
 
-    # Skip the case that the destination is a subdirectory of the source
-    if not os.path.relpath(destination, source).startswith(".."):
-        print("Destination is a subdirectory of source")
+    # Normalize paths
+    source, destination = _normalize_paths(source, destination)
+
+    # Initial validation
+    if not _validate_copy_operation(source, destination):
         return
 
-    # Skip the case that the destination is already exists
-    # unless the destination is a directory/project
-    if csys.exists(destination):
-        if VObject(destination).is_task_or_algorithm():
-            print("Destination is a task or algorithm")
-            return
-        if VObject(destination).is_zombie():
-            print("Illegal to copy")
-            return
+    # Adjust destination if it's an existing directory
+    destination = _adjust_destination_path(source, destination)
 
-    # Skip the case that the destination is outside the project
-    if os.path.relpath(destination, csys.project_path()).startswith(".."):
-        print("Destination is outside the project")
+    # Validate again after path adjustment
+    if not _validate_copy_operation(source, destination):
         return
 
     VObject(source).copy_to(destination)
 
 
-def ls(line):
-    """
-    The function ls should not be defined here
-    """
+def ls(_: str) -> None:
+    """List the contents of the current object."""
     print("Running")
-    manager.current_object().ls()
+    MANAGER.current_object().ls()
 
 
-def short_ls(line):
-    """
-    The function ls should not be defined here
-    """
-    manager.c.short_ls()
+def short_ls(_: str) -> None:
+    """Show short listing of the current object."""
+    MANAGER.c.short_ls()
 
 
-def mkalgorithm(obj, use_template=False):
-    """ Create a new algorithm """
-    line = csys.refine_path(obj, manager.c.path)
+def mkalgorithm(obj: str, use_template: bool = False) -> None:
+    """Create a new algorithm."""
+    line = csys.refine_path(obj, MANAGER.c.path)
     parent_path = os.path.abspath(line+"/..")
     object_type = VObject(parent_path).object_type()
-    if object_type != "directory" and object_type != "project":
+    if object_type not in ("directory", "project"):
         print("Not allowed to create algorithm here")
         return
     create_algorithm(line, use_template)
 
 
-def mktask(line):
-    """ Create a new task """
-    line = csys.refine_path(line, manager.c.path)
+def mktask(line: str) -> None:
+    """Create a new task."""
+    line = csys.refine_path(line, MANAGER.c.path)
     parent_path = os.path.abspath(line+"/..")
     object_type = VObject(parent_path).object_type()
-    if object_type != "directory" and object_type != "project":
+    if object_type not in ("directory", "project"):
         print("Not allowed to create task here")
         return
     create_task(line)
 
 
-def mkdata(line):
-    """ Create a new data task """
-    line = csys.refine_path(line, manager.c.path)
+def mkdata(line: str) -> None:
+    """Create a new data task."""
+    line = csys.refine_path(line, MANAGER.c.path)
     parent_path = os.path.abspath(line+"/..")
     object_type = VObject(parent_path).object_type()
-    if object_type != "directory" and object_type != "project":
+    if object_type not in ("directory", "project"):
         print("Not allowed to create task here")
         return
     create_data(line)
 
 
-def mkdir(line):
-    """ Create a new directory """
-    line = csys.refine_path(line, manager.c.path)
+def mkdir(line: str) -> None:
+    """Create a new directory."""
+    line = csys.refine_path(line, MANAGER.c.path)
     parent_path = os.path.abspath(line+"/..")
     object_type = VObject(parent_path).object_type()
-    if object_type != "directory" and object_type != "project":
+    if object_type not in ("directory", "project"):
         print("Not allowed to create directory here")
         return
     create_directory(line)
 
 
-def rm(line):
+def rm(line: str) -> None:
+    """Remove a file or directory."""
     line = os.path.abspath(line)
     # Deal with the illegal operation
     if line == csys.project_path():
@@ -265,44 +270,53 @@ def rm(line):
         return
     VObject(line).rm()
 
-def rm_file(file):
-    if manager.c.object_type() != "task" and manager.c.object_type() != "algorithm":
+
+def rm_file(file_name: str) -> None:
+    """Remove a file from current task or algorithm."""
+    if MANAGER.c.object_type() not in ("task", "algorithm"):
         print("Unable to call rm_file if you are not in a task or algorithm.")
         return
     # Deal with * case
-    if file == "*":
-        path = manager.c.path
-        for file in os.listdir(path):
+    if file_name == "*":
+        path = MANAGER.c.path
+        for current_file in os.listdir(path):
             # protect .chern and chern.yaml
-            if file in (".chern", "chern.yaml"):
+            if current_file in (".chern", "chern.yaml"):
                 continue
-            manager.c.rm_file(file)
+            MANAGER.c.rm_file(current_file)
         return
-    manager.c.rm_file(file)
+    MANAGER.c.rm_file(file_name)
 
-def mv_file(file, dest_file):
-    if manager.c.object_type() != "task" and manager.c.object_type() != "algorithm":
+
+def mv_file(file_name: str, dest_file: str) -> None:
+    """Move a file within current task or algorithm."""
+    if MANAGER.c.object_type() not in ("task", "algorithm"):
         print("Unable to call mv_file if you are not in a task or algorithm.")
         return
-    manager.c.move_file(file, dest_file)
-
-def add_source(line):
-    # line = os.path.abspath(line)
-    manager.c.add_source(line)
+    MANAGER.c.move_file(file_name, dest_file)
 
 
-def jobs(line):
-    object_type = manager.c.object_type()
-    if object_type != "algorithm" and object_type != "task":
+def add_source(line: str) -> None:
+    """Add a source to the current object."""
+    MANAGER.c.add_source(line)
+
+
+def jobs(_: str) -> None:
+    """Show jobs for current algorithm or task."""
+    object_type = MANAGER.c.object_type()
+    if object_type not in ("algorithm", "task"):
         print("Not able to found job")
         return
-    manager.c.jobs()
+    MANAGER.c.jobs()
 
-def status():
-    print(manager.current_object().printed_status().colored())
 
-def import_file(filename):
-    if manager.c.object_type() != "task" and manager.c.object_type() != "algorithm":
+def status() -> None:
+    """Show status of current object."""
+    print(MANAGER.current_object().printed_status().colored())
+
+def import_file(filename: str) -> None:
+    """Import a file into current task or algorithm."""
+    if MANAGER.c.object_type() not in ("task", "algorithm"):
         print("Unable to call importfile if you are not in a task or algorithm.")
         return
 
@@ -313,112 +327,134 @@ def import_file(filename):
             print("The path is not a directory")
             return
         for file in os.listdir(filename):
-            print("Importing: from ", os.path.join(filename, file))
-            print("Importing: to ", manager.c.path)
-            manager.c.import_file(os.path.join(filename, file))
+            print(f"Importing: from {os.path.join(filename, file)}")
+            print(f"Importing: to {MANAGER.c.path}")
+            MANAGER.c.import_file(os.path.join(filename, file))
         return
-    manager.c.import_file(filename)
+    MANAGER.c.import_file(filename)
 
-def add_input(path, alias):
-    if manager.c.object_type() != "task" and manager.c.object_type() != "algorithm":
+
+def add_input(path: str, alias: str) -> None:
+    """Add an input to current task or algorithm."""
+    if MANAGER.c.object_type() not in ("task", "algorithm"):
         print("Unable to call add_input if you are not in a task or algorithm.")
         return
-    manager.c.add_input(path, alias)
+    MANAGER.c.add_input(path, alias)
 
 
-def add_algorithm(path):
-    if manager.c.object_type() != "task":
+def add_algorithm(path: str) -> None:
+    """Add an algorithm to current task."""
+    if MANAGER.c.object_type() != "task":
         print("Unable to call add_algorithm if you are not in a task.")
         return
-    manager.c.add_algorithm(path)
+    MANAGER.c.add_algorithm(path)
 
 
-def add_parameter(par, value):
-    if manager.c.object_type() != "task":
+def add_parameter(par: str, value: str) -> None:
+    """Add a parameter to current task."""
+    if MANAGER.c.object_type() != "task":
         print("Unable to call add_input if you are not in a task.")
         return
-    manager.c.add_parameter(par, value)
+    MANAGER.c.add_parameter(par, value)
 
 
-def rm_parameter(par):
-    if manager.c.object_type() != "task":
+def rm_parameter(par: str) -> None:
+    """Remove a parameter from current task."""
+    if MANAGER.c.object_type() != "task":
         print("Unable to call add_input if you are not in a task.")
         return
-    manager.c.remove_parameter(par)
+    MANAGER.c.remove_parameter(par)
 
 
-def remove_input(alias):
-    if not manager.c.is_task_or_algorithm():
+def remove_input(alias: str) -> None:
+    """Remove an input from current task or algorithm."""
+    if not MANAGER.c.is_task_or_algorithm():
         print("Unable to call remove_input if you are not in a task.")
         return
-    manager.c.remove_input(alias)
+    MANAGER.c.remove_input(alias)
 
 
-def add_host(host, url):
+def add_host(host: str, url: str) -> None:
+    """Add a host to the communicator."""
     cherncc = ChernCommunicator.instance()
     cherncc.add_host(host, url)
 
 
-def hosts():
+def hosts() -> None:
+    """Show all hosts and their status."""
     cherncc = ChernCommunicator.instance()
-    hosts = cherncc.hosts()
-    urls = cherncc.urls()
-    print("{0:<20}{1:20}".format("HOSTS", "STATUS"))
-    for host in hosts:
-        status = cherncc.host_status(host)
-        color_tag = {"ok":"ok", "unconnected":"warning"}[status]
-        print("{0:<20}{1:20}".format(host, colorize(status, color_tag)))
+    host_list = cherncc.hosts()
+    print(f"{'HOSTS':<20}{'STATUS':20}")
+    for host in host_list:
+        host_status = cherncc.host_status(host)
+        color_tag = {"ok": "ok", "unconnected": "warning"}[host_status]
+        print(f"{host:<20}{colorize(host_status, color_tag):20}")
 
-def dite():
+
+def dite() -> None:
+    """Show DITE information."""
     cherncc = ChernCommunicator.instance()
     dite_info = cherncc.dite_info()
     print(dite_info)
 
-def runners():
+def runners() -> None:
+    """Display all available runners."""
     cherncc = ChernCommunicator.instance()
-    status = cherncc.dite_status()
-    if status == "unconnected":
+    dite_status = cherncc.dite_status()
+    if dite_status == "unconnected":
         print(colorize("DITE unconnected, please connect first", "warning"))
         return
-    runners = cherncc.runners()
-    print("Number of runners registered at DITE: ", len(runners))
-    if runners:
+    runner_list = cherncc.runners()
+    print(f"Number of runners registered at DITE: {len(runner_list)}")
+    if runner_list:
         urls = cherncc.runners_url()
-        for runner, url in zip(runners, urls):
-            print("{0:<20}{1:20}".format(runner, url))
+        for runner, url in zip(runner_list, urls):
+            print(f"{runner:<20}{url:20}")
             info = cherncc.runner_connection(runner)
             # print(info)
-            print("{0:<20}{1:20}".format("Status: ", info["status"]))
+            print(f"{'Status: ':<20}{info['status']:20}")
 
-def register_runner(runner, url, secret):
+
+def register_runner(runner: str, url: str, secret: str) -> None:
+    """Register a runner with DITE."""
     cherncc = ChernCommunicator.instance()
     cherncc.register_runner(runner, url, secret)
 
-def remove_runner(runner):
+
+def remove_runner(runner: str) -> None:
+    """Remove a runner from DITE."""
     cherncc = ChernCommunicator.instance()
     cherncc.remove_runner(runner)
 
-def send(path):
-    manager.c.send(path)
 
-def impview():
-    is_task = manager.c.is_task()
+def send(path: str) -> None:
+    """Send a path to current object."""
+    MANAGER.c.send(path)
+
+
+def impview() -> None:
+    """View impressions for current task."""
+    is_task = MANAGER.c.is_task()
     if not is_task:
         print("Not able to view")
         return
-    manager.current_object().impview()
+    MANAGER.current_object().impview()
 
-def edit_script(obj):
+
+def edit_script(obj: str) -> None:
+    """Edit a script object using configured editor."""
     path = os.path.join(os.environ["HOME"], ".chern", "config.yaml")
     yaml_file = metadata.YamlFile(path)
     editor = yaml_file.read_variable("editor", "vi")
-    subprocess.call([editor, manager.c.path + "/" + obj])
+    subprocess.call([editor, f"{MANAGER.c.path}/{obj}"])
 
-def config():
-    if not manager.c.is_task_or_algorithm():
+
+def config() -> None:
+    """Edit configuration for current task or algorithm."""
+    if not MANAGER.c.is_task_or_algorithm():
         print("Not able to config")
         return
     path = os.path.join(os.environ["HOME"], ".chern", "config.yaml")
     yaml_file = metadata.YamlFile(path)
     editor = yaml_file.read_variable("editor", "vi")
-    subprocess.call([editor, f"{manager.c.path}/chern.yaml"])
+    subprocess.call([editor, f"{MANAGER.c.path}/chern.yaml"])

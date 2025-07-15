@@ -23,11 +23,10 @@
 import click
 import os
 from os.path import join
-from typing import Optional
-from Chern.kernel import vproject
-from Chern.utils import csys
-from Chern.utils import metadata
-from Chern.interface.ChernShell import ChernShell
+from .kernel import vproject
+from .utils import csys
+from .utils import metadata
+from .interface.ChernShell import ChernShell
 from logging import getLogger
 import logging
 
