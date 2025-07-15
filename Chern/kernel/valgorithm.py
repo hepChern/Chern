@@ -3,6 +3,7 @@
 import os
 import shutil
 import subprocess
+from typing import List, Tuple, Optional
 
 from ..utils import csys
 from ..utils import metadata
@@ -21,13 +22,13 @@ class VAlgorithm(VObject):
     """ Algorithm class
     """
 
-    def helpme(self, command):
+    def helpme(self, command: str) -> Message:
         """ Helpme function """
         message = Message()
         message.add(helpme.algorithm_helpme.get(command, "No such command, try ``helpme'' alone."))
         return message
 
-    def printed_status(self):
+    def printed_status(self) -> Message:
         """ Print the status """
         message = super().printed_status()
         cherncc = ChernCommunicator.instance()

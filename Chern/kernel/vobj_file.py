@@ -6,11 +6,15 @@ from os.path import normpath
 import shutil
 from dataclasses import dataclass
 from logging import getLogger
+from typing import List, Optional, TYPE_CHECKING
 
 from ..utils import csys
 from ..utils.message import Message
 from ..utils import metadata
 from .vobj_core import Core
+
+if TYPE_CHECKING:
+    from .vobject import VObject
 
 from .chern_cache import ChernCache
 from .chern_communicator import ChernCommunicator
@@ -32,7 +36,7 @@ class LsParameters:
 class FileManagement(Core):
     """ This class is used to manage the file system of the VObject
     """
-    def ls(self, show_info=LsParameters()):
+    def ls(self, show_info: 'LsParameters' = None) -> Message:
         """ Print the subdirectory of the object
         I recommend to print also the README
         and the parameters|inputs|outputs ...

@@ -9,18 +9,19 @@ import uuid
 import hashlib
 import tarfile
 import subprocess
+from typing import List, Tuple, Any, Optional, Iterator
 
 from contextlib import contextmanager
 from colored import fg, attr
 
 # Utility Functions
-def generate_uuid():
+def generate_uuid() -> str:
     """ Generate a uuid
     """
     return uuid.uuid4().hex
 
 
-def colorize(string, color):
+def colorize(string: str, color: str) -> str:
     """ Make the string have color
     """
     if color == "warning":
@@ -34,13 +35,13 @@ def colorize(string, color):
     return string
 
 
-def color_print(string, color):
+def color_print(string: str, color: str) -> None:
     """ Print the string with color
     """
     print(colorize(string, color))
 
 
-def debug(*arg):
+def debug(*arg: Any) -> None:
     """ Print debug string
     """
     print(colorize("debug >> ", "debug"), end="")
@@ -50,13 +51,13 @@ def debug(*arg):
 
 
 # Path and Directory Functions
-def abspath(path):
+def abspath(path: str) -> str:
     """ Get the absolute path of the path
     """
     return os.path.abspath(path)
 
 
-def strip_path_string(path_string):
+def strip_path_string(path_string: str) -> str:
     """ Remove the "/" in the end of the string
     and the " " in the begin and the end of the string.
     replace the "." in the string to "/"
@@ -66,7 +67,7 @@ def strip_path_string(path_string):
     return path_string
 
 
-def special_path_string(path_string):
+def special_path_string(path_string: str) -> str:
     """ Replace the path string . -> /
     rather than the following cases
     .
@@ -80,7 +81,7 @@ def special_path_string(path_string):
     return path_string.replace(".", "/")
 
 
-def refine_path(path, home):
+def refine_path(path: str, home: str) -> str:
     """ Refine the path
     """
     if path.startswith("~") or path.startswith("/"):
@@ -90,7 +91,7 @@ def refine_path(path, home):
     return path
 
 
-def exists(path):
+def exists(path: str) -> bool:
     """ Check if the path exists
     """
     if not os.path.exists(path):

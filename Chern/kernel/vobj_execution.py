@@ -1,16 +1,21 @@
 """ This module provides the ExecutionManagement class.
 """
 from logging import getLogger
+from typing import Optional, List, TYPE_CHECKING
 
 from .chern_communicator import ChernCommunicator
 from .vobj_core import Core
+
+if TYPE_CHECKING:
+    from .vobject import VObject
+    from .vimpression import VImpression
 
 logger = getLogger("ChernLogger")
 
 
 class ExecutionManagement(Core):
     """ Manage the contact with dite and runner. """
-    def is_submitted(self, runner="local"): # pylint: disable=unused-argument
+    def is_submitted(self, runner: str = "local") -> bool: # pylint: disable=unused-argument
         """ Judge whether submitted or not. Return a True or False.
         """
         # FIXME: incomplete
@@ -18,17 +23,17 @@ class ExecutionManagement(Core):
             return False
         return False
 
-    def submit(self, runner="local"):
+    def submit(self, runner: str = "local") -> None:
         """ Submit the impression to the runner. """
         cherncc = ChernCommunicator.instance()
         self.deposit()
         cherncc.execute([self.impression().uuid], runner)
 
-    def resubmit(self, runner="local"):
+    def resubmit(self, runner: str = "local") -> None:
         """ Resubmit the impression to the runner. """
         # FIXME: incomplete
 
-    def deposit(self):
+    def deposit(self) -> None:
         """ Deposit the impression to the dite. """
         if not self.is_task_or_algorithm():
             sub_objects = self.sub_objects()
@@ -45,14 +50,14 @@ class ExecutionManagement(Core):
             obj.deposit()
         cherncc.deposit(self.impression())
 
-    def is_deposited(self):
+    def is_deposited(self) -> bool:
         """ Judge whether deposited or not. Return a True or False. """
         if not self.is_impressed_fast():
             return False
         cherncc = ChernCommunicator.instance()
         return cherncc.is_deposited(self.impression()) == "TRUE"
 
-    def job_status(self, runner=None):
+    def job_status(self, runner: Optional[str] = None) -> str:
         """ Get the status of the job"""
         if not self.is_task_or_algorithm():
             sub_objects = self.sub_objects()

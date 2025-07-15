@@ -5,7 +5,7 @@ define some classes and functions used throughout the project
 # Load module
 from colored import fg, attr
 
-def colorize(string, color=""):
+def colorize(string: str, color: str = "") -> str:
     """Make the string have color"""
     colors = {
         "success": fg("green") + string + attr("reset"),
@@ -34,6 +34,6 @@ def colorize(string, color=""):
                 break
     return colors.get(color, string)  # Default to 'string' if color not found
 
-def color_print(string, color):
+def color_print(string: str, color: str) -> None:
     """Print the string with color"""
     print(colorize(string, color))

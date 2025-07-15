@@ -3,6 +3,7 @@ This is the top class for project manager
 """
 import os
 from subprocess import call, PIPE
+from typing import Optional, Union, TYPE_CHECKING
 from Chern.utils import metadata
 from Chern.utils import csys
 import Chern.kernel.valgorithm as valg #as _VAlgorithm
@@ -10,7 +11,10 @@ import Chern.kernel.vtask as vtsk #as _VTask
 import Chern.kernel.vdirectory as vdir
 import Chern.kernel.vproject as vproj
 
-def create_object_instance(path):
+if TYPE_CHECKING:
+    from Chern.kernel.vobject import VObject
+
+def create_object_instance(path: str) -> 'VObject':
     """ Create an object instance
     """
     path = csys.strip_path_string(path)
@@ -29,17 +33,17 @@ class ChernProjectManager(object):
     c = None
 
     @classmethod
-    def get_manager(cls):
+    def get_manager(cls) -> 'ChernProjectManager':
         """ Return the manager itself
         """
         if cls.instance is None:
             cls.instance = ChernProjectManager()
         return cls.instance
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.init_global_config()
 
-    def init_global_config(self):
+    def init_global_config(self) -> None:
         chern_config_path = os.environ.get("HOME") +"/.Chern"
         if not os.path.exists(chern_config_path):
             os.mkdir(chern_config_path)

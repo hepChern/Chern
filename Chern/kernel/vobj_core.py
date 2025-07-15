@@ -7,16 +7,21 @@ Unit tests: 8
 import os
 from abc import ABC, abstractmethod
 from logging import getLogger
+from typing import TYPE_CHECKING, Optional, List
 
 from ..utils import csys
 from ..utils import metadata
+
+if TYPE_CHECKING:
+    from .vobject import VObject
+    from .vimpression import VImpression
 
 logger = getLogger("ChernLogger")
 
 class Core(ABC):
     """ The core of the VObject
     """
-    def __init__(self, path): # Unittest: DONE
+    def __init__(self, path: str) -> None: # Unittest: DONE
         """ Initialize the VObject
         """
         logger.debug("VObject::Core.__init__")
@@ -24,18 +29,18 @@ class Core(ABC):
         self.config_file = metadata.ConfigFile(self.path+"/.chern/config.json")
         logger.debug("VObject::Core.__init__ done")
 
-    def __str__(self): # Unittest: DONE
+    def __str__(self) -> str: # Unittest: DONE
         """ Define the behavior of print(vobject)
         """
         return self.invariant_path()
 
-    def __repr__(self): # Unittest: DONE
+    def __repr__(self) -> str: # Unittest: DONE
         """ Define the behavior of print(vobject)
         """
         return self.invariant_path()
 
     # Path handling, type and status
-    def invariant_path(self): # Unittest: DONE
+    def invariant_path(self) -> str: # Unittest: DONE
         """ The path relative to the project root.
         It is invariant when the project is moved.
         """
@@ -43,27 +48,27 @@ class Core(ABC):
         path = os.path.relpath(self.path, project_path)
         return path
 
-    def relative_path(self, path): # Unittest: DONE
+    def relative_path(self, path: str) -> str: # Unittest: DONE
         """ Return a path relative to the path of this object
         """
         return os.path.relpath(path, self.path)
 
-    def object_type(self): # Unittest: DONE
+    def object_type(self) -> str: # Unittest: DONE
         """ Return the type of the this object.
         """
         return self.config_file.read_variable("object_type", "")
 
-    def is_task(self): # Unittest: DONE
+    def is_task(self) -> bool: # Unittest: DONE
         """ Judge whether it is a task.
         """
         return self.object_type() == "task"
 
-    def is_algorithm(self): # Unittest: DONE
+    def is_algorithm(self) -> bool: # Unittest: DONE
         """ Judge whether it is an algorithm.
         """
         return self.object_type() == "algorithm"
 
-    def is_task_or_algorithm(self): # Unittest: DONE
+    def is_task_or_algorithm(self) -> bool: # Unittest: DONE
         """ Judge whether it is a task or an algorithm.
         """
         if self.object_type() == "task":
@@ -72,26 +77,26 @@ class Core(ABC):
             return True
         return False
 
-    def is_zombie(self): # Unittest: DONE
+    def is_zombie(self) -> bool: # Unittest: DONE
         """ Judge whether it is actually an object
         """
         return self.object_type() == ""
 
     @abstractmethod
-    def get_vobject(self, path):
+    def get_vobject(self, path: str) -> 'VObject':
         """ To avoid circular import
         """
 
     @abstractmethod
-    def status(self, consult_id=None):
+    def status(self, consult_id: Optional[int] = None) -> str:
         """ Abstract method for future implementation"""
 
     @abstractmethod
-    def job_status(self, runner=None):
+    def job_status(self, runner: Optional[str] = None) -> str:
         """ Abstract method for future implementation"""
 
     @abstractmethod
-    def import_file(self, path):
+    def import_file(self, path: str) -> None:
         """ Abstract method for future implementation"""
 
     # Abstract methods, for file operations

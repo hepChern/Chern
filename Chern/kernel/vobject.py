@@ -89,8 +89,12 @@ import os
 from os.path import join
 import subprocess
 from logging import getLogger
+from typing import TYPE_CHECKING
 
 from ..utils import metadata
+
+if TYPE_CHECKING:
+    from .vobj_file import LsParameters
 
 from .vobj_arc_management import ArcManagement
 from .vobj_alias_management import AliasManagement
@@ -108,7 +112,7 @@ class VObject(ArcManagement, FileManagement, AliasManagement,
     """
 
     # Initialization and Representation
-    def __init__(self, path):
+    def __init__(self, path: str) -> None:
         """ Initialize a instance of the object.
         All the information is directly read from and write to the disk.
         parameter ``path'' is allowed to be a string
@@ -118,7 +122,7 @@ class VObject(ArcManagement, FileManagement, AliasManagement,
         super().__init__(path)
         logger.debug("VObject init done: %s", path)
 
-    def color_tag(self, status):
+    def color_tag(self, status: str) -> str:
         """ Get the color tag according to the status.
         """
         if status in ("built", "done", "finished"):
@@ -131,14 +135,14 @@ class VObject(ArcManagement, FileManagement, AliasManagement,
             color_tag = "normal"
         return color_tag
 
-    def cat(self, file_name):
+    def cat(self, file_name: str) -> None:
         """ Get the content of a file in the directory
         """
         path = os.path.join(self.path, file_name)
         with open(path, "r", encoding="utf-8") as f:
             print(f.read().strip(""))
 
-    def readme(self):
+    def readme(self) -> str:
         """
         FIXME
         Get the README String.
@@ -147,12 +151,12 @@ class VObject(ArcManagement, FileManagement, AliasManagement,
         with open(self.path+"/.chern/README.md", "r", encoding="utf-8") as f:
             return f.read().strip("\n")
 
-    def comment(self, line):
+    def comment(self, line: str) -> None:
         """ Add a comment line to the README.md"""
         with open(self.path+"/.chern/README.md", "a", encoding="utf-8") as f:
             f.write(line + "\n")
 
-    def edit_readme(self):
+    def edit_readme(self) -> None:
         """ Edit the README.md file of the object"""
         yaml_file = metadata.YamlFile(
             join(os.environ["HOME"], ".chern", "config.yaml")
@@ -161,5 +165,5 @@ class VObject(ArcManagement, FileManagement, AliasManagement,
         file_name = os.path.join(self.path, ".chern/README.md")
         subprocess.call(f"{editor} {file_name}", shell=True)
 
-    def get_vobject(self, path):
+    def get_vobject(self, path: str) -> 'VObject':
         return VObject(path)

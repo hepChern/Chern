@@ -2,17 +2,21 @@
 """
 from os.path import join
 from logging import getLogger
+from typing import Optional, List, TYPE_CHECKING, Any, Dict, Tuple
 
 from ..utils import csys
 from ..utils import metadata
+
+if TYPE_CHECKING:
+    from .vobject import VObject
 
 logger = getLogger("ChernLogger")
 
 class VImpression():
     """ A class to represent an impression
     """
-    uuid = None
-    def __init__(self, uuid = None):
+    uuid: Optional[str] = None
+    def __init__(self, uuid: Optional[str] = None) -> None:
         """ Initialize the impression
         """
         if uuid is None:
@@ -23,24 +27,24 @@ class VImpression():
         self.config_file = metadata.ConfigFile(self.path+"/config.json")
         self.tarfile = self.path + "/packed" + self.uuid + ".tar.gz"
 
-    def __str__(self):
+    def __str__(self) -> str:
         """ Print the impression
         """
         return self.uuid
 
-    def is_zombie(self):
+    def is_zombie(self) -> bool:
         """ Check whether the impression is a zombie
         """
         return not csys.exists(self.path)
 
-    def is_packed(self):
+    def is_packed(self) -> bool:
         """ Check whether the impression is packed
         """
         return csys.exists(
                 join(self.path, "/packed", self.uuid, ".tar.gz")
                 )
 
-    def pack(self):
+    def pack(self) -> None:
         """ Pack the impression
         """
         if self.is_packed():
@@ -48,32 +52,32 @@ class VImpression():
         output_name = self.path + "/packed" + self.uuid
         csys.make_archive(output_name, self.path+"/contents")
 
-    def clean(self):
+    def clean(self) -> None:
         """ Clean the impression
         """
         csys.rm_tree(self.path+"/contents")
 
-    def upack(self):
+    def upack(self) -> None:
         """ Unpack the impression
         """
         # FIXME: to be implemented
 
-    def difference(self):
+    def difference(self) -> Any:
         """ Calculate the difference between this and another impression
         """
         # FIXME: to be implemented
 
-    def tree(self):
+    def tree(self) -> Any:
         """ Get the tree of the impression
         """
         return self.config_file.read_variable("tree")
 
-    def parents(self):
+    def parents(self) -> List[str]:
         """ Get the parents of the impression
         """
         return self.config_file.read_variable("parents", [])
 
-    def parent(self):
+    def parent(self) -> Optional[str]:
         """ Get the parent of the impression
         """
         parents = self.parents()
@@ -81,7 +85,7 @@ class VImpression():
             return parents[-1]
         return None
 
-    def pred_impressions(self):
+    def pred_impressions(self) -> List['VImpression']:
         """ Get the impression dependencies
         """
         # FIXME An assumption is that all the predcessor's are impressed,
@@ -91,19 +95,19 @@ class VImpression():
         dependencies = [VImpression(uuid) for uuid in dependencies_uuid]
         return dependencies
 
-    def has_alias(self, alias):
+    def has_alias(self, alias: str) -> bool:
         """ Check if the impression has an alias
         """
         alias_to_imp = self.config_file.read_variable("alias_to_impression", {})
         return alias in alias_to_imp
 
-    def alias_to_impression_uuid(self, alias):
+    def alias_to_impression_uuid(self, alias: str) -> str:
         """ Get the alias to impression mapping
         """
         alias_to_imp = self.config_file.read_variable("alias_to_impression", {})
         return alias_to_imp.get(alias, "")
 
-    def create(self, obj):
+    def create(self, obj: 'VObject') -> None:
         """ Create this impression with a VObject file
         """
         # Create an impression directory and copy the files to it

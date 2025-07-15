@@ -23,6 +23,7 @@
 import click
 import os
 from os.path import join
+from typing import Optional
 from Chern.kernel import vproject
 from Chern.utils import csys
 from Chern.utils import metadata

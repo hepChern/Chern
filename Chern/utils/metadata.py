@@ -3,6 +3,7 @@
 import json
 import os
 import fcntl  # For Unix-based systems
+from typing import Any, Optional, Dict, Union
 import yaml
 
 
@@ -15,14 +16,14 @@ class ConfigFile():
         - string
     """
 
-    def __init__(self, file_path):
+    def __init__(self, file_path: str) -> None:
         """Initialize the class with a file path.
 
         Create the file if it does not initially exist.
         """
         self.file_path = file_path
 
-    def read_variable(self, variable_name, default=None):
+    def read_variable(self, variable_name: str, default: Optional[Any] = None) -> Any:
         """Get the content of a variable from the JSON file.
 
         Args:
@@ -41,7 +42,7 @@ class ConfigFile():
             data = json.loads(contents)
             return data.get(variable_name, default)
 
-    def write_variable(self, variable_name, value):
+    def write_variable(self, variable_name: str, value: Any) -> None:
         """Write a variable to the JSON file.
 
         Args:
@@ -70,14 +71,14 @@ class YamlFile():
     YAML files are similar to JSON but are more human-readable.
     """
 
-    def __init__(self, file_path):
+    def __init__(self, file_path: str) -> None:
         """Initialize the class with a file path.
 
         Create the file if it does not initially exist.
         """
         self.file_path = file_path
 
-    def read_variable(self, variable_name, default=None):
+    def read_variable(self, variable_name: str, default: Optional[Any] = None) -> Any:
         """Get the content of a variable from the YAML file.
 
         Args:
@@ -99,7 +100,7 @@ class YamlFile():
                 return default
             return data.get(variable_name, default)
 
-    def write_variable(self, variable_name, value):
+    def write_variable(self, variable_name: str, value: Any) -> None:
         """Write a variable to the YAML file.
 
         Args:
