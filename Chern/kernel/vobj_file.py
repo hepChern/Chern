@@ -35,7 +35,7 @@ class LsParameters:
 class FileManagement(Core):
     """ This class is used to manage the file system of the VObject
     """
-    def ls(self, show_info: 'LsParameters' = None) -> Message:
+    def ls(self, show_info: 'LsParameters' = LsParameters()) -> Message:
         """ Print the subdirectory of the object
         I recommend to print also the README
         and the parameters|inputs|outputs ...
