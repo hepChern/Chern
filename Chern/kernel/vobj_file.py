@@ -6,7 +6,7 @@ from os.path import normpath
 import shutil
 from dataclasses import dataclass
 from logging import getLogger
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Tuple, List, Optional, Any
 
 from ..utils import csys
 from ..utils.message import Message
@@ -66,7 +66,7 @@ class FileManagement(Core):
 
         return message
 
-    def show_status(self):
+    def show_status(self) -> Message:
         """ Show the status of the task.
         """
         status = self.status()
@@ -83,7 +83,7 @@ class FileManagement(Core):
         message.add("\n")
         return message
 
-    def printed_status(self): # pylint: disable=too-many-branches
+    def printed_status(self) -> Message: # pylint: disable=too-many-branches
         """ Printed the status of the object"""
 
         message = Message()
@@ -150,7 +150,7 @@ class FileManagement(Core):
                 message.add("\n")
         return message
 
-    def printed_dite_status(self):
+    def printed_dite_status(self) -> Message:
         """ Print the status of the DITE"""
         cherncc = ChernCommunicator.instance()
         message = Message()
@@ -163,7 +163,7 @@ class FileManagement(Core):
         message.add("\n")
         return message
 
-    def show_sub_objects(self, sub_objects, show_info):
+    def show_sub_objects(self, sub_objects: List['VObject'], show_info: LsParameters) -> Message:
         """ Show the sub_objects"""
         message = Message()
         sub_objects = self.sub_objects()
@@ -185,7 +185,7 @@ class FileManagement(Core):
                 message.add(f"[{index}] {f'({sub_object.object_type()})':<12} {sub_path:>20}\n")
         return message
 
-    def show_predecessors(self, predecessors, total):
+    def show_predecessors(self, predecessors: List['VObject'], total: int) -> Message:
         """ Show the predecessors of the object"""
         message = Message()
 
@@ -221,7 +221,7 @@ class FileManagement(Core):
 
         return message
 
-    def show_successors(self, successors, total):
+    def show_successors(self, successors: List['VObject'], total: int) -> Message:
         """ Show the successors of the object"""
         message = Message()
         message.add("-->o Successors:\n", "title0")
@@ -235,28 +235,33 @@ class FileManagement(Core):
             message.add(f"{order} {obj_type:<12} {alias:>10}: @/{succ_path:<20}\n")
         return message
 
-    def copy_to_check(self, new_path): # UnitTest: DONE
+    def copy_to_check(self, new_path: str) -> Tuple[bool, str]: # UnitTest: DONE
         """ Check if the new path is valid for copying
+        
+        Returns:
+            Tuple[bool, str]: (success_status, error_message)
         """
         # Check if the destination directory exists
         destination_dir = os.path.dirname(new_path)
         if not os.path.exists(destination_dir) and destination_dir:
-            logger.warning("Warning: Destination directory '%s' does not exist.", destination_dir)
-            return False
+            rel_dest_dir = os.path.relpath(destination_dir, csys.project_path())
+            error_msg = f"Destination directory '@/{rel_dest_dir}' does not exist."
+            return False, error_msg
 
         # Check if source and destination paths are the same
         if os.path.abspath(self.path) == os.path.abspath(new_path):
-            logger.warning("Warning: Source and destination paths are the same.")
-            return False
+            error_msg = "Source and destination paths are the same."
+            return False, error_msg
 
         # Check if the destination path already exists
         if os.path.exists(new_path):
-            logger.warning("Warning: Destination path '%s' already exists.", new_path)
-            return False
+            rel_new_path = os.path.relpath(new_path, csys.project_path())
+            error_msg = f"Destination path '@/{rel_new_path}' already exists."
+            return False, error_msg
 
-        return True
+        return True, ""
 
-    def copy_to_deal_with_arcs(self, queue, new_path): # UnitTest: DONE
+    def copy_to_deal_with_arcs(self, queue: List['VObject'], new_path: str) -> None: # UnitTest: DONE
         """ Deal with the arcs when copying
         """
         for obj in queue:
@@ -297,12 +302,14 @@ class FileManagement(Core):
                 if self.relative_path(succ_object.path).startswith(".."):
                     pass
 
-    def copy_to(self, new_path): # UnitTest: DONE
+    def copy_to(self, new_path: str) -> Message: # UnitTest: DONE
         """ Copy the current objects and its containings to a new path.
         """
-
-        if not self.copy_to_check(new_path):
-            return
+        is_valid, error_message = self.copy_to_check(new_path)
+        if not is_valid:
+            message = Message()
+            message.add(f"Error: {error_message}", "warning")
+            return message
 
         queue = self.sub_objects_recursively()
         # Make sure the related objects are all impressed
@@ -325,7 +332,9 @@ class FileManagement(Core):
             new_object = self.get_vobject(norm_path)
             new_object.impress()
 
-    def move_to_deal_with_arcs(self, queue, new_path): # UnitTest: DONE
+        return Message()  # Empty message for success
+
+    def move_to_deal_with_arcs(self, queue: List['VObject'], new_path: str) -> None: # UnitTest: DONE
         """ Deal with the arcs when moving
         """
         for obj in queue:
@@ -387,25 +396,32 @@ class FileManagement(Core):
                     obj.remove_arc_to(succ_object)
 
 
-    def move_to(self, new_path): # UnitTest: DONE
+    def move_to(self, new_path: str) -> Message: # UnitTest: DONE
         """ move to another path
         """
-        if not self.move_to_check(new_path):
-            return
+        is_valid, error_message = self.move_to_check(new_path)
+        if not is_valid:
+            message = Message()
+            message.add(f"Error: {error_message}", "warning")
+            return message
 
         queue = self.sub_objects_recursively()
 
         # Make sure the related objects are all impressed
         all_impressed = True
+        not_impressed_objects = []
         for obj in queue:
             if not obj.is_task_or_algorithm():
                 continue
             if not obj.is_impressed_fast():
                 all_impressed = False
-                print(f"The {obj.object_type()} {obj} is not impressed,"
-                      f" please impress it and try again")
+                not_impressed_objects.append(obj)
+        
         if not all_impressed:
-            return
+            message = Message()
+            for obj in not_impressed_objects:
+                message.add(f"The {obj.object_type()} {obj} is not impressed, please impress it and try again\n", "warning")
+            return message
 
         shutil.copytree(self.path, new_path)
 
@@ -413,14 +429,61 @@ class FileManagement(Core):
 
         shutil.rmtree(self.path)
 
-    def move_to_check(self, new_path): # UnitTest: DONE
-        """ Check if the new path is valid for moving"""
-        if self.path.lower() == new_path.lower():
-            print("The source and destination paths are the same.")
-            return False
-        return True
+        return Message()  # Empty message for success
 
-    def rm(self): # UnitTest: DONE
+    def move_to_check(self, new_path: str) -> Tuple[bool, str]: # UnitTest: DONE
+        """ Check if the new path is valid for moving
+        
+        Returns:
+            Tuple[bool, str]: (success_status, error_message)
+        """
+        # Check if the destination directory already exists
+        destination_dir = os.path.dirname(new_path)
+        if not os.path.exists(destination_dir) and destination_dir:
+            rel_dest_dir = os.path.relpath(destination_dir, csys.project_path())
+            error_msg = f"Destination directory '@/{rel_dest_dir}' does not exist."
+            return False, error_msg
+
+        # Check if the destination path already exists
+        if os.path.exists(new_path):
+            rel_new_path = os.path.relpath(new_path, csys.project_path())
+            error_msg = f"Destination path '@/{rel_new_path}' already exists."
+            return False, error_msg
+
+        # Check if the destination directory is a subdirectory of the source
+        if os.path.commonpath([self.path, new_path]) == self.path:
+            rel_new_path = os.path.relpath(new_path, csys.project_path())
+            rel_source_path = os.path.relpath(self.path, csys.project_path())
+            error_msg = f"Destination path '@/{rel_new_path}' is a subdirectory of the source path '@/{rel_source_path}'."
+            return False, error_msg
+
+        # Check if the destination parent directory is a valid vdirectory or vproject
+        # This ensures that the destination is within a valid vobject structure
+        parent_dir = normpath(
+            os.path.join(new_path, "..")
+        )
+        parent_object = self.get_vobject(parent_dir)
+        
+        # Check if the parent object is a zombie (invalid/non-existent vobject)
+        if parent_object.is_zombie():
+            rel_new_path = os.path.relpath(new_path, csys.project_path())
+            error_msg = f"The destination path '@/{rel_new_path}' has an invalid parent directory."
+            return False, error_msg
+        
+        # Check if the parent object is a valid vdirectory or vproject
+        if not (parent_object.object_type() in ("directory", "project")):
+            rel_new_path = os.path.relpath(new_path, csys.project_path())
+            error_msg = f"The destination path '@/{rel_new_path}' is not within a vdirectory or vproject."
+            return False, error_msg
+
+        # Check if source and destination paths are the same
+        if self.path.lower() == new_path.lower():
+            error_msg = "The source and destination paths are the same."
+            return False, error_msg
+            
+        return True, ""
+
+    def rm(self) -> Message: # UnitTest: DONE
         """ Remove this object.
         The important thing is to unalias.
         """
@@ -440,7 +503,9 @@ class FileManagement(Core):
 
         shutil.rmtree(self.path)
 
-    def sub_objects(self): # UnitTest: DONE
+        return Message()  # Empty message for success
+
+    def sub_objects(self) -> List['VObject']: # UnitTest: DONE
         """ return a list of the sub_objects
         """
         sub_directories = os.listdir(self.path)
@@ -453,7 +518,7 @@ class FileManagement(Core):
                 sub_object_list.append(obj)
         return sub_object_list
 
-    def sub_objects_recursively(self): # UnitTest: DONE
+    def sub_objects_recursively(self) -> List['VObject']: # UnitTest: DONE
         """ Return a list of all the sub_objects
         """
         queue = [self]
@@ -464,95 +529,108 @@ class FileManagement(Core):
             index += 1
         return queue
 
-    def import_file(self, path):
+    def import_file(self, path: str) -> Message:
         """
         Import the file to this task directory
         """
+        message = Message()
+        
         if not self.is_task_or_algorithm():
-            print("This function is only available for task or algorithm.")
-            return
+            message.add("This function is only available for task or algorithm.", "warning")
+            return message
 
         if not os.path.exists(path):
-            print("File does not exist.")
-            return
+            message.add("File does not exist.", "warning")
+            return message
 
         filename = os.path.basename(path)
         if os.path.exists(self.path + "/" + filename):
-            print("File already exists.")
-            return
+            message.add("File already exists.", "warning")
+            return message
 
         if os.path.isdir(path):
             csys.copy_tree(path, self.path + "/" + filename)
         else:
             csys.copy(path, self.path + "/" + filename)
 
-    def rm_file(self, file):
+        return message  # Empty message for success
+
+    def rm_file(self, file: str) -> Message:
         """
         Remove the files within a task or an algorithm
         """
+        message = Message()
+        
         if not self.is_task_or_algorithm():
-            print("This function is only available for task or algorithm.")
-            return
+            message.add("This function is only available for task or algorithm.", "warning")
+            return message
 
         abspath = self.path + "/" + file
 
         if not os.path.exists(abspath):
-            print("File does not exist.")
-            return
+            message.add("File does not exist.", "warning")
+            return message
 
         # protect: the file should not go out of the task directory
         if self.relative_path(abspath).startswith(".."):
-            print("The file should not go out of the task directory.")
-            return
+            message.add("The file should not go out of the task directory.", "warning")
+            return message
 
         # protect: the file should not be the task directory
         if self.relative_path(abspath) == ".":
-            print("The file should not be the task directory.")
-            return
+            message.add("The file should not be the task directory.", "warning")
+            return message
 
         # protect: should not remove the .chern and chern.yaml
         if self.relative_path(abspath) in (".chern", "chern.yaml"):
-            print("The file should not be the .chern or chern.yaml.")
-            return
+            message.add("The file should not be the .chern or chern.yaml.", "warning")
+            return message
 
         if os.path.isdir(abspath):
             csys.rm_tree(abspath)
         else:
             os.remove(abspath)
 
-    def move_file(self, file, dest_file):
+        return message  # Empty message for success
+
+    def move_file(self, file: str, dest_file: str) -> Message:
         """
         Move the files within a task or an algorithm
         """
+        message = Message()
+        
         if not self.is_task_or_algorithm():
-            print("This function is only available for task or algorithm.")
-            return
+            message.add("This function is only available for task or algorithm.", "warning")
+            return message
 
         abspath = self.path + "/" + file
 
         if not os.path.exists(abspath):
-            print("File does not exist.")
-            return
+            message.add("File does not exist.", "warning")
+            return message
 
         # protect: the file should not go out of the task directory
         if self.relative_path(abspath).startswith(".."):
-            print("The file should not go out of the task directory.")
-            return
+            message.add("The file should not go out of the task directory.", "warning")
+            return message
 
         # protect: the file should not be the task directory
         if self.relative_path(abspath) == ".":
-            print("The file should not be the task directory.")
-            return
+            message.add("The file should not be the task directory.", "warning")
+            return message
 
         # protect: should not remove the .chern and chern.yaml
         if self.relative_path(abspath) in (".chern", "chern.yaml"):
-            print("The file should not be the .chern or chern.yaml.")
-            return
+            message.add("The file should not be the .chern or chern.yaml.", "warning")
+            return message
 
         # check if the destination directory exists
         dest = self.path + "/" + dest_file
         if not os.path.exists(os.path.dirname(dest)):
-            print(f"Error: Destination directory '{os.path.dirname(dest)}' does not exist.")
-            return
+            rel_dest_dir = os.path.relpath(os.path.dirname(dest), csys.project_path())
+            message.add(f"Error: Destination directory '@/{rel_dest_dir}' does not exist.", "warning")
+            return message
 
         csys.move(abspath, dest)
+
+        return message  # Empty message for success

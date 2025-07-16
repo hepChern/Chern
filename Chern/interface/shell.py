@@ -101,7 +101,6 @@ def mv(source: str, destination: str) -> None:
     mv SOURCE DIRECTORY
     BECAREFULL!!
     mv SOURCE1 SOURCE2 SOURCE3 ... DIRECTORY is not supported
-    use loop instead
     """
     if destination.startswith("@/") or destination == "@":
         destination = os.path.normpath(csys.project_path() + destination.strip("@"))
@@ -114,7 +113,9 @@ def mv(source: str, destination: str) -> None:
     else:
         source = os.path.abspath(source)
 
-    VObject(source).move_to(destination)
+    result = VObject(source).move_to(destination)
+    if result.messages:  # If there are error messages
+        print(result.colored())
 
 
 def _normalize_paths(source: str, destination: str) -> tuple[str, str]:
@@ -197,7 +198,9 @@ def cp(source: str, destination: str) -> None:
     if not _validate_copy_operation(source, destination):
         return
 
-    VObject(source).copy_to(destination)
+    result = VObject(source).copy_to(destination)
+    if result.messages:  # If there are error messages
+        print(result.colored())
 
 
 def ls(_: str) -> None:
@@ -268,7 +271,9 @@ def rm(line: str) -> None:
     if not csys.exists(line):
         print("File not exists")
         return
-    VObject(line).rm()
+    result = VObject(line).rm()
+    if result.messages:  # If there are error messages
+        print(result.colored())
 
 
 def rm_file(file_name: str) -> None:
@@ -283,9 +288,13 @@ def rm_file(file_name: str) -> None:
             # protect .chern and chern.yaml
             if current_file in (".chern", "chern.yaml"):
                 continue
-            MANAGER.c.rm_file(current_file)
+            result = MANAGER.c.rm_file(current_file)
+            if result.messages:  # If there are error messages
+                print(result.colored())
         return
-    MANAGER.c.rm_file(file_name)
+    result = MANAGER.c.rm_file(file_name)
+    if result.messages:  # If there are error messages
+        print(result.colored())
 
 
 def mv_file(file_name: str, dest_file: str) -> None:
@@ -293,7 +302,9 @@ def mv_file(file_name: str, dest_file: str) -> None:
     if MANAGER.c.object_type() not in ("task", "algorithm"):
         print("Unable to call mv_file if you are not in a task or algorithm.")
         return
-    MANAGER.c.move_file(file_name, dest_file)
+    result = MANAGER.c.move_file(file_name, dest_file)
+    if result.messages:  # If there are error messages
+        print(result.colored())
 
 
 def add_source(line: str) -> None:
@@ -329,9 +340,13 @@ def import_file(filename: str) -> None:
         for file in os.listdir(filename):
             print(f"Importing: from {os.path.join(filename, file)}")
             print(f"Importing: to {MANAGER.c.path}")
-            MANAGER.c.import_file(os.path.join(filename, file))
+            result = MANAGER.c.import_file(os.path.join(filename, file))
+            if result.messages:  # If there are error messages
+                print(result.colored())
         return
-    MANAGER.c.import_file(filename)
+    result = MANAGER.c.import_file(filename)
+    if result.messages:  # If there are error messages
+        print(result.colored())
 
 
 def add_input(path: str, alias: str) -> None:

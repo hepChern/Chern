@@ -34,6 +34,6 @@ def colorize(string: str, color: str = "") -> str:
                 break
     return colors.get(color, string)  # Default to 'string' if color not found
 
-def color_print(string: str, color: str) -> None:
+def color_print(string, color):
     """Print the string with color"""
     print(colorize(string, color))

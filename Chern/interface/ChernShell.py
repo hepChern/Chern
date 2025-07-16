@@ -149,10 +149,14 @@ class ChernShell(cmd.Cmd):
             source = args[0]
             destination = args[1]
             shell.mv(source, destination)
-        except (IndexError, ValueError) as e:
-            print(f"Error: Please provide source and destination. {e}")
         except Exception as e:
             print(f"Error moving object: {e}")
+
+    def complete_mv(self, _: str, line: str, _begidx: int, _endidx: int) -> list:
+        """Complete mv command with available paths."""
+        current_path = MANAGER.c.path
+        filepath = csys.strip_path_string(line[3:])
+        return self.get_completions(current_path, filepath, line)
 
     def do_cp(self, arg: str) -> None:
         """Copy directory or object."""
