@@ -262,7 +262,7 @@ class FileManagement(Core):
 
         return True, ""
 
-    def copy_to_deal_with_arcs(self, queue: List['VObject'], new_path: str) -> None: # UnitTest: DONE
+    def copy_to_deal_with_arcs(self, queue: List['VObject'], new_path: str) -> None:
         """ Deal with the arcs when copying
         """
         for obj in queue:
@@ -335,8 +335,8 @@ class FileManagement(Core):
 
         return Message()  # Empty message for success
 
-    def move_to_deal_with_arcs(self, queue: List['VObject'], 
-                              new_path: str) -> None:  # UnitTest: DONE
+    def move_to_deal_with_arcs(self, queue: List['VObject'],
+                              new_path: str) -> None:
         """ Deal with the arcs when moving
         """
         for obj in queue:
@@ -397,7 +397,6 @@ class FileManagement(Core):
                 if self.relative_path(succ_object.path).startswith(".."):
                     obj.remove_arc_to(succ_object)
 
-
     def move_to(self, new_path: str) -> Message: # UnitTest: DONE
         """ move to another path
         """
@@ -436,35 +435,35 @@ class FileManagement(Core):
 
     def move_to_check(self, new_path: str) -> Tuple[bool, str]: # UnitTest: DONE
         """ Check if the new path is valid for moving
-        
+
         Returns:
             Tuple[bool, str]: (success_status, error_message)
         """
         # Perform all validation checks and collect any error
         error_msg = ""
-        
+
         # Check if the destination directory already exists
         destination_dir = os.path.dirname(new_path)
         if not os.path.exists(destination_dir) and destination_dir:
             rel_dest_dir = os.path.relpath(destination_dir, csys.project_path())
             error_msg = f"Destination directory '@/{rel_dest_dir}' does not exist."
-        
+
         # Check if the destination path already exists
         elif os.path.exists(new_path):
             rel_new_path = os.path.relpath(new_path, csys.project_path())
             error_msg = f"Destination path '@/{rel_new_path}' already exists."
-        
+
         # Check if the destination directory is a subdirectory of the source
         elif os.path.commonpath([self.path, new_path]) == self.path:
             rel_new_path = os.path.relpath(new_path, csys.project_path())
             rel_source_path = os.path.relpath(self.path, csys.project_path())
             error_msg = (f"Destination path '@/{rel_new_path}' is a subdirectory "
                         f"of the source path '@/{rel_source_path}'.")
-        
+
         # Check if source and destination paths are the same
         elif self.path.lower() == new_path.lower():
             error_msg = "The source and destination paths are the same."
-        
+
         else:
             # Check if the destination parent directory is a valid vdirectory or vproject
             parent_dir = normpath(os.path.join(new_path, ".."))
@@ -473,8 +472,9 @@ class FileManagement(Core):
             # Check if the parent object is a zombie (invalid/non-existent vobject)
             if parent_object.is_zombie():
                 rel_new_path = os.path.relpath(new_path, csys.project_path())
-                error_msg = f"The destination path '@/{rel_new_path}' has an invalid parent directory."
-            
+                error_msg = (f"The destination path '@/{rel_new_path}' has an "
+                            f"invalid parent directory.")
+
             # Check if the parent object is a valid vdirectory or vproject
             elif parent_object.object_type() not in ("directory", "project"):
                 rel_new_path = os.path.relpath(new_path, csys.project_path())
@@ -604,7 +604,7 @@ class FileManagement(Core):
             message.add("This function is only available for task or algorithm.", "warning")
         else:
             abspath = self.path + "/" + file
-            
+
             if not os.path.exists(abspath):
                 message.add("File does not exist.", "warning")
             elif self.relative_path(abspath).startswith(".."):
@@ -617,7 +617,7 @@ class FileManagement(Core):
                 # Check if the destination directory exists
                 dest = self.path + "/" + dest_file
                 if not os.path.exists(os.path.dirname(dest)):
-                    rel_dest_dir = os.path.relpath(os.path.dirname(dest), 
+                    rel_dest_dir = os.path.relpath(os.path.dirname(dest),
                                                  csys.project_path())
                     message.add(f"Error: Destination directory '@/{rel_dest_dir}' "
                                f"does not exist.", "warning")
