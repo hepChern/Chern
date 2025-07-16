@@ -186,9 +186,16 @@ class TestChernProject(unittest.TestCase):
 
         obj_folder = vobj.VObject("tasks")
 
-        self.assertTrue(obj_folder.copy_to_check("tasksDuplicate"))
-        self.assertFalse(obj_folder.copy_to_check("tasks"))
-        self.assertFalse(obj_folder.copy_to_check("includes"))
+        # Extract status from tuple for copy_to_check
+        status, _ = obj_folder.copy_to_check("tasksDuplicate")
+        self.assertTrue(status)
+        
+        status, _ = obj_folder.copy_to_check("tasks")
+        self.assertFalse(status)
+        
+        status, _ = obj_folder.copy_to_check("includes")
+        self.assertFalse(status)
+        
         obj_folder.copy_to("tasksDuplicate")
 
         self.assertIn('tasksDuplicate', [obj.invariant_path() for obj in obj_top.sub_objects()])
@@ -206,8 +213,13 @@ class TestChernProject(unittest.TestCase):
         imp_taskQA = str(vobj.VObject("tasks/taskQA").impression())
         imp_taskGen = str(vobj.VObject("tasks/taskGen").impression())
 
-        self.assertFalse(obj_folder.move_to_check("tasks"))
-        self.assertTrue(obj_folder.move_to_check("tasksMoved"))
+        # Extract status from tuple for move_to_check
+        status, _ = obj_folder.move_to_check("tasks")
+        self.assertFalse(status)
+        
+        status, _ = obj_folder.move_to_check("tasksMoved")
+        self.assertTrue(status)
+        
         obj_folder.move_to("tasksMoved")
         self.assertIn('tasksMoved', [obj.invariant_path() for obj in obj_top.sub_objects()])
 
