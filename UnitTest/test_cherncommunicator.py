@@ -10,12 +10,12 @@ CHERN_CACHE = ChernCache.instance()
 import unittest
 from io import BytesIO
 from unittest.mock import patch, mock_open, MagicMock
-from Chern.kernel.chern_communicator import ChernCommunicator  # Replace with your actual module name
+from Chern.kernel.chern_communicator import ChernCommunicator
 import tarfile
 
 class TestChernCommunicator(unittest.TestCase):
 
-    @patch("Chern.kernel.chern_communicator.requests.get")  # Patch at the location where it's used
+    @patch("Chern.kernel.chern_communicator.requests.get")
     def test_dite_status(self, mock_get):
         print(Fore.BLUE + "Testing Dite Status..." + Style.RESET)
         prepare.create_chern_project("demo_complex")
@@ -35,20 +35,19 @@ class TestChernCommunicator(unittest.TestCase):
         mock_get.return_value = mock_response
 
         status = self.comm.dite_status()
-        mock_get.assert_called_once_with("http://localhost:8080/ditestatus", timeout=10)
+        mock_get.assert_called_once_with("http://localhost:8080/dite-status", timeout=10)
         self.assertEqual(status, "ok")
 
         # Simulate unconnected status due to response
         mock_get.reset_mock()
         mock_get.side_effect = Exception("Connection error")
         status = self.comm.dite_status()
-        mock_get.assert_called_once_with("http://localhost:8080/ditestatus", timeout=10)
+        mock_get.assert_called_once_with("http://localhost:8080/dite-status", timeout=10)
         self.assertEqual(status, "unconnected")
 
         os.chdir("..")
         prepare.remove_chern_project("demo_complex")
         CHERN_CACHE.__init__()
-
 
     @patch("Chern.kernel.chern_communicator.requests.get")
     def test_dite_info(self, mock_get):
@@ -71,20 +70,19 @@ class TestChernCommunicator(unittest.TestCase):
 
         # Call the dite_info method
         info = self.comm.dite_info()
-        mock_get.assert_called_once_with("http://localhost:8080/ditestatus", timeout=10)
+        mock_get.assert_called_once_with("http://localhost:8080/dite-status", timeout=10)
         self.assertIn("[connected]", info)
 
         # Simulate unconnected status
         mock_get.reset_mock()
         mock_get.side_effect = Exception("Connection error")
         info = self.comm.dite_info()
-        mock_get.assert_called_once_with("http://localhost:8080/ditestatus", timeout=10)
+        mock_get.assert_called_once_with("http://localhost:8080/dite-status", timeout=10)
         self.assertIn("[unconnected]", info)
 
         os.chdir("..")
         prepare.remove_chern_project("demo_genfit_new")
         CHERN_CACHE.__init__()
-
 
     @patch("Chern.kernel.chern_communicator.requests.get")
     def test_output_files(self, mock_get):
@@ -109,7 +107,7 @@ class TestChernCommunicator(unittest.TestCase):
         result = self.comm.output_files("xyz", machine="local")
 
         expected_calls = [
-            unittest.mock.call("http://localhost:8080/machine_id/local", timeout=10),
+            unittest.mock.call("http://localhost:8080/machine-id/local", timeout=10),
             unittest.mock.call("http://localhost:8080/outputs/xyz/machineABC", timeout=10),
         ]
         mock_get.assert_has_calls(expected_calls)
@@ -118,7 +116,6 @@ class TestChernCommunicator(unittest.TestCase):
         os.chdir("..")
         prepare.remove_chern_project("demo_genfit_new")
         CHERN_CACHE.__init__()
-
 
     @patch("Chern.kernel.chern_communicator.requests.get")
     def get_file(self, mock_get):
@@ -142,15 +139,13 @@ class TestChernCommunicator(unittest.TestCase):
         result = self.comm.get_file("xyz", "output1.out", machine="local")
 
         mock_get.assert_called_once_with(
-            "http://localhost:8080/get_file/xyz/output1.out/local", timeout=10
+            "http://localhost:8080/get-file/xyz/output1.out/local", timeout=10
         )
         self.assertEqual(result, "file content")
 
         os.chdir("..")
         prepare.remove_chern_project("demo_genfit_new")
         CHERN_CACHE.__init__()
-
-
 
     @patch("Chern.kernel.chern_communicator.requests.get")
     @patch("Chern.kernel.chern_communicator.requests.post")
@@ -190,7 +185,6 @@ class TestChernCommunicator(unittest.TestCase):
 
         self.comm.deposit_with_data(impression, path="/some/raw/data")
 
-
         # Check tarfile opening: read and write
         self.assertEqual(mock_tarfile_open.call_count, 2)
         mock_tarfile_open.assert_any_call("/path/to/impression.tar", "r")
@@ -215,23 +209,13 @@ class TestChernCommunicator(unittest.TestCase):
 
         # Check HTTP get
         mock_get.assert_called_once_with(
-            "http://localhost:8080/setjobstatus/abc123/archived",
+            "http://localhost:8080/set-job-status/abc123/archived",
             timeout=5
         )
         os.chdir("..")
         prepare.remove_chern_project("demo_genfit_new")
         CHERN_CACHE.__init__()
 
-    """
-    def export(self, impression, filename, output):
-        url = self.serverurl()
-        r = requests.get(
-                f"http://{url}/export/{impression.uuid}/{filename}",
-                timeout=self.timeout
-        )
-        with open(output, "wb") as f:
-            f.write(r.content)
-    """
     @patch("Chern.kernel.chern_communicator.requests.get")
     def test_export(self, mock_get):
         print(Fore.BLUE + "Testing Export..." + Style.RESET)
@@ -356,7 +340,7 @@ class TestChernCommunicator(unittest.TestCase):
         status = self.comm.run_status(impression, machine="local")
 
         mock_get.assert_called_once_with(
-            "http://localhost:8080/runstatus/abc123/local", timeout=10
+            "http://localhost:8080/run-status/abc123/local", timeout=10
         )
         self.assertEqual(status, "running")
 
@@ -366,7 +350,7 @@ class TestChernCommunicator(unittest.TestCase):
         status = self.comm.run_status(impression, machine="local")
 
         mock_get.assert_called_once_with(
-            "http://localhost:8080/runstatus/abc123/local", timeout=10
+            "http://localhost:8080/run-status/abc123/local", timeout=10
         )
         self.assertEqual(status, "unconnected")
 
@@ -442,7 +426,7 @@ class TestChernCommunicator(unittest.TestCase):
 
         # Verify get call for machine_id
         mock_get.assert_any_call(
-            "http://localhost:8080/machine_id/local", timeout=10
+            "http://localhost:8080/machine-id/local", timeout=10
         )
         # Verify get call for run
         mock_get.assert_any_call(
@@ -603,7 +587,7 @@ class TestChernCommunicator(unittest.TestCase):
 
         # Verify post call
         mock_post.assert_called_once_with(
-            "http://localhost:8080/registerrunner",
+            "http://localhost:8080/register-runner",
             data={'runner': 'new_runner', 'url': 'http://runner.url',
                   'token': 'token123'},
             timeout=10
@@ -634,7 +618,7 @@ class TestChernCommunicator(unittest.TestCase):
         result = self.comm.sample_status(impression)
         
         mock_get.assert_called_once_with(
-            "http://localhost:8080/samplestatus/abc123", timeout=10
+            "http://localhost:8080/sample-status/abc123", timeout=10
         )
         self.assertEqual(result, "sample_status_ok")
 
@@ -697,7 +681,7 @@ class TestChernCommunicator(unittest.TestCase):
         # Verify subprocess call
         mock_subprocess.assert_called_once_with([
             "open",
-            "http://localhost:8080/impview/abc123"
+            "http://localhost:8080/imp-view/abc123"
         ])
 
         os.chdir("..")
@@ -746,7 +730,7 @@ class TestChernCommunicator(unittest.TestCase):
         result = self.comm.get_file("impression123", "output.txt")
 
         mock_get.assert_called_once_with(
-            "http://localhost:8080/getfile/impression123/output.txt",
+            "http://localhost:8080/get-file/impression123/output.txt",
             timeout=10
         )
         self.assertEqual(result, "/path/to/file")

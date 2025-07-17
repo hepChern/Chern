@@ -16,27 +16,27 @@ Job Submission & Management:
 
 Status & Monitoring:
 - GET /status/{uuid} - Get job status of impression
-- GET /runstatus/{uuid}/{machine} - Get run status on specific machine
+- GET /run-status/{uuid}/{machine} - Get run status on specific machine
 - GET /deposited/{uuid} - Check if impression is deposited
-- GET /samplestatus/{uuid} - Get sample processing status
+- GET /sample-status/{uuid} - Get sample processing status
 - GET /workflow/{uuid} - Get workflow information
-- GET /ditestatus - Check DITE server connection status
+- GET /dite-status - Check DITE server connection status
 
 Machine & Runner Management:
 - GET /runners - List available compute runners
-- GET /runnersurl - List runner URLs
-- GET /machine_id/{machine} - Get machine ID for runner name
-- POST /registerrunner - Register new compute runner
-- GET /removerunner/{runner} - Remove compute runner
-- GET /runnerconnection/{runner} - Check runner connection status
+- GET /runners-url - List runner URLs
+- GET /machine-id/{machine} - Get machine ID for runner name
+- POST /register-runner - Register new compute runner
+- GET /remove-runner/{runner} - Remove compute runner
+- GET /runner-connection/{runner} - Check runner connection status
 
 File Operations:
 - GET /collect/{uuid} - Collect impression results
 - GET /export/{uuid}/{filename} - Download specific file from impression
 - GET /outputs/{impression}/{machine_id} - List output files
-- GET /getfile/{impression}/{filename} - Get file path from impression
-- GET /impview/{uuid} - View impression in browser interface
-- GET /setjobstatus/{uuid}/archived - Set job status to archived
+- GET /get-file/{impression}/{filename} - Get file path from impression
+- GET /imp-view/{uuid} - View impression in browser interface
+- GET /set-job-status/{uuid}/archived - Set job status to archived
 
 All requests use configurable timeout (default: 10s) and support both local and remote execution.
 
@@ -100,8 +100,8 @@ class ChernCommunicator():
         url = self.serverurl()
         logger.debug("url: %s", url)
         try:
-            logger.debug("http://%s/ditestatus", url)
-            r = requests.get(f"http://{url}/ditestatus", timeout=self.timeout)
+            logger.debug("http://%s/dite-status", url)
+            r = requests.get(f"http://{url}/dite-status", timeout=self.timeout)
             logger.debug(r)
         except Exception:
             return "unconnected"
@@ -134,7 +134,7 @@ class ChernCommunicator():
         }
         url = self.serverurl()
         machine_id = requests.get(
-            f"http://{url}/machine_id/{machine}",
+            f"http://{url}/machine-id/{machine}",
             timeout=self.timeout
         ).text
         requests.post(
@@ -199,7 +199,7 @@ class ChernCommunicator():
             timeout=self.timeout
         )
         requests.get(
-                f"http://{url}/setjobstatus/{impression.uuid}/archived",
+                f"http://{url}/set-job-status/{impression.uuid}/archived",
                 timeout=self.timeout
         )
 
@@ -208,7 +208,7 @@ class ChernCommunicator():
         files = {"impressions": " ".join(impressions)}
         url = self.serverurl()
         machine_id = requests.get(
-            f"http://{url}/machine_id/{machine}",
+            f"http://{url}/machine-id/{machine}",
             timeout=self.timeout
         ).text
         requests.post(
@@ -248,7 +248,7 @@ class ChernCommunicator():
         url = self.serverurl()
         try:
             r = requests.get(
-                f"http://{url}/runstatus/{impression.uuid}/{machine}",
+                f"http://{url}/run-status/{impression.uuid}/{machine}",
                 timeout=self.timeout
             )
         except Exception as e:
@@ -287,7 +287,7 @@ class ChernCommunicator():
         url = self.serverurl()
         try:
             r = requests.get(
-                f"http://{url}/samplestatus/{impression.uuid}",
+                f"http://{url}/sample-status/{impression.uuid}",
                 timeout=self.timeout
             )
         except Exception as e:
@@ -353,7 +353,7 @@ class ChernCommunicator():
         url = self.serverurl()
         try:
             r = requests.get(
-                    f"http://{url}/runnersurl",
+                    f"http://{url}/runners-url",
                     timeout=self.timeout
             )
         except Exception as e:
@@ -366,7 +366,7 @@ class ChernCommunicator():
         url = self.serverurl()
 
         requests.post(
-            f"http://{url}/registerrunner",
+            f"http://{url}/register-runner",
             data={'runner': runner, 'url': runner_url, 'token': token},
             timeout=self.timeout
         )
@@ -376,7 +376,7 @@ class ChernCommunicator():
         url = self.serverurl()
         try:
             r = requests.get(
-                    f"http://{url}/removerunner/{runner}",
+                    f"http://{url}/remove-runner/{runner}",
                     timeout=self.timeout
             )
             if r.text != "successful":
@@ -391,7 +391,7 @@ class ChernCommunicator():
         url = self.serverurl()
         try:
             r = requests.get(
-                f"http://{url}/runnerconnection/{runner}",
+                f"http://{url}/runner-connection/{runner}",
                 timeout=self.timeout
             )
         except Exception as e:
@@ -407,7 +407,7 @@ class ChernCommunicator():
             machine_id = "none"
         else:
             machine_id = requests.get(
-                f"http://{url}/machine_id/{machine}",
+                f"http://{url}/machine-id/{machine}",
                 timeout=self.timeout
             ).text
         r = requests.get(
@@ -420,7 +420,7 @@ class ChernCommunicator():
         """ Get the file from the server """
         url = self.serverurl()
         path = requests.get(
-            f"http://{url}/getfile/{impression}/{filename}",
+            f"http://{url}/get-file/{impression}/{filename}",
             timeout=self.timeout
         ).text
         return path
@@ -447,4 +447,4 @@ class ChernCommunicator():
     def impview(self, impression):
         """ View the impression in the browser """
         url = self.serverurl()
-        subprocess.call(["open", f"http://{url}/impview/{impression.uuid}"])
+        subprocess.call(["open", f"http://{url}/imp-view/{impression.uuid}"])
