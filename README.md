@@ -1,3 +1,4 @@
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/hepChern/Chern)
 # Chern
 
 Chern is a data analysis management toolkit designed for high energy physics research. It provides a structured environment for organizing projects, tasks, algorithms, and data, enabling reproducible and collaborative scientific workflows.
