@@ -473,3 +473,7 @@ def config() -> None:
     yaml_file = metadata.YamlFile(path)
     editor = yaml_file.read_variable("editor", "vi")
     subprocess.call([editor, f"{MANAGER.c.path}/chern.yaml"])
+
+def danger_call(cmd: str) -> None:
+    message = MANAGER.c.danger_call(cmd)
+    print(message.colored())

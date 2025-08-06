@@ -7,10 +7,13 @@ Unit tests: 8
 import os
 from abc import ABC, abstractmethod
 from logging import getLogger
+from subprocess import Popen
 from typing import TYPE_CHECKING, Optional
+
 
 from ..utils import csys
 from ..utils import metadata
+from ..utils.message import Message
 
 if TYPE_CHECKING:
     from .vobject import VObject
@@ -81,6 +84,35 @@ class Core(ABC):
         """ Judge whether it is actually an object
         """
         return self.object_type() == ""
+
+    def danger_call(self, cmd: str) -> Message:
+        """ A dangerous call that directly call the command
+        """
+        logger.warning("Dangerous call: %s", cmd)
+        message = Message()
+        message.add(f"Executing dangerous command: {cmd}\n", "warning")
+        try:
+            process = Popen(cmd, shell=True, stdout=-1, stderr=-1, text=True)
+            stdout, stderr = process.communicate()
+            
+            if stdout:
+                message.add(f"STDOUT:\n{stdout}\n", "info")
+            if stderr:
+                message.add(f"STDERR:\n{stderr}\n", "error")
+                
+            if process.returncode == 0:
+                message.add("Command executed successfully.\n", "success")
+            else:
+                message.add(
+                    f"Command failed with return code {process.returncode}\n",
+                    "error"
+                )
+
+        except Exception as e:
+            message.add(f"Error executing command: {e}\n", "error")
+        return message
+        
+    
 
     @abstractmethod
     def get_vobject(self, path: str) -> 'VObject':
