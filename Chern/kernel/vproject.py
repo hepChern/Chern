@@ -31,12 +31,18 @@ class VProject(VObject):
                 impressions.extend(sub_object.get_impressions())
         return impressions
 
-    def submit(self, runner="local"):
+    def submit(self, runner="local") -> Message:
         """ Submit the project to the server"""
         cherncc = ChernCommunicator.instance()
+        dite_status = cherncc.dite_status()
+        if dite_status != "connected":
+            msg = Message()
+            msg.add("DITE is not connected. Please check the connection.", "warning")
+            return msg
         self.deposit()
         impressions = self.get_impressions()
         cherncc.execute(impressions, runner)
+        return Message(f"Impressions {impressions} submitted to {runner}.")
 
     def clean_impressions(self):
         """ Clean all the impressions of the project"""

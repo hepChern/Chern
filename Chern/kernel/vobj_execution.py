@@ -3,6 +3,7 @@
 from logging import getLogger
 from typing import Optional, TYPE_CHECKING
 
+from ..utils.message import Message
 from .chern_communicator import ChernCommunicator
 from .vobj_core import Core
 
@@ -23,11 +24,22 @@ class ExecutionManagement(Core):
             return False
         return False
 
-    def submit(self, runner: str = "local") -> None:
+    def submit(self, runner: str = "local") -> Message:
         """ Submit the impression to the runner. """
         cherncc = ChernCommunicator.instance()
+        # Check the connection
+        dite_status = cherncc.dite_status()
+        if dite_status != "connected":
+            msg = Message()
+            msg.add("DITE is not connected. Please check the connection.", "warning")
+            # logger.error(msg)
+            return msg
         self.deposit()
         cherncc.execute([self.impression().uuid], runner)
+        msg = Message()
+        msg.add(f"Impression {self.impression().uuid} submitted to {runner}.")
+        logger.info(msg)
+        return msg
 
     def resubmit(self, runner: str = "local") -> None:
         """ Resubmit the impression to the runner. """

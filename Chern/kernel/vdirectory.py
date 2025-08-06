@@ -75,13 +75,20 @@ class VDirectory(VObject):
             else:
                 VDirectory(sub_object.path).deposit()
 
-    def submit(self, runner = "local"):
+    def submit(self, runner = "local") -> Message:
         """ Submit the contents of the directory
         """
         cherncc = ChernCommunicator.instance()
+        dite_status = cherncc.dite_status()
+        if dite_status != "connected":
+            msg = Message()
+            msg.add("DITE is not connected. Please check the connection.", "warning")
+            return msg
         self.deposit()
         impressions = self.get_impressions()
         cherncc.execute(impressions, runner)
+        return Message(f"Impressions {impressions} submitted to {runner}.")
+
 
 def create_directory(path):
     """ Create a directory
