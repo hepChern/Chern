@@ -11,6 +11,7 @@ This is a common pattern in interactive shells to prevent crashes.
 # pylint: disable=broad-exception-caught
 import cmd
 import os
+from typing import Tuple
 
 from ..interface import shell
 from ..interface.ChernManager import get_manager
@@ -27,6 +28,13 @@ class ChernShell(cmd.Cmd):
     prompt = '[Chern]'
     file = None
 
+    def __init__(self):
+        """Initialize the shell and set custom completer delimiters."""
+        super().__init__()
+        # Treat the dash as part of a command name for completion
+        import readline
+        self.completerdelims = readline.get_completer_delims().replace('-', '')
+
     def init(self) -> None:
         """Initialize the shell with current project context."""
         current_project_name = MANAGER.get_current_project()
@@ -40,6 +48,57 @@ class ChernShell(cmd.Cmd):
         current_project_name = MANAGER.get_current_project()
         current_path = os.path.relpath(MANAGER.c.path, csys.project_path(MANAGER.c.path))
         self.prompt = f"[Chern][{current_project_name}][{current_path}] "
+
+    def parseline(self, line: str) -> Tuple[str, str, str]:
+        """Parse a command line input."""
+        # Replace ALL dashes with underscores to map to method names
+        cmd, arg, line = super().parseline(line.replace('-', '_'))
+        return cmd, arg, line
+
+    def completenames(self, text, *ignored):
+        """Complete command names based on user input."""
+        matches = []
+        
+        # Get all method names that start with 'do_'
+        for name in self.get_names():
+            if name.startswith("do_"):
+                # Convert do_create_task to create-task
+                command_name = name[3:].replace('_', '-')
+                if command_name.startswith(text):
+                    matches.append(command_name)
+        
+        return matches
+
+    def completedefault(self, text, line, begidx, endidx):
+        """Default completion handler for commands that don't exist."""
+        # Check if we're still typing the first word (no spaces)
+        if ' ' not in line.strip():
+            # Get the full command being typed so far
+            full_command = line[:endidx].strip()
+            
+            # Get all matching commands
+            all_matches = self.completenames(full_command)
+            
+            if all_matches:
+                results = []
+                for match in all_matches:
+                    if match.startswith(full_command):
+                        # Calculate the suffix that should be added after the current cursor position
+                        # text represents what cmd thinks needs to be completed
+                        # We need to find where 'text' starts within the full command
+                        text_start_pos = full_command.rfind(text) if text else len(full_command)
+                        
+                        if text_start_pos >= 0:
+                            # Return the part of the match that comes after the text being completed
+                            suffix = match[text_start_pos:]
+                            if suffix:
+                                results.append(suffix)
+                        elif match == full_command:
+                            # Exact match, add space
+                            results.append(' ')
+                return results
+    
+        return []
 
     def do_ls(self, _: str) -> None:
         """List contents of current object."""
