@@ -479,6 +479,16 @@ class ChernShell(cmd.Cmd):
         except Exception as e:
             print(f"Error viewing impressions: {e}")
 
+    def do_danger_call(self, arg: str) -> None:
+        """Dangerous call to execute a command directly."""
+        try:
+            cmd = arg
+            shell.danger_call(cmd)
+        except (IndexError, ValueError) as e:
+            print(f"Error: Please provide a command to execute. {e}")
+        except Exception as e:
+            print(f"Error executing command: {e}")
+
     def emptyline(self) -> None:
         """Handle empty line input."""
 
