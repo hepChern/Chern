@@ -32,6 +32,9 @@ class VAlgorithm(VObject):
         """ Print the status """
         message = super().printed_status()
         cherncc = ChernCommunicator.instance()
+        dite_status = cherncc.dite_status()
+        if dite_status != "connected":
+            return message
         workflow_check = cherncc.workflow(self.impression())
         if workflow_check == "UNDEFINED":
             message.add("Workflow not defined\n")

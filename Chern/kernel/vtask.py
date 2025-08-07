@@ -138,6 +138,9 @@ class VTask(InputManager, SettingManager, FileManager, JobManager):
             return message
 
         cherncc = ChernCommunicator.instance()
+        dite_status = cherncc.dite_status()
+        if dite_status != "connected":
+            return message
         job_status = cherncc.job_status(self.impression())
         message.add("Job status: ")
         message.add(f"{'['+job_status+']'}", "success")
