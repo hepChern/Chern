@@ -447,6 +447,12 @@ def send(path: str) -> None:
     MANAGER.c.send(path)
 
 
+def submit(runner: str = "local") -> None:
+    """Submit to the runner."""
+    message = MANAGER.c.submit(runner)
+    print(message.colored())
+
+
 def impview() -> None:
     """View impressions for current task."""
     is_task = MANAGER.c.is_task()

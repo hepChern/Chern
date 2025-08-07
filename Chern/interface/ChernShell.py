@@ -393,10 +393,10 @@ class ChernShell(cmd.Cmd):
         """Submit current object."""
         try:
             if arg == "":
-                MANAGER.current_object().submit()
+                shell.submit()
             else:
                 obj = arg.split()[0]
-                MANAGER.current_object().submit(obj)
+                shell.submit(obj)
         except Exception as e:
             print(f"Error submitting: {e}")
 
