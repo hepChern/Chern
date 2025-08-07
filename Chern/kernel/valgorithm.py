@@ -38,6 +38,7 @@ class VAlgorithm(VObject):
         workflow_check = cherncc.workflow(self.impression())
         if workflow_check == "UNDEFINED":
             message.add("Workflow not defined\n")
+        return message
 
     def run_status(self) -> str:
         """ Asking for the remote status
