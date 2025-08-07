@@ -6,11 +6,12 @@ import os
 from ..utils import metadata
 from ..utils import csys
 from ..utils.message import Message
+from .vdirectory import VDirectory
 from .vobject import VObject
-from .chern_communicator import ChernCommunicator
 from . import helpme
 
-class VProject(VObject):
+
+class VProject(VDirectory):
     """ operate the project
     """
 
@@ -19,30 +20,6 @@ class VProject(VObject):
         message = Message()
         message.add(helpme.project_helpme.get(command, "No such command, try ``helpme'' alone."))
         return message
-
-    def get_impressions(self):
-        """ Get all the impressions of the project"""
-        impressions = []
-        sub_objects = self.sub_objects()
-        for sub_object in sub_objects:
-            if sub_object.object_type() == "task" or sub_object.object_type() == "algorithm":
-                impressions.append(sub_object.impression().uuid)
-            else:
-                impressions.extend(sub_object.get_impressions())
-        return impressions
-
-    def submit(self, runner="local") -> Message:
-        """ Submit the project to the server"""
-        cherncc = ChernCommunicator.instance()
-        dite_status = cherncc.dite_status()
-        if dite_status != "connected":
-            msg = Message()
-            msg.add("DITE is not connected. Please check the connection.", "warning")
-            return msg
-        self.deposit()
-        impressions = self.get_impressions()
-        cherncc.execute(impressions, runner)
-        return Message(f"Impressions {impressions} submitted to {runner}.")
 
     def clean_impressions(self):
         """ Clean all the impressions of the project"""

@@ -37,7 +37,6 @@ from .vobject import VObject
 from .vtask import VTask
 from .valgorithm import VAlgorithm
 from . import helpme
-from .chern_communicator import ChernCommunicator
 
 class VDirectory(VObject):
     """ The VDirectory class
@@ -48,19 +47,6 @@ class VDirectory(VObject):
         message = Message()
         message.add(helpme.directory_helpme.get(command, "No such command, try ``helpme'' alone."))
         return message
-
-    def get_impressions(self):
-        """ Get the impressions of the directory
-        """
-        impressions = []
-        sub_objects = self.sub_objects()
-        for sub_object in sub_objects:
-            if sub_object.is_task_or_algorithm():
-                impressions.append(sub_object.impression().uuid)
-            else:
-                sub_object = VDirectory(sub_object.path)
-                impressions.extend(sub_object.get_impressions())
-        return impressions
 
     def deposit(self):
         """ Deposit the contents of the directory
@@ -74,21 +60,6 @@ class VDirectory(VObject):
                 VAlgorithm(sub_object.path).deposit()
             else:
                 VDirectory(sub_object.path).deposit()
-
-    def submit(self, runner = "local") -> Message:
-        """ Submit the contents of the directory
-        """
-        cherncc = ChernCommunicator.instance()
-        dite_status = cherncc.dite_status()
-        if dite_status != "connected":
-            msg = Message()
-            msg.add("DITE is not connected. Please check the connection.", "warning")
-            return msg
-        self.deposit()
-        impressions = self.get_impressions()
-        cherncc.execute(impressions, runner)
-        return Message(f"Impressions {impressions} submitted to {runner}.")
-
 
 def create_directory(path):
     """ Create a directory
@@ -105,4 +76,7 @@ def create_directory(path):
     directory = VObject(path)
 
     with open(path + "/.chern/README.md", "w", encoding="utf-8") as f:
-        f.write(f"Please write README for the directory {directory.invariant_path()}")
+        f.write(
+            f"Please write README for the directory "
+            f"{directory.invariant_path()}"
+        )

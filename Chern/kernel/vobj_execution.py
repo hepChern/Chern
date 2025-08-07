@@ -24,6 +24,20 @@ class ExecutionManagement(Core):
             return False
         return False
 
+    def get_impressions(self) -> list[str]:
+        """ Get the impressions of the object.
+        """
+        if not self.is_task_or_algorithm():
+            sub_objects = self.sub_objects()
+            impressions = []
+            for sub_object in sub_objects:
+                impressions.extend(sub_object.get_impressions())
+            return impressions
+        impression = self.impression()
+        if impression is None:
+            return []
+        return [impression.uuid]
+
     def submit(self, runner: str = "local") -> Message:
         """ Submit the impression to the runner. """
         cherncc = ChernCommunicator.instance()
@@ -35,10 +49,10 @@ class ExecutionManagement(Core):
             # logger.error(msg)
             return msg
         self.deposit()
-        cherncc.execute([self.impression().uuid], runner)
+        impressions = self.get_impressions()
+        cherncc.execute(impressions, runner)
         msg = Message()
-        msg.add(f"Impression {self.impression().uuid} submitted to {runner}.")
-        logger.info(msg)
+        msg.add(f"Impressions {impressions} submitted to {runner}.", "info")
         return msg
 
     def resubmit(self, runner: str = "local") -> None:

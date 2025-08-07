@@ -92,27 +92,25 @@ class Core(ABC):
         message = Message()
         message.add(f"Executing dangerous command: {cmd}\n", "warning")
         try:
-            process = Popen(cmd, shell=True, stdout=-1, stderr=-1, text=True)
-            stdout, stderr = process.communicate()
-            
-            if stdout:
-                message.add(f"STDOUT:\n{stdout}\n", "info")
-            if stderr:
-                message.add(f"STDERR:\n{stderr}\n", "error")
-                
-            if process.returncode == 0:
-                message.add("Command executed successfully.\n", "success")
-            else:
-                message.add(
-                    f"Command failed with return code {process.returncode}\n",
-                    "error"
-                )
-
-        except Exception as e:
+            with Popen(
+                cmd, shell=True, stdout=-1, stderr=-1, text=True
+            ) as process:
+                stdout, stderr = process.communicate()
+                if stdout:
+                    message.add(f"STDOUT:\n{stdout}\n", "info")
+                if stderr:
+                    message.add(f"STDERR:\n{stderr}\n", "error")
+                if process.returncode == 0:
+                    message.add("Command executed successfully.\n", "success")
+                else:
+                    message.add(
+                        f"Command failed with return code "
+                        f"{process.returncode}\n",
+                        "error"
+                    )
+        except OSError as e:
             message.add(f"Error executing command: {e}\n", "error")
         return message
-        
-    
 
     @abstractmethod
     def get_vobject(self, path: str) -> 'VObject':
