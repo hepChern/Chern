@@ -306,24 +306,65 @@ class TestVAlgorithm(unittest.TestCase):
         try:
             algorithm = valg.VAlgorithm(os.getcwd() + "/algorithms/algAna1")
             
-            # Mock ChernCommunicator and parent printed_status
-            with patch.object(ChernCommunicator, 'instance') as mock_instance:
+            # Test when dite is connected and workflow is undefined
+            with patch.object(ChernCommunicator, 'instance') as mock_instance, \
+                 patch('Chern.kernel.vobject.VObject.printed_status') as mock_super:
+                
                 mock_communicator = MagicMock()
                 mock_instance.return_value = mock_communicator
+                mock_communicator.dite_status.return_value = "connected"  # Set to connected
                 mock_communicator.workflow.return_value = "UNDEFINED"
                 
-                with patch('Chern.kernel.vobject.VObject.printed_status') \
-                        as mock_super:
-                    mock_message = MagicMock()
-                    mock_super.return_value = mock_message
-                    
-                    algorithm.printed_status()
-                    
-                    mock_communicator.workflow.assert_called_once()
-                    mock_message.add.assert_called_with(
-                        "Workflow not defined\n"
-                    )
-                    
+                mock_message = MagicMock()
+                mock_super.return_value = mock_message
+                
+                result = algorithm.printed_status()
+                
+                # Verify dite_status was checked
+                mock_communicator.dite_status.assert_called_once()
+                # Verify workflow was called since dite is connected
+                mock_communicator.workflow.assert_called_once()
+                # Verify the "Workflow not defined" message was added
+                mock_message.add.assert_called_with("Workflow not defined\n")
+                
+            # Test when dite is not connected
+            with patch.object(ChernCommunicator, 'instance') as mock_instance, \
+                 patch('Chern.kernel.vobject.VObject.printed_status') as mock_super:
+                
+                mock_communicator = MagicMock()
+                mock_instance.return_value = mock_communicator
+                mock_communicator.dite_status.return_value = "disconnected"
+                
+                mock_message = MagicMock()
+                mock_super.return_value = mock_message
+                
+                result = algorithm.printed_status()
+                
+                # Should return early without calling workflow
+                mock_communicator.dite_status.assert_called_once()
+                mock_communicator.workflow.assert_not_called()
+                self.assertEqual(result, mock_message)
+                
+            # Test when dite is connected and workflow is defined
+            with patch.object(ChernCommunicator, 'instance') as mock_instance, \
+                 patch('Chern.kernel.vobject.VObject.printed_status') as mock_super:
+                
+                mock_communicator = MagicMock()
+                mock_instance.return_value = mock_communicator
+                mock_communicator.dite_status.return_value = "connected"
+                mock_communicator.workflow.return_value = "defined_workflow"
+                
+                mock_message = MagicMock()
+                mock_super.return_value = mock_message
+                
+                result = algorithm.printed_status()
+                
+                # Should call workflow and not add the undefined message
+                mock_communicator.dite_status.assert_called_once()
+                mock_communicator.workflow.assert_called_once()
+                # Should not add "Workflow not defined" message since workflow is defined
+                mock_message.add.assert_not_called()
+                
         finally:
             os.chdir("..")
             prepare.remove_chern_project("demo_complex")

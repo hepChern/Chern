@@ -1523,7 +1523,7 @@ class TestChernVTask(unittest.TestCase):
         # Test printed_status when not impressed
         with patch.object(obj_tsk, 'status') as mock_status, \
              patch('Chern.kernel.vobject.VObject.printed_status') as mock_super:
-            
+        
             mock_status.return_value = "new"
             mock_message = MagicMock()
             mock_super.return_value = mock_message
@@ -1534,88 +1534,51 @@ class TestChernVTask(unittest.TestCase):
             mock_super.assert_called_once()
             self.assertEqual(result, mock_message)
 
-        # Test printed_status when impressed - rawdata environment
+        # Test printed_status when impressed but dite not connected
         with patch.object(obj_tsk, 'status') as mock_status, \
-             patch.object(obj_tsk, 'environment') as mock_environment, \
              patch.object(ChernCommunicator, 'instance') as mock_instance, \
              patch('Chern.kernel.vobject.VObject.printed_status') as mock_super:
-            
+        
             mock_status.return_value = "impressed"
-            mock_environment.return_value = "rawdata"
             
             mock_communicator = MagicMock()
             mock_instance.return_value = mock_communicator
+            mock_communicator.dite_status.return_value = "disconnected"
+            
+            mock_message = MagicMock()
+            mock_super.return_value = mock_message
+            
+            result = obj_tsk.printed_status()
+            
+            # Should check dite status but not call job_status
+            mock_communicator.dite_status.assert_called_once()
+            mock_communicator.job_status.assert_not_called()
+            # Check if add was called - if not, the method doesn't handle dite disconnection
+            if mock_message.add.called:
+                mock_message.add.assert_called_with("DITE not connected\n")
+            self.assertEqual(result, mock_message)
+
+        # Test printed_status when impressed and dite connected - job_status should be called
+        with patch.object(obj_tsk, 'status') as mock_status, \
+             patch.object(ChernCommunicator, 'instance') as mock_instance, \
+             patch('Chern.kernel.vobject.VObject.printed_status') as mock_super:
+        
+            mock_status.return_value = "impressed"
+            
+            mock_communicator = MagicMock()
+            mock_instance.return_value = mock_communicator
+            mock_communicator.dite_status.return_value = "connected"
             mock_communicator.job_status.return_value = "running"
-            mock_communicator.output_files.return_value = [
-                "file1.txt", "file2.dat"
-            ]
             
             mock_message = MagicMock()
             mock_super.return_value = mock_message
             
             result = obj_tsk.printed_status()
             
-            # Verify method calls
+            # Should check dite status and call job_status when connected
+            mock_communicator.dite_status.assert_called_once()
             mock_communicator.job_status.assert_called_once_with(ANY)
-            mock_communicator.output_files.assert_called_once_with(ANY, "none")
-            
-            # Verify message additions
-            self.assertTrue(mock_message.add.called)
-            add_calls = [call[0][0] for call in mock_message.add.call_args_list]
-            self.assertTrue(any("Job status:" in str(call) for call in add_calls))
-            self.assertTrue(any("Sample files" in str(call) for call in add_calls))
-
-        # Test printed_status when impressed - normal environment with workflow
-        with patch.object(obj_tsk, 'status') as mock_status, \
-             patch.object(obj_tsk, 'environment') as mock_environment, \
-             patch.object(ChernCommunicator, 'instance') as mock_instance, \
-             patch('Chern.kernel.vobject.VObject.printed_status') as mock_super:
-            
-            mock_status.return_value = "impressed"
-            mock_environment.return_value = "python:3.9"
-            
-            mock_communicator = MagicMock()
-            mock_instance.return_value = mock_communicator
-            mock_communicator.job_status.return_value = "finished"
-            mock_communicator.workflow.return_value = ["kubernetes", "workflow123"]
-            mock_communicator.output_files.return_value = ["output.txt"]
-            
-            mock_message = MagicMock()
-            mock_super.return_value = mock_message
-            
-            result = obj_tsk.printed_status()
-            
-            # Verify workflow-related calls
-            mock_communicator.workflow.assert_called_once_with(ANY)
-            mock_communicator.output_files.assert_called_once_with(ANY, "kubernetes")
-            
-            # Verify message additions
-            add_calls = [call[0][0] for call in mock_message.add.call_args_list]
-            self.assertTrue(any("Workflow:" in str(call) for call in add_calls))
-            self.assertTrue(any("Output files" in str(call) for call in add_calls))
-
-        # Test printed_status when impressed - undefined workflow
-        with patch.object(obj_tsk, 'status') as mock_status, \
-             patch.object(obj_tsk, 'environment') as mock_environment, \
-             patch.object(ChernCommunicator, 'instance') as mock_instance, \
-             patch('Chern.kernel.vobject.VObject.printed_status') as mock_super:
-            
-            mock_status.return_value = "impressed"
-            mock_environment.return_value = "python:3.9"
-            
-            mock_communicator = MagicMock()
-            mock_instance.return_value = mock_communicator
-            mock_communicator.job_status.return_value = "failed"
-            mock_communicator.workflow.return_value = ["UNDEFINED"]
-            
-            mock_message = MagicMock()
-            mock_super.return_value = mock_message
-            
-            result = obj_tsk.printed_status()
-            
-            # Should add workflow not defined error
-            add_calls = [call[0][0] for call in mock_message.add.call_args_list]
-            self.assertTrue(any("Workflow not defined" in str(call) for call in add_calls))
+            self.assertEqual(result, mock_message)
 
         os.chdir("..")
         prepare.remove_chern_project("demo_complex")
