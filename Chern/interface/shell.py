@@ -478,6 +478,20 @@ def config() -> None:
     path = os.path.join(os.environ["HOME"], ".chern", "config.yaml")
     yaml_file = metadata.YamlFile(path)
     editor = yaml_file.read_variable("editor", "vi")
+    # Generate a template file if the config file does not exist
+    if not os.path.exists(f"{MANAGER.c.path}/chern.yaml"):
+        with open(f"{MANAGER.c.path}/chern.yaml", "w") as f:
+            if MANAGER.c.object_type() == "task":
+                f.write("""environment: chern
+memory_limit: 256Mi
+alias:
+  - void
+parameters: {}"""
+            else:
+                f.write("""environment: script
+commands:
+  - echo "Hello, world!"
+"""
     subprocess.call([editor, f"{MANAGER.c.path}/chern.yaml"])
 
 def danger_call(cmd: str) -> None:
