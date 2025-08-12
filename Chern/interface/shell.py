@@ -486,12 +486,11 @@ def config() -> None:
 memory_limit: 256Mi
 alias:
   - void
-parameters: {}"""
+parameters: {{}}""")
             else:
                 f.write("""environment: script
 commands:
-  - echo "Hello, world!"
-"""
+  - echo 'Hello, world!'""")
     subprocess.call([editor, f"{MANAGER.c.path}/chern.yaml"])
 
 def danger_call(cmd: str) -> None:
