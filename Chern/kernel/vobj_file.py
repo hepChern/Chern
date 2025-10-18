@@ -142,7 +142,8 @@ class FileManagement(Core):
             for sub_object in self.sub_objects():
                 objects.append((str(sub_object), sub_object.job_status()))
 
-            max_width = max(len(name) for name, _ in objects)
+            if objects:
+                max_width = max(len(name) for name, _ in objects)
 
             for name, status in objects:
                 message.add(f"{name:<{max_width}}: ")
@@ -238,7 +239,7 @@ class FileManagement(Core):
 
     def copy_to_check(self, new_path: str) -> Tuple[bool, str]: # UnitTest: DONE
         """ Check if the new path is valid for copying
-        
+
         Returns:
             Tuple[bool, str]: (success_status, error_message)
         """
