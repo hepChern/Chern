@@ -47,7 +47,7 @@ class ChernShell(cmd.Cmd):
         """Set up the prompt before entering the command loop."""
         current_project_name = MANAGER.get_current_project()
         current_path = os.path.relpath(MANAGER.c.path, csys.project_path(MANAGER.c.path))
-        self.prompt = f"[Chern][{current_project_name}][{current_path}] "
+        self.prompt = f"[Chern][{current_project_name}][{current_path}]\n>>>> "
 
     def parseline(self, line: str) -> Tuple[str, str, str]:
         """Parse a command line input."""
@@ -58,7 +58,7 @@ class ChernShell(cmd.Cmd):
     def completenames(self, text, *ignored):
         """Complete command names based on user input."""
         matches = []
-        
+
         # Get all method names that start with 'do_'
         for name in self.get_names():
             if name.startswith("do_"):
@@ -66,7 +66,7 @@ class ChernShell(cmd.Cmd):
                 command_name = name[3:].replace('_', '-')
                 if command_name.startswith(text):
                     matches.append(command_name)
-        
+
         return matches
 
     def completedefault(self, text, line, begidx, endidx):
@@ -75,10 +75,10 @@ class ChernShell(cmd.Cmd):
         if ' ' not in line.strip():
             # Get the full command being typed so far
             full_command = line[:endidx].strip()
-            
+
             # Get all matching commands
             all_matches = self.completenames(full_command)
-            
+
             if all_matches:
                 results = []
                 for match in all_matches:
@@ -87,7 +87,7 @@ class ChernShell(cmd.Cmd):
                         # text represents what cmd thinks needs to be completed
                         # We need to find where 'text' starts within the full command
                         text_start_pos = full_command.rfind(text) if text else len(full_command)
-                        
+
                         if text_start_pos >= 0:
                             # Return the part of the match that comes after the text being completed
                             suffix = match[text_start_pos:]
@@ -97,7 +97,7 @@ class ChernShell(cmd.Cmd):
                             # Exact match, add space
                             results.append(' ')
                 return results
-    
+
         return []
 
     def do_ls(self, _: str) -> None:
@@ -189,7 +189,7 @@ class ChernShell(cmd.Cmd):
             shell.cd(myobject)
             current_project_name = MANAGER.get_current_project()
             current_path = os.path.relpath(MANAGER.c.path, csys.project_path(MANAGER.c.path))
-            self.prompt = f"[Chern][{current_project_name}][{current_path}] "
+            self.prompt = f"[Chern][{current_project_name}][{current_path}]\n>>>> "
         except (IndexError, ValueError) as e:
             print(f"Error: Please provide a directory or object name. {e}")
         except Exception as e:
