@@ -142,6 +142,7 @@ class FileManagement(Core):
             for sub_object in self.sub_objects():
                 objects.append((str(sub_object), sub_object.job_status()))
 
+            max_width = 0
             if objects:
                 max_width = max(len(name) for name, _ in objects)
 
