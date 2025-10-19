@@ -117,7 +117,7 @@ class FileManagement(Core):
 
         cherncc = ChernCommunicator.instance()
         dite_status = cherncc.dite_status()
-        if dite_status == "ok":
+        if dite_status == "connected":
             message.add("DITE: ")
             message.add("[connected]")
             message.add("\n")
@@ -157,7 +157,7 @@ class FileManagement(Core):
         message = Message()
         message.add(">>>> DITE: ", "title0")
         status = cherncc.dite_status()
-        if status == "ok":
+        if status == "connected":
             message.add("[connected]", "success")
         elif status == "unconnected":
             message.add("[unconnected]", "warning")

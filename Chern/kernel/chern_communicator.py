@@ -42,11 +42,11 @@ All requests use configurable timeout (default: 10s) and support both local and 
 
 Method Usage Status:
 ===================
-✓ Used methods: submit, deposit, execute, kill, runners, register_runner, 
+✓ Used methods: submit, deposit, execute, kill, runners, register_runner,
   remove_runner, status, run_status, collect, export, dite_status, dite_info,
   output_files, get_file, deposit_with_data, add_host, serverurl, is_deposited,
   workflow, sample_status, job_status, runner_connection, impview, display
-  
+
 ✗ UNUSED methods: resubmit, runners_url
 """
 
@@ -107,7 +107,7 @@ class ChernCommunicator():
             return "unconnected"
         status = r.text
         if status == "ok":
-            return "ok"
+            return "connected"
         return "unconnected"
 
     def dite_info(self): # UnitTest: DONE
@@ -117,7 +117,7 @@ class ChernCommunicator():
         w += colorize(self.serverurl(), "normal")
         w += "\n"
         w += colorize("DITE Status: ", "title0")
-        if self.dite_status() == "ok":
+        if self.dite_status() == "connected":
             w += colorize("[connected]", "success")
         else:
             w += colorize("[unconnected]", "warning")
@@ -219,8 +219,8 @@ class ChernCommunicator():
         )
 
     def resubmit(self, impression, machine="local"):
-        """ Resubmit the impression to the server 
-        
+        """ Resubmit the impression to the server
+
         ✗ UNUSED METHOD - No references found in codebase
         """
         # Well, I don't know how to do it.
@@ -347,7 +347,7 @@ class ChernCommunicator():
 
     def runners_url(self):
         """ Get the list of runner URLs
-        
+
         ✗ UNUSED METHOD - No references found in codebase
         """
         url = self.serverurl()
