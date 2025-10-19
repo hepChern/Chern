@@ -36,7 +36,7 @@ class TestChernCommunicator(unittest.TestCase):
 
         status = self.comm.dite_status()
         mock_get.assert_called_once_with("http://localhost:8080/dite-status", timeout=10)
-        self.assertEqual(status, "ok")
+        self.assertEqual(status, "connected")
 
         # Simulate unconnected status due to response
         mock_get.reset_mock()
@@ -284,7 +284,7 @@ class TestChernCommunicator(unittest.TestCase):
         # Mock the response for status
         mock_get.reset_mock()
         mock_response = MagicMock()
-        mock_response.text = "ok"
+        mock_response.text = "connected"
         mock_get.return_value = mock_response
 
         # Call the status method
@@ -293,7 +293,7 @@ class TestChernCommunicator(unittest.TestCase):
         mock_get.assert_called_once_with(
             "http://localhost:8080/status/abc123", timeout=10
         )
-        self.assertEqual(status, "ok")
+        self.assertEqual(status, "connected")
 
         # Simulate unconnected status
         mock_get.reset_mock()
@@ -492,7 +492,7 @@ class TestChernCommunicator(unittest.TestCase):
         mock_get.reset_mock()
         mock_get.return_value = MagicMock(text="TRUE")
         result = self.comm.is_deposited(impression)
-        
+
         mock_get.assert_called_once_with(
             "http://localhost:8080/deposited/abc123", timeout=10
         )
@@ -527,7 +527,7 @@ class TestChernCommunicator(unittest.TestCase):
         mock_get.reset_mock()
         mock_get.return_value = MagicMock(text="killed")
         result = self.comm.kill(impression)
-        
+
         mock_get.assert_called_once_with(
             "http://localhost:8080/kill/abc123", timeout=10
         )
@@ -556,7 +556,7 @@ class TestChernCommunicator(unittest.TestCase):
         mock_get.reset_mock()
         mock_get.return_value = MagicMock(text="runner1 runner2 runner3")
         result = self.comm.runners()
-        
+
         mock_get.assert_called_once_with(
             "http://localhost:8080/runners", timeout=10
         )
@@ -616,7 +616,7 @@ class TestChernCommunicator(unittest.TestCase):
         mock_get.reset_mock()
         mock_get.return_value = MagicMock(text="sample_status_ok")
         result = self.comm.sample_status(impression)
-        
+
         mock_get.assert_called_once_with(
             "http://localhost:8080/sample-status/abc123", timeout=10
         )
@@ -694,7 +694,7 @@ class TestChernCommunicator(unittest.TestCase):
         os.chdir("demo_complex")
 
         self.comm = ChernCommunicator()
-        
+
         # Get the current serverurl (might be from config)
         current_url = self.comm.serverurl()
         self.assertIsInstance(current_url, str)
@@ -703,7 +703,7 @@ class TestChernCommunicator(unittest.TestCase):
         # Test add_host
         new_url = "newserver:8080"
         self.comm.add_host(new_url)
-        
+
         # Verify the URL was updated
         updated_url = self.comm.serverurl()
         self.assertEqual(updated_url, new_url)
