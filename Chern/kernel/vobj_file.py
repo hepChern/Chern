@@ -83,7 +83,7 @@ class FileManagement(Core):
         message.add("\n")
         return message
 
-    def printed_status(self) -> Message: # pylint: disable=too-many-branches
+    def printed_status(self) -> Message: # pylint: disable=too-many-branches,too-many-statements
         """ Printed the status of the object"""
 
         message = Message()
