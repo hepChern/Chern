@@ -107,7 +107,7 @@ class Core(VObject):
         line = ""
 
         for i, f in enumerate(files, start=1):
-            line += f"algorithm:{f:<{max_len+4}}"
+            line += f"code:{f:<{max_len+4}}"
             if i % nfiles == 0:
                 message.add(line + "\n")
                 line = ""
