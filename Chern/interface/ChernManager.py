@@ -57,7 +57,7 @@ class ChernProjectManager:
         current_project = global_config_file.read_variable("current_project")
         if current_project is None:
             return None
-        
+
         projects_path = global_config_file.read_variable("projects_path")
         path = projects_path.get(current_project, "no_place|")
         if path == "no_place|":
@@ -71,7 +71,7 @@ class ChernProjectManager:
             global_config_file.write_variable("current_project", current_project)
             global_config_file.write_variable("projects_path", projects_path)
             return self.get_current_project()
-        
+
         return current_project
 
     def get_all_projects(self) -> List[str]:
@@ -123,6 +123,12 @@ class ChernProjectManager:
         """Get the current object instance from the current working directory."""
         path = os.getcwd()
         return create_object_instance(path)
+
+    def sub_object(self, dirname) -> 'VObject':
+        """Get the sub object instance from the current working directory."""
+        path = os.path.join(os.getcwd(), dirname)
+        return create_object_instance(path)
+
 
 
 def get_manager() -> ChernProjectManager:
