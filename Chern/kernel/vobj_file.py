@@ -136,8 +136,8 @@ class FileManagement(Core):
         if not self.is_task_or_algorithm():
             job_status = self.job_status()
             message.add(f"{'Job status':<10}: ")
-            message.add(f"{'['+job_status+']'}\n")
-            message.add("---------------\n")
+            message.add(f"{'['+job_status+']'}")
+            message.add("\n---------------\n")
             objects = []
             for sub_object in self.sub_objects():
                 objects.append((str(sub_object), sub_object.job_status()))
