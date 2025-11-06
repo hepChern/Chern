@@ -290,6 +290,14 @@ def remove_cache(file_path):
             pass
 
 
+def create_temp_dir(prefix="chern_tmp_"):
+    """ Create a temporary directory
+    """
+    temp_dir = os.path.join("/tmp", prefix + generate_uuid())
+    os.makedirs(temp_dir)
+    return temp_dir
+
+
 # Checksum Functions
 # def md5sum(filename, block_size=65536):
 #     """ Get the md5sum of the file
