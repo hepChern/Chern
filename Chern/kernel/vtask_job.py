@@ -1,8 +1,10 @@
 """ JobManager class for managing tasks
 """
+import os
 from logging import getLogger
 
 from .chern_communicator import ChernCommunicator
+from ..utils import csys
 from .vtask_core import Core
 
 logger = getLogger("ChernLogger")
@@ -16,7 +18,7 @@ class JobManager(Core):
         cherncc = ChernCommunicator.instance()
         cherncc.kill(self.impression())
 
-    def run_status(self, host="local"): # pylint: disable=unused-argument
+    def run_status(self, runner="none"): # pylint: disable=unused-argument
         """ Get the run status of the job"""
         # FIXME duplicated code
         cherncc = ChernCommunicator.instance()
@@ -62,3 +64,25 @@ class JobManager(Core):
         """ Send data to the job"""
         cherncc = ChernCommunicator.instance()
         cherncc.deposit_with_data(self.impression(), path)
+
+    def workaround_preshell(self) -> (tuple[bool, str]):
+        """ Pre-shell workaround"""
+        cherncc = ChernCommunicator.instance()
+        status = cherncc.dite_status()
+        if status != "connected":
+            return (False, "")
+        # make a temporal directory for data deposit
+        temp_dir = csys.create_temp_dir(prefix="chernws_")
+        # copy the data to the temporal directory
+        file_list = csys.tree_excluded(self.path)
+        for dirpath, _, filenames in file_list:
+            for f in filenames:
+                full_path = os.path.join(dirpath, f)
+                rel_path = os.path.relpath(full_path, self.path)
+                dest_path = os.path.join(temp_dir, rel_path)
+                csys.copy(full_path, dest_path)
+        return (True, temp_dir)
+
+    def workaround_postshell(self) -> bool:
+        """ Post-shell workaround"""
+        return True
