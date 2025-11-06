@@ -372,6 +372,17 @@ def add_parameter(par: str, value: str) -> None:
         return
     MANAGER.c.add_parameter(par, value)
 
+def add_parameter_subtask(dirname: str, par: str, value: str) -> None:
+    """Add a parameter to current task."""
+    if MANAGER.c.object_type() not in ("directory", "project"):
+        print("Unable to call add_parameter_subtask if you are not in a dir")
+        return
+    obj = MANAGER.sub_object(dirname)
+    if not obj.is_task():
+        print("Unable to call add_input if you are not in a task.")
+        return
+    obj.add_parameter(par, value)
+
 
 def rm_parameter(par: str) -> None:
     """Remove a parameter from current task."""
@@ -496,3 +507,14 @@ commands:
 def danger_call(cmd: str) -> None:
     message = MANAGER.c.danger_call(cmd)
     print(message.colored())
+
+def workaround_preshell() -> tuple[bool, str]:
+    if not MANAGER.c.is_task():
+        return (False, "Not able to call workaround if you are not in a task.")
+    return MANAGER.c.workaround_preshell()
+
+def workaround_postshell() -> None:
+    if not MANAGER.c.is_task():
+        print("Not able to call workaround if you are not in a task.")
+        return
+    MANAGER.c.workaround_postshell()
