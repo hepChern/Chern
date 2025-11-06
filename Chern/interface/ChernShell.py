@@ -273,6 +273,25 @@ class ChernShell(cmd.Cmd):
         except Exception as e:
             print(f"Error creating task: {e}")
 
+    def do_create_multi_tasks(self, arg: str) -> None:
+        """Create multiple tasks with a base name and number of tasks."""
+        try:
+            objs = arg.split()
+            if len(objs) < 2:
+                print("Error: Please provide at least two task arguments: base_name and number_of_tasks.")
+                return
+            base_name = objs[0]
+            number_of_tasks = int(objs[1])
+            if number_of_tasks <= 0 and number_of_tasks > 10000:
+                print("Error: number_of_tasks should be between 1 and 10000.")
+                return
+            for i in range(number_of_tasks):
+                task_name = f"{base_name}_{i}"
+                shell.mktask(task_name)
+                shell.add_parameter_subtask(task_name, "index", str(i))
+        except Exception as e:
+            print(f"Error creating task: {e}")
+
     def do_create_algorithm(self, arg: str) -> None:
         """Create a new algorithm."""
         try:
@@ -425,6 +444,11 @@ class ChernShell(cmd.Cmd):
         except Exception as e:
             print(f"Error importing file: {e}")
 
+    def complete_import_file(self, _: str, line: str, _begidx: int, _endidx: int) -> list:
+        """Complete import_file command with available paths."""
+        filepath = csys.strip_path_string(line[12:])
+        return self.get_completions_out(filepath, line)
+
     def do_rm_file(self, arg: str) -> None:
         """Remove files from current object."""
         try:
@@ -548,6 +572,47 @@ class ChernShell(cmd.Cmd):
         except Exception as e:
             print(f"Error executing command: {e}")
 
+    def do_workaround(self, arg):
+        """Workaround to test/debug the task."""
+        try:
+            status, info = shell.workaround_preshell()
+            if not status:
+                print(info)
+                return
+            # Remember the current path
+            path = os.getcwd()
+            # Switch to the ~
+            os.chdir(info)
+            # os.system(os.environ.get("SHELL", "/bin/bash"))
+            # use docker if arg is docker
+            if arg.strip() == "docker":
+                os.system("docker run -it rootproject/root:6.36.00-ubuntu25.04 bash")
+            else:
+                os.system(os.environ.get("SHELL", "/bin/bash"))
+            shell.workaround_postshell()
+            # Switch back to the original path
+            os.chdir(path)
+        except (IndexError, ValueError) as e:
+            print(f"Error: Please provide a command to execute. {e}")
+        except Exception as e:
+            print(f"Error executing command: {e}")
+
+    def do_system_shell(self, arg):
+        """Enter a system shell (bash). Type 'exit' or press Ctrl-D to return."""
+        print("Entering system shell. Type 'exit' to return.\n")
+
+        # Ensure Ctrl-C doesn’t kill the main Python process
+        # old_handler = signal.signal(signal.SIGINT, signal.SIG_DFL)
+
+        try:
+            os.system(os.environ.get("SHELL", "/bin/bash"))
+        finally:
+            # Restore Python's default SIGINT handling
+            # signal.signal(signal.SIGINT, old_handler)
+            pass
+
+        print("\nReturned to Chern Shell.")
+
     def emptyline(self) -> None:
         """Handle empty line input."""
 
@@ -572,5 +637,21 @@ class ChernShell(cmd.Cmd):
         if os.path.exists(dirname):
             listdir = os.listdir(dirname)
             completions = [f for f in listdir if f.startswith(basename) and f != ".chern"]
+            return completions
+        return []
+
+    def get_completions_out(self, abspath: str, line: str) -> list:
+        """Get command completions for absolute paths."""
+        if os.path.exists(abspath):
+            listdir = os.listdir(abspath)
+            if line.endswith("/"):
+                return listdir
+            return []
+
+        basename = os.path.basename(abspath)
+        dirname = os.path.dirname(abspath)
+        if os.path.exists(dirname):
+            listdir = os.listdir(dirname)
+            completions = [f for f in listdir if f.startswith(basename)]
             return completions
         return []
