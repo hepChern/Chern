@@ -243,7 +243,7 @@ class ChernCommunicator():
             return "unconnected"
         return r.text
 
-    def run_status(self, impression, machine="local"): # UnitTest: DONE
+    def run_status(self, impression, machine="none"): # UnitTest: DONE
         """ Get the run status of the impression """
         url = self.serverurl()
         try:
