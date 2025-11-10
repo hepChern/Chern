@@ -400,7 +400,7 @@ class ChernCommunicator():
         return json.loads(r.text)
 
     # === File Operations ===
-    def output_files(self, impression, machine="local"): # UnitTest: DONE
+    def output_files(self, impression, machine="none"): # UnitTest: DONE
         """ Get the output files of the impression """
         url = self.serverurl()
         if machine == "none":

@@ -125,6 +125,14 @@ def mkdir(directory):
     if not os.path.exists(directory):
         os.makedirs(directory)
 
+def symlink(src, dst):
+    """ Safely create a symbolic link
+    """
+    directory = os.path.dirname(dst)
+    mkdir(directory)
+    if os.path.exists(dst):
+        os.remove(dst)
+    os.symlink(src, dst)
 
 def list_dir(src):
     """ List the files in the directory

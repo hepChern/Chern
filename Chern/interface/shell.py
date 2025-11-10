@@ -517,4 +517,4 @@ def workaround_postshell() -> None:
     if not MANAGER.c.is_task():
         print("Not able to call workaround if you are not in a task.")
         return
-    MANAGER.c.workaround_postshell()
+    MANAGER.c.workaround_postshell("")

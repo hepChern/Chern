@@ -71,18 +71,61 @@ class JobManager(Core):
         status = cherncc.dite_status()
         if status != "connected":
             return (False, "")
+        # Check whether all the preceding jobs are finished
+        for pre in self.inputs():
+            if not pre.is_impressed_fast():
+                return (False, f"Preceding job {pre} is not impressed")
+            pre_status = pre.run_status()
+            if pre_status != "finished":
+                return (False, f"Preceding job {pre} is not finished")
+            cherncc.collect(pre.impression())
+
         # make a temporal directory for data deposit
         temp_dir = csys.create_temp_dir(prefix="chernws_")
         # copy the data to the temporal directory
         file_list = csys.tree_excluded(self.path)
+        print(file_list)
         for dirpath, _, filenames in file_list:
             for f in filenames:
-                full_path = os.path.join(dirpath, f)
+                full_path = os.path.join(csys.project_path(), self.invariant_path(), dirpath, f)
                 rel_path = os.path.relpath(full_path, self.path)
                 dest_path = os.path.join(temp_dir, rel_path)
                 csys.copy(full_path, dest_path)
+
+        # Create the temporal directory and copy the data there
+        for pre in self.inputs():
+            pre_temp_dir = csys.create_temp_dir(prefix="chernimp_")
+            outputs = cherncc.output_files(pre.impression())
+            print(pre_temp_dir)
+            csys.mkdir(os.path.join(pre_temp_dir, "outputs"))
+            for f in outputs:
+                cherncc.export(pre.impression(), f"{f}", os.path.join(pre_temp_dir, "outputs", f))
+            alias = self.path_to_alias(pre.invariant_path())
+            print(f"Linking preceding job {pre} to {alias}")
+            # Make a symlink
+            csys.symlink(
+                os.path.join(pre_temp_dir),
+                os.path.join(temp_dir, alias),
+            )
+
+        algorithm = self.algorithm()
+        if algorithm:
+            alg_temp_dir = csys.create_temp_dir(prefix="chernws_")
+            file_list = csys.tree_excluded(algorithm.path)
+            print(file_list)
+            for dirpath, _, filenames in file_list:
+                for f in filenames:
+                    full_path = os.path.join(csys.project_path(), algorithm.invariant_path(), dirpath, f)
+                    rel_path = os.path.relpath(full_path, algorithm.path)
+                    dest_path = os.path.join(alg_temp_dir, rel_path)
+                    csys.copy(full_path, dest_path)
+            csys.symlink(
+                os.path.join(alg_temp_dir),
+                os.path.join(temp_dir, "code"),
+            )
+
         return (True, temp_dir)
 
-    def workaround_postshell(self) -> bool:
+    def workaround_postshell(self, path) -> bool:
         """ Post-shell workaround"""
         return True
