@@ -24,12 +24,13 @@ logger = getLogger("ChernLogger")
 class Core(ABC):
     """ The core of the VObject
     """
-    def __init__(self, path: str) -> None: # Unittest: DONE
+    def __init__(self, path: str, project_path: str = "") -> None: # Unittest: DONE
         """ Initialize the VObject
         """
         logger.debug("VObject::Core.__init__")
         self.path = csys.strip_path_string(path)
         self.config_file = metadata.ConfigFile(self.path+"/.chern/config.json")
+        self._project_path = project_path
         logger.debug("VObject::Core.__init__ done")
 
     def __str__(self) -> str: # Unittest: DONE
@@ -42,12 +43,19 @@ class Core(ABC):
         """
         return self.invariant_path()
 
+    def project_path(self) -> str: # Unittest: DONE
+        """ Return the project path of this object
+        """
+        if not self._project_path:
+            self._project_path = csys.project_path(self.path)
+        return self._project_path
+
     # Path handling, type and status
     def invariant_path(self) -> str: # Unittest: DONE
         """ The path relative to the project root.
         It is invariant when the project is moved.
         """
-        project_path = csys.project_path(self.path)
+        project_path = self.project_path()
         path = os.path.relpath(self.path, project_path)
         return path
 
