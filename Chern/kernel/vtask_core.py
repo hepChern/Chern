@@ -69,7 +69,7 @@ class Core(VObject):
         message.add(f"{self.memory_limit()}")
         message.add("\n")
 
-        validated_str = "true" if self.validated() else "false"
+        validated_str = "True" if self.validated() else "False"
         message.add("Validated: ", "title0")
         message.add(f"{validated_str}")
         message.add("\n")
