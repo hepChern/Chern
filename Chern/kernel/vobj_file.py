@@ -15,11 +15,21 @@ from .vobj_core import Core
 from .chern_cache import ChernCache
 from .chern_communicator import ChernCommunicator
 
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, as_completed
+
 if TYPE_CHECKING:
     from .vobject import VObject
 
 CHERN_CACHE = ChernCache.instance()
 logger = getLogger("ChernLogger")
+
+# === at top of your file ===
+def _check_sub_status(sub):
+    return str(sub), sub.status()
+
+def _get_job_status(args):
+    sub, now = args
+    return str(sub), sub.job_status(now)
 
 
 @dataclass
@@ -87,6 +97,8 @@ class FileManagement(Core):
         """ Printed the status of the object"""
 
         message = Message()
+        import time
+        start_time = time.time()
 
         message.add(f"Status of : {self.invariant_path()}\n")
         if self.is_task_or_algorithm():
@@ -108,11 +120,27 @@ class FileManagement(Core):
                 message.add("Some subobjects are ")
                 message.add("[not impressed]", 'normal')
                 message.add(".\n")
-                for sub_object in self.sub_objects():
+                # ---- Testing the parallelization speedup ----
+                # Parallelized subobject status checks
+
+                sub_objects = self.sub_objects()
+
+                # Parallel check of subobject statuses (CPU-bound)
+                # with ProcessPoolExecutor(max_workers=8) as executor:
+                #     futures = [executor.submit(_check_sub_status, sub) for sub in sub_objects]
+                #     for fut in as_completed(futures):
+                #         name, sub_status = fut.result()
+                #         if sub_status == "new":
+                #             message.add(f"Subobject {name} is [not impressed]\n", "normal")
+                # ----------------------------------------------
+
+                # ---- Original serial subobject status checks ----
+                for sub_object in sub_objects:
                     if sub_object.status() == "new":
                         message.add(f"Subobject {sub_object} is ")
                         message.add("[not impressed]", 'normal')
                         message.add("\n")
+                # -------------------------------------------------
                 return message
 
         cherncc = ChernCommunicator.instance()
@@ -133,14 +161,15 @@ class FileManagement(Core):
                 message.add("Impression not deposited in DITE\n")
                 return message
 
+        now = time.time()
         if not self.is_task_or_algorithm():
-            job_status = self.job_status()
+            job_status = self.job_status(now)
             message.add(f"{'Job status':<10}: ")
             message.add(f"{'['+job_status+']'}")
             message.add("\n---------------\n")
             objects = []
             for sub_object in self.sub_objects():
-                objects.append((str(sub_object), sub_object.job_status()))
+                objects.append((str(sub_object), sub_object.job_status(now)))
 
             max_width = 0
             if objects:
@@ -150,6 +179,7 @@ class FileManagement(Core):
                 message.add(f"{name:<{max_width}}: ")
                 message.add(f"[{status}]")
                 message.add("\n")
+
         return message
 
     def printed_dite_status(self) -> Message:
@@ -247,7 +277,7 @@ class FileManagement(Core):
         # Check if the destination directory exists
         destination_dir = os.path.dirname(new_path)
         if not os.path.exists(destination_dir) and destination_dir:
-            rel_dest_dir = os.path.relpath(destination_dir, csys.project_path())
+            rel_dest_dir = os.path.relpath(destination_dir, self.project_path())
             error_msg = f"Destination directory '@/{rel_dest_dir}' does not exist."
             return False, error_msg
 
@@ -258,7 +288,7 @@ class FileManagement(Core):
 
         # Check if the destination path already exists
         if os.path.exists(new_path):
-            rel_new_path = os.path.relpath(new_path, csys.project_path())
+            rel_new_path = os.path.relpath(new_path, self.project_path())
             error_msg = f"Destination path '@/{rel_new_path}' already exists."
             return False, error_msg
 
@@ -272,7 +302,7 @@ class FileManagement(Core):
             norm_path = normpath(
                 join(new_path, self.relative_path(obj.path))
             )
-            new_object = self.get_vobject(norm_path)
+            new_object = self.get_vobject(norm_path, self.project_path())
             new_object.clean_flow()
             new_object.clean_impressions()
 
@@ -281,16 +311,19 @@ class FileManagement(Core):
             norm_path = normpath(
                 join(new_path, self.relative_path(obj.path))
             )
-            new_object = self.get_vobject(norm_path)
+            new_object = self.get_vobject(norm_path, self.project_path())
             for pred_object in obj.predecessors():
                 # if in the outside directory
                 if self.relative_path(pred_object.path).startswith(".."):
-                    pass
+                    # FIXME: link the outside object, make it optional?
+                    new_object.add_arc_from(pred_object)
+                    alias = obj.path_to_alias(pred_object.invariant_path())
+                    new_object.set_alias(alias, pred_object.invariant_path())
                 else:
                     # if in the same tree
                     relative_path = self.relative_path(pred_object.path)
                     new_object.add_arc_from(self.get_vobject(
-                        join(new_path, relative_path))
+                        join(new_path, relative_path), self.project_path())
                     )
                     alias1 = obj.path_to_alias(pred_object.invariant_path())
                     norm_path = normpath(
@@ -298,7 +331,7 @@ class FileManagement(Core):
                     )
                     new_object.set_alias(
                         alias1,
-                        self.get_vobject(norm_path).invariant_path()
+                        self.get_vobject(norm_path, self.project_path()).invariant_path()
                     )
 
             for succ_object in obj.successors():
@@ -332,7 +365,7 @@ class FileManagement(Core):
             norm_path = normpath(f"{new_path}/{self.relative_path(obj.path)}")
             if obj.object_type() == "directory":
                 continue
-            new_object = self.get_vobject(norm_path)
+            new_object = self.get_vobject(norm_path, self.project_path())
             new_object.impress()
 
         return Message()  # Empty message for success
@@ -346,7 +379,7 @@ class FileManagement(Core):
             norm_path = normpath(
                 join(new_path, self.relative_path(obj.path))
             )
-            new_object = self.get_vobject(norm_path)
+            new_object = self.get_vobject(norm_path, self.project_path())
             new_object.clean_flow()
 
         for obj in queue:
@@ -354,7 +387,7 @@ class FileManagement(Core):
             norm_path = normpath(
                 join(new_path, self.relative_path(obj.path))
             )
-            new_object = self.get_vobject(norm_path)
+            new_object = self.get_vobject(norm_path, self.project_path())
             for pred_object in obj.predecessors():
                 if self.relative_path(pred_object.path).startswith(".."):
                     # if in the outside directory
@@ -365,7 +398,7 @@ class FileManagement(Core):
                     # if in the same tree
                     relative_path = self.relative_path(pred_object.path)
                     new_object.add_arc_from(
-                        self.get_vobject(join(new_path, relative_path))
+                        self.get_vobject(join(new_path, relative_path), self.project_path())
                     )
                     alias1 = obj.path_to_alias(pred_object.invariant_path())
                     alias2 = pred_object.path_to_alias(obj.invariant_path())
@@ -376,7 +409,7 @@ class FileManagement(Core):
                         alias1,
                         self.get_vobject(norm_path).invariant_path()
                     )
-                    self.get_vobject(norm_path).set_alias(
+                    self.get_vobject(norm_path, self.project_path()).set_alias(
                         alias2,
                         new_object.invariant_path()
                     )
@@ -447,18 +480,18 @@ class FileManagement(Core):
         # Check if the destination directory already exists
         destination_dir = os.path.dirname(new_path)
         if not os.path.exists(destination_dir) and destination_dir:
-            rel_dest_dir = os.path.relpath(destination_dir, csys.project_path())
+            rel_dest_dir = os.path.relpath(destination_dir, self.project_path())
             error_msg = f"Destination directory '@/{rel_dest_dir}' does not exist."
 
         # Check if the destination path already exists
         elif os.path.exists(new_path):
-            rel_new_path = os.path.relpath(new_path, csys.project_path())
+            rel_new_path = os.path.relpath(new_path, self.project_path())
             error_msg = f"Destination path '@/{rel_new_path}' already exists."
 
         # Check if the destination directory is a subdirectory of the source
         elif os.path.commonpath([self.path, new_path]) == self.path:
-            rel_new_path = os.path.relpath(new_path, csys.project_path())
-            rel_source_path = os.path.relpath(self.path, csys.project_path())
+            rel_new_path = os.path.relpath(new_path, self.project_path())
+            rel_source_path = os.path.relpath(self.path, self.project_path())
             error_msg = (f"Destination path '@/{rel_new_path}' is a subdirectory "
                         f"of the source path '@/{rel_source_path}'.")
 
@@ -469,17 +502,17 @@ class FileManagement(Core):
         else:
             # Check if the destination parent directory is a valid vdirectory or vproject
             parent_dir = normpath(os.path.join(new_path, ".."))
-            parent_object = self.get_vobject(parent_dir)
+            parent_object = self.get_vobject(parent_dir, self.project_path())
 
             # Check if the parent object is a zombie (invalid/non-existent vobject)
             if parent_object.is_zombie():
-                rel_new_path = os.path.relpath(new_path, csys.project_path())
+                rel_new_path = os.path.relpath(new_path, self.project_path())
                 error_msg = (f"The destination path '@/{rel_new_path}' has an "
                             f"invalid parent directory.")
 
             # Check if the parent object is a valid vdirectory or vproject
             elif parent_object.object_type() not in ("directory", "project"):
-                rel_new_path = os.path.relpath(new_path, csys.project_path())
+                rel_new_path = os.path.relpath(new_path, self.project_path())
                 error_msg = (f"The destination path '@/{rel_new_path}' is not "
                             f"within a vdirectory or vproject.")
 
@@ -514,7 +547,7 @@ class FileManagement(Core):
         sub_object_list = []
         for item in sub_directories:
             if os.path.isdir(join(self.path, item)):
-                obj = self.get_vobject(join(self.path, item))
+                obj = self.get_vobject(join(self.path, item), self.project_path())
                 if obj.is_zombie():
                     continue
                 sub_object_list.append(obj)
@@ -620,7 +653,7 @@ class FileManagement(Core):
                 dest = self.path + "/" + dest_file
                 if not os.path.exists(os.path.dirname(dest)):
                     rel_dest_dir = os.path.relpath(os.path.dirname(dest),
-                                                 csys.project_path())
+                                                 self.project_path())
                     message.add(f"Error: Destination directory '@/{rel_dest_dir}' "
                                f"does not exist.", "warning")
                 else:
