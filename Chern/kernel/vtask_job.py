@@ -46,7 +46,7 @@ class JobManager(Core):
     def impview(self):
         """ Open browser to view the impression"""
         cherncc = ChernCommunicator.instance()
-        cherncc.impview(self.impression())
+        return cherncc.impview(self.impression())
 
     def export(self, filename, output_file):
         """ Export the file"""
@@ -87,7 +87,7 @@ class JobManager(Core):
         print(file_list)
         for dirpath, _, filenames in file_list:
             for f in filenames:
-                full_path = os.path.join(csys.project_path(), self.invariant_path(), dirpath, f)
+                full_path = os.path.join(self.project_path(), self.invariant_path(), dirpath, f)
                 rel_path = os.path.relpath(full_path, self.path)
                 dest_path = os.path.join(temp_dir, rel_path)
                 csys.copy(full_path, dest_path)
@@ -115,7 +115,7 @@ class JobManager(Core):
             print(file_list)
             for dirpath, _, filenames in file_list:
                 for f in filenames:
-                    full_path = os.path.join(csys.project_path(), algorithm.invariant_path(), dirpath, f)
+                    full_path = os.path.join(self.project_path(), algorithm.invariant_path(), dirpath, f)
                     rel_path = os.path.relpath(full_path, algorithm.path)
                     dest_path = os.path.join(alg_temp_dir, rel_path)
                     csys.copy(full_path, dest_path)
