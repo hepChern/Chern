@@ -33,7 +33,7 @@ class InputManager(Core):
     def add_algorithm(self, path):
         """ Add a algorithm
         """
-        obj = self.get_vobject(path)
+        obj = self.get_vobject(path, self.project_path())
         if obj.object_type() != "algorithm":
             print(f"You are adding {obj.object_type()} type object as"
                   f" algorithm. The algorithm is required to be an algorithm.")
@@ -48,7 +48,7 @@ class InputManager(Core):
         if algorithm is not None:
             print("Already have algorithm, will replace it")
             self.remove_algorithm()
-        self.add_arc_from(self.get_vobject(path))
+        self.add_arc_from(self.get_vobject(path, self.project_path()))
 
     def remove_algorithm(self):
         """ Remove the algorithm
