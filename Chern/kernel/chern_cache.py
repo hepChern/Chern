@@ -17,6 +17,8 @@ class ChernCache:
         self.impression_consult_table = {}
         self.predecessor_consult_table = {}
         self.status_consult_table = {}
+        self.job_status_consult_table = {}
+        self.project_modification_time = (None, -1)
 
     @classmethod
     def instance(cls): # UnitTest: DONE
