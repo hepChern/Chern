@@ -464,13 +464,14 @@ def submit(runner: str = "local") -> None:
     print(message.colored())
 
 
-def impview() -> None:
+def view(browser: str = "open") -> None:
     """View impressions for current task."""
     is_task = MANAGER.c.is_task()
     if not is_task:
         print("Not able to view")
         return
-    MANAGER.current_object().impview()
+    url = MANAGER.current_object().impview()
+    subprocess.call([browser, url])
 
 
 def edit_script(obj: str) -> None:
