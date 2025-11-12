@@ -32,9 +32,7 @@ class ImpressionManagement(Core):
         object_type = self.object_type()
         if object_type not in ("task", "algorithm"):
             sub_objects = self.sub_objects()
-            now = time.time()
             for sub_object in sub_objects:
-                print(f"Impressing sub-object {sub_object.path} ... at {time.time() - now:.2f} seconds")
                 sub_object.impress()
             return
         logger.debug("Check whether it is impressed with is_impressed_fast")
@@ -153,7 +151,8 @@ class ImpressionManagement(Core):
             logger.debug("Time now: %lf", now)
             logger.debug("Last consult time: %lf", last_consult_time)
             return is_impressed
-        modification_time_from_cache, modification_consult_time = CHERN_CACHE.project_modification_time
+        modification_time_from_cache, modification_consult_time = \
+                CHERN_CACHE.project_modification_time
         if modification_time_from_cache is None or now - modification_consult_time > 1:
             modification_time = csys.dir_mtime(self.project_path())
             CHERN_CACHE.project_modification_time = modification_time, now
@@ -203,7 +202,6 @@ class ImpressionManagement(Core):
                     return "new"
             return "impressed"
 
-        now = time.time()
         if not self.is_impressed_fast():
             if consult_id:
                 consult_table[self.path] = (consult_id, "new")

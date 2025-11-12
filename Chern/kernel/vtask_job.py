@@ -65,8 +65,9 @@ class JobManager(Core):
         cherncc = ChernCommunicator.instance()
         cherncc.deposit_with_data(self.impression(), path)
 
-    def workaround_preshell(self) -> (tuple[bool, str]):
+    def workaround_preshell(self) -> (tuple[bool, str]): # pylint: disable=too-many-locals
         """ Pre-shell workaround"""
+        # FIXME: Still WIP
         cherncc = ChernCommunicator.instance()
         status = cherncc.dite_status()
         if status != "connected":
@@ -115,7 +116,11 @@ class JobManager(Core):
             print(file_list)
             for dirpath, _, filenames in file_list:
                 for f in filenames:
-                    full_path = os.path.join(self.project_path(), algorithm.invariant_path(), dirpath, f)
+                    full_path = os.path.join(
+                            self.project_path(),
+                            algorithm.invariant_path(),
+                            dirpath, f
+                    )
                     rel_path = os.path.relpath(full_path, algorithm.path)
                     dest_path = os.path.join(alg_temp_dir, rel_path)
                     csys.copy(full_path, dest_path)
@@ -128,4 +133,5 @@ class JobManager(Core):
 
     def workaround_postshell(self, path) -> bool:
         """ Post-shell workaround"""
+        print(path)
         return True

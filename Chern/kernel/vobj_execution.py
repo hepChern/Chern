@@ -95,7 +95,6 @@ class ExecutionManagement(Core):
             if cid == consult_id:
                 return status
 
-        now = time.time()
         if consult_id is None:
             consult_id = time
 

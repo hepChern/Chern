@@ -1,6 +1,7 @@
 """ This module is used to manage the file system of the VObject
 """
 import os
+import time
 from os.path import join
 from os.path import normpath
 import shutil
@@ -15,21 +16,20 @@ from .vobj_core import Core
 from .chern_cache import ChernCache
 from .chern_communicator import ChernCommunicator
 
-from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, as_completed
-
 if TYPE_CHECKING:
     from .vobject import VObject
 
 CHERN_CACHE = ChernCache.instance()
 logger = getLogger("ChernLogger")
 
+# from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, as_completed
 # === at top of your file ===
-def _check_sub_status(sub):
-    return str(sub), sub.status()
-
-def _get_job_status(args):
-    sub, now = args
-    return str(sub), sub.job_status(now)
+# def _check_sub_status(sub):
+#     return str(sub), sub.status()
+#
+# def _get_job_status(args):
+#     sub, now = args
+#     return str(sub), sub.job_status(now)
 
 
 @dataclass
@@ -97,8 +97,6 @@ class FileManagement(Core):
         """ Printed the status of the object"""
 
         message = Message()
-        import time
-        start_time = time.time()
 
         message.add(f"Status of : {self.invariant_path()}\n")
         if self.is_task_or_algorithm():

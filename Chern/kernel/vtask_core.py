@@ -171,3 +171,7 @@ class Core(VObject):
     @abstractmethod
     def send_data(self, path):
         """ Abstract method for future implementation"""
+
+    @abstractmethod
+    def inputs(self):
+        """ Abstract method for future implementation"""
