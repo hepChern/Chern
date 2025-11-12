@@ -1,16 +1,20 @@
 """ This module provides the ExecutionManagement class.
 """
+import time
 from logging import getLogger
 from typing import Optional, TYPE_CHECKING
 
 from ..utils.message import Message
 from .chern_communicator import ChernCommunicator
 from .vobj_core import Core
+from .chern_cache import ChernCache
 
 if TYPE_CHECKING:
     from .vobject import VObject
     from .vimpression import VImpression
 
+
+CHERN_CACHE = ChernCache.instance()
 logger = getLogger("ChernLogger")
 
 
@@ -83,21 +87,38 @@ class ExecutionManagement(Core):
         cherncc = ChernCommunicator.instance()
         return cherncc.is_deposited(self.impression()) == "TRUE"
 
-    def job_status(self, runner: Optional[str] = None) -> str:
+    def job_status(self, consult_id = None, runner: Optional[str] = None) -> str:
         """ Get the status of the job"""
+        consult_table = CHERN_CACHE.job_status_consult_table
+        if consult_id is not None:
+            cid, status = consult_table.get(self.path, (-1, -1))
+            if cid == consult_id:
+                return status
+
+        now = time.time()
+        if consult_id is None:
+            consult_id = time
+
         if not self.is_task_or_algorithm():
             sub_objects = self.sub_objects()
             pending = False
             for sub_object in sub_objects:
-                status = sub_object.job_status()
+                status = sub_object.job_status(consult_id, runner)
                 if status == "failed":
+                    consult_table[self.path] = (consult_id, "failed")
                     return "failed"
                 if status not in ("finished", "archived"):
                     pending = True
             if pending:
+                consult_table[self.path] = (consult_id, "pending")
                 return "pending"
+            consult_table[self.path] = (consult_id, "finished")
             return "finished"
         cherncc = ChernCommunicator.instance()
         if runner is None:
-            return cherncc.job_status(self.impression())
-        return cherncc.job_status(self.impression(), runner)
+            job_status = cherncc.job_status(self.impression())
+            consult_table[self.path] = (consult_id, job_status)
+            return job_status
+        job_status = cherncc.job_status(self.impression(), runner)
+        consult_table[self.path] = (consult_id, job_status)
+        return job_status
