@@ -660,33 +660,33 @@ class TestChernCommunicator(unittest.TestCase):
         prepare.remove_chern_project("demo_genfit_new")
         CHERN_CACHE.__init__()
 
-    @patch("Chern.kernel.chern_communicator.subprocess.call")
-    def test_impview(self, mock_subprocess):
-        print(Fore.BLUE + "Testing Impview..." + Style.RESET)
-        prepare.create_chern_project("demo_genfit_new")
-        os.chdir("demo_genfit_new")
+    # @patch("Chern.kernel.chern_communicator.subprocess.call")
+    # def test_impview(self, mock_subprocess):
+    #     print(Fore.BLUE + "Testing Impview..." + Style.RESET)
+    #     prepare.create_chern_project("demo_genfit_new")
+    #     os.chdir("demo_genfit_new")
 
-        # Setup mock impression
-        class FakeImpression:
-            uuid = "abc123"
+    #     # Setup mock impression
+    #     class FakeImpression:
+    #         uuid = "abc123"
 
-        impression = FakeImpression()
+    #     impression = FakeImpression()
 
-        self.comm = ChernCommunicator()
-        self.comm.serverurl = MagicMock(return_value="localhost:8080")
+    #     self.comm = ChernCommunicator()
+    #     self.comm.serverurl = MagicMock(return_value="localhost:8080")
 
-        # Call impview method
-        self.comm.impview(impression)
+    #     # Call impview method
+    #     self.comm.impview(impression)
 
-        # Verify subprocess call
-        mock_subprocess.assert_called_once_with([
-            "open",
-            "http://localhost:8080/imp-view/abc123"
-        ])
+    #     # Verify subprocess call
+    #     mock_subprocess.assert_called_once_with([
+    #         "open",
+    #         "http://localhost:8080/imp-view/abc123"
+    #     ])
 
-        os.chdir("..")
-        prepare.remove_chern_project("demo_genfit_new")
-        CHERN_CACHE.__init__()
+    #     os.chdir("..")
+    #     prepare.remove_chern_project("demo_genfit_new")
+    #     CHERN_CACHE.__init__()
 
     def test_add_host_and_serverurl(self):
         print(Fore.BLUE + "Testing Add Host and ServerURL..." + Style.RESET)

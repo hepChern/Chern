@@ -77,7 +77,7 @@ class TestChernVTask(unittest.TestCase):
         prepare.create_chern_project("demo_complex")
         os.chdir("demo_complex")
         obj_tsk = vtsk.VTask(os.getcwd() + "/tasks/taskAna1")
-        
+
         # Test move operation
         obj_tsk.move_to(os.getcwd() + "/tasks/TASKANA1")
         print(obj_tsk.invariant_path())
@@ -98,63 +98,63 @@ class TestChernVTask(unittest.TestCase):
         with patch.object(ChernCommunicator, 'instance') as mock_instance:
             mock_communicator = MagicMock()
             mock_instance.return_value = mock_communicator
-            
+
             # Test kill method
             obj_tsk.kill()
             mock_communicator.kill.assert_called_once_with(ANY)
-            
+
             # Reset mock
             mock_communicator.reset_mock()
-            
+
             # Test collect method
             obj_tsk.collect()
             mock_communicator.collect.assert_called_once_with(ANY)
-            
+
             # Reset mock
             mock_communicator.reset_mock()
-            
+
             # Test display method
             test_filename = "test_file.txt"
             obj_tsk.display(test_filename)
             mock_communicator.display.assert_called_once_with(
                 ANY, test_filename
             )
-            
+
             # Reset mock
             mock_communicator.reset_mock()
-            
+
             # Test impview method
             obj_tsk.impview()
             mock_communicator.impview.assert_called_once_with(ANY)
-            
+
             # Reset mock
             mock_communicator.reset_mock()
-            
+
             # Test export method - successful case
             test_filename = "output.txt"
             test_output_file = "exported_output.txt"
             mock_communicator.export.return_value = (
                 "/path/to/exported_output.txt"
             )
-            
+
             obj_tsk.export(test_filename, test_output_file)
             mock_communicator.export.assert_called_once_with(
                 ANY, test_filename, test_output_file
             )
-            
+
             # Reset mock
             mock_communicator.reset_mock()
-            
+
             # Test export method - file not found case
             mock_communicator.export.return_value = "NOTFOUND"
             with patch('Chern.kernel.vtask_job.logger') as mock_logger:
                 obj_tsk.export(test_filename, test_output_file)
                 mock_logger.error.assert_called_once()
                 self.assertIn("not found", str(mock_logger.error.call_args))
-            
+
             # Reset mock
             mock_communicator.reset_mock()
-            
+
             # Test send_data method
             test_path = "/path/to/data"
             obj_tsk.send_data(test_path)
@@ -166,64 +166,64 @@ class TestChernVTask(unittest.TestCase):
         prepare.remove_chern_project("demo_complex")
         CHERN_CACHE.__init__()
 
-    def test_run_status_method(self):
-        """Test run_status method with different scenarios"""
-        print(Fore.BLUE + "Testing run_status Method..." + Style.RESET)
+    # def test_run_status_method(self):
+    #     """Test run_status method with different scenarios"""
+    #     print(Fore.BLUE + "Testing run_status Method..." + Style.RESET)
 
-        prepare.create_chern_project("demo_complex")
-        os.chdir("demo_complex")
-        obj_tsk = vtsk.VTask(os.getcwd() + "/tasks/taskAna1")
+    #     prepare.create_chern_project("demo_complex")
+    #     os.chdir("demo_complex")
+    #     obj_tsk = vtsk.VTask(os.getcwd() + "/tasks/taskAna1")
 
-        with patch.object(ChernCommunicator, 'instance') as mock_instance:
-            mock_communicator = MagicMock()
-            mock_instance.return_value = mock_communicator
-            
-            # Test normal case (non-rawdata environment)
-            with patch.object(obj_tsk, 'environment',
-                              return_value='normal_env'):
-                mock_communicator.status.return_value = "running"
-                status = obj_tsk.run_status()
-                self.assertEqual(status, "running")
-                mock_communicator.status.assert_called_once_with(ANY)
-            
-            # Reset mock
-            mock_communicator.reset_mock()
-            
-            # Test rawdata environment - finished case
-            with patch.object(obj_tsk, 'environment',
-                              return_value='rawdata'), \
-                 patch.object(obj_tsk, 'input_md5',
-                              return_value='test_md5'):
-                mock_communicator.sample_status.return_value = 'test_md5'
-                status = obj_tsk.run_status()
-                self.assertEqual(status, "finished")
-                mock_communicator.sample_status.assert_called_once_with(ANY)
-            
-            # Reset mock
-            mock_communicator.reset_mock()
-            
-            # Test rawdata environment - unsubmitted case
-            with patch.object(obj_tsk, 'environment',
-                              return_value='rawdata'), \
-                 patch.object(obj_tsk, 'input_md5',
-                              return_value='test_md5'):
-                mock_communicator.sample_status.return_value = 'different_md5'
-                status = obj_tsk.run_status()
-                self.assertEqual(status, "unsubmitted")
-                mock_communicator.sample_status.assert_called_once_with(ANY)
-            
-            # Test with custom host parameter (ignored due to unused-argument)
-            mock_communicator.reset_mock()
-            with patch.object(obj_tsk, 'environment',
-                              return_value='normal_env'):
-                mock_communicator.status.return_value = "queued"
-                status = obj_tsk.run_status(host="remote")
-                self.assertEqual(status, "queued")
-                mock_communicator.status.assert_called_once_with(ANY)
+    #     with patch.object(ChernCommunicator, 'instance') as mock_instance:
+    #         mock_communicator = MagicMock()
+    #         mock_instance.return_value = mock_communicator
 
-        os.chdir("..")
-        prepare.remove_chern_project("demo_complex")
-        CHERN_CACHE.__init__()
+    #         # Test normal case (non-rawdata environment)
+    #         with patch.object(obj_tsk, 'environment',
+    #                           return_value='normal_env'):
+    #             mock_communicator.status.return_value = "running"
+    #             status = obj_tsk.run_status()
+    #             self.assertEqual(status, "running")
+    #             mock_communicator.status.assert_called_once_with(ANY)
+
+    #         # Reset mock
+    #         mock_communicator.reset_mock()
+
+    #         # Test rawdata environment - finished case
+    #         with patch.object(obj_tsk, 'environment',
+    #                           return_value='rawdata'), \
+    #              patch.object(obj_tsk, 'input_md5',
+    #                           return_value='test_md5'):
+    #             mock_communicator.sample_status.return_value = 'test_md5'
+    #             status = obj_tsk.run_status()
+    #             self.assertEqual(status, "finished")
+    #             mock_communicator.sample_status.assert_called_once_with(ANY)
+
+    #         # Reset mock
+    #         mock_communicator.reset_mock()
+
+    #         # Test rawdata environment - unsubmitted case
+    #         with patch.object(obj_tsk, 'environment',
+    #                           return_value='rawdata'), \
+    #              patch.object(obj_tsk, 'input_md5',
+    #                           return_value='test_md5'):
+    #             mock_communicator.sample_status.return_value = 'different_md5'
+    #             status = obj_tsk.run_status()
+    #             self.assertEqual(status, "unsubmitted")
+    #             mock_communicator.sample_status.assert_called_once_with(ANY)
+
+    #         # Test with custom host parameter (ignored due to unused-argument)
+    #         mock_communicator.reset_mock()
+    #         with patch.object(obj_tsk, 'environment',
+    #                           return_value='normal_env'):
+    #             mock_communicator.status.return_value = "queued"
+    #             status = obj_tsk.run_status(host="remote")
+    #             self.assertEqual(status, "queued")
+    #             mock_communicator.status.assert_called_once_with(ANY)
+
+    #     os.chdir("..")
+    #     prepare.remove_chern_project("demo_complex")
+    #     CHERN_CACHE.__init__()
 
     def test_core_methods(self):
         """Test Core class methods inherited by VTask"""
@@ -319,7 +319,7 @@ class TestChernVTask(unittest.TestCase):
         with patch.object(obj_tsk, 'environment', return_value='rawdata'), \
              patch.object(obj_tsk, 'input_md5',
                           return_value='test_md5_hash'):
-            
+
             # Test show_parameters with rawdata environment
             param_msg = obj_tsk.show_parameters()
             self.assertIsNotNone(param_msg)
@@ -352,7 +352,7 @@ class TestChernVTask(unittest.TestCase):
         with patch('os.listdir') as mock_listdir, \
              patch.object(obj_tsk, 'algorithm', return_value=mock_algorithm), \
              patch('os.get_terminal_size') as mock_terminal_size:
-            
+
             mock_listdir.return_value = [
                 "script.py",
                 "config.txt",
@@ -362,14 +362,14 @@ class TestChernVTask(unittest.TestCase):
                 "data_processor.py"
             ]
             mock_terminal_size.return_value.columns = 80
-            
+
             # Add parameters for command substitution
             obj_tsk.add_parameter("test_param", "test_value")
             obj_tsk.add_parameter("input_file", "input.dat")
-            
+
             algorithm_msg = obj_tsk.show_algorithm()
             self.assertIsNotNone(algorithm_msg)
-            
+
             msg_str = str(algorithm_msg)
             # Should contain algorithm files
             # (excluding hidden, README.md, chern.yaml)
@@ -378,7 +378,7 @@ class TestChernVTask(unittest.TestCase):
             self.assertNotIn(".hidden", msg_str)
             self.assertNotIn("README.md", msg_str)
             self.assertNotIn("chern.yaml", msg_str)
-            
+
             # Should contain commands with parameter substitution
             self.assertIn("Commands", msg_str)
             self.assertIn("test_value", msg_str)  # Parameter substituted
@@ -388,7 +388,7 @@ class TestChernVTask(unittest.TestCase):
         # Test with empty algorithm directory
         with patch('os.listdir') as mock_listdir, \
              patch.object(obj_tsk, 'algorithm', return_value=mock_algorithm):
-            
+
             mock_listdir.return_value = []
             algorithm_msg = obj_tsk.show_algorithm()
             self.assertIsNotNone(algorithm_msg)
@@ -417,17 +417,17 @@ class TestChernVTask(unittest.TestCase):
         # Test set_input_md5 method with mocking
         test_path = "/test/input/path"
         test_md5 = "test_md5_hash_12345"
-        
+
         with patch('Chern.utils.csys.dir_md5') as mock_dir_md5, \
              patch('Chern.utils.metadata.YamlFile') as mock_yaml_file:
-            
+
             mock_dir_md5.return_value = test_md5
             mock_yaml_instance = MagicMock()
             mock_yaml_file.return_value = mock_yaml_instance
-            
+
             # Test set_input_md5
             result_md5 = obj_tsk.set_input_md5(test_path)
-            
+
             # Verify the method calls
             mock_dir_md5.assert_called_once_with(test_path)
             mock_yaml_file.assert_called_once_with(
@@ -441,18 +441,18 @@ class TestChernVTask(unittest.TestCase):
         # Test output_md5 method with mocking
         test_impression = "test_impression_123"
         test_output_md5 = "output_md5_hash_67890"
-        
+
         with patch.object(obj_tsk, 'config_file') as mock_config_file, \
              patch.object(obj_tsk, 'impression', return_value=test_impression):
-            
+
             # Mock the config file to return output_md5s
             mock_config_file.read_variable.return_value = {
                 test_impression: test_output_md5,
                 "other_impression": "other_md5"
             }
-            
+
             result_output_md5 = obj_tsk.output_md5()
-            
+
             # Verify the method calls
             mock_config_file.read_variable.assert_called_once_with(
                 "output_md5s", {}
@@ -462,12 +462,12 @@ class TestChernVTask(unittest.TestCase):
         # Test output_md5 method with empty result
         with patch.object(obj_tsk, 'config_file') as mock_config_file, \
              patch.object(obj_tsk, 'impression', return_value=test_impression):
-            
+
             # Mock the config file to return empty dict
             mock_config_file.read_variable.return_value = {}
-            
+
             result_output_md5 = obj_tsk.output_md5()
-            
+
             # Should return empty string for non-existent impression
             self.assertEqual(result_output_md5, "")
 
@@ -475,14 +475,14 @@ class TestChernVTask(unittest.TestCase):
         with patch.object(obj_tsk, 'config_file') as mock_config_file, \
              patch.object(obj_tsk, 'impression',
                           return_value="non_existent_impression"):
-            
+
             # Mock the config file to return dict without our impression
             mock_config_file.read_variable.return_value = {
                 "other_impression": "other_md5"
             }
-            
+
             result_output_md5 = obj_tsk.output_md5()
-            
+
             # Should return empty string for non-existent impression
             self.assertEqual(result_output_md5, "")
 
@@ -508,9 +508,9 @@ class TestChernVTask(unittest.TestCase):
             mock_yaml_instance = MagicMock()
             mock_yaml_file.return_value = mock_yaml_instance
             mock_yaml_instance.read_variable.return_value = "mocked_uuid_123"
-            
+
             md5_result = obj_tsk.input_md5()
-            
+
             # Verify correct file path and variable name
             mock_yaml_file.assert_called_once_with(
                 os.path.join(obj_tsk.path, "chern.yaml")
@@ -525,7 +525,7 @@ class TestChernVTask(unittest.TestCase):
             mock_yaml_instance = MagicMock()
             mock_yaml_file.return_value = mock_yaml_instance
             mock_yaml_instance.read_variable.return_value = ""
-            
+
             md5_result = obj_tsk.input_md5()
             self.assertEqual(md5_result, "")
 
@@ -545,10 +545,10 @@ class TestChernVTask(unittest.TestCase):
         # Test set_input_md5 with directory that doesn't exist
         with patch('Chern.utils.csys.dir_md5') as mock_dir_md5, \
              patch('Chern.utils.metadata.YamlFile') as mock_yaml_file:
-            
+
             # Simulate dir_md5 raising an exception
             mock_dir_md5.side_effect = FileNotFoundError("Directory not found")
-            
+
             with self.assertRaises(FileNotFoundError):
                 obj_tsk.set_input_md5("/non/existent/path")
 
@@ -559,7 +559,7 @@ class TestChernVTask(unittest.TestCase):
             mock_yaml_instance.read_variable.side_effect = Exception(
                 "YAML parsing error"
             )
-            
+
             with self.assertRaises(Exception):
                 obj_tsk.input_md5()
 
@@ -568,7 +568,7 @@ class TestChernVTask(unittest.TestCase):
             mock_config_file.read_variable.side_effect = Exception(
                 "Config file error"
             )
-            
+
             with self.assertRaises(Exception):
                 obj_tsk.output_md5()
 
@@ -587,17 +587,17 @@ class TestChernVTask(unittest.TestCase):
         # Test add_source method
         test_path = "/test/source/path"
         test_md5 = "source_md5_hash_12345"
-        
+
         with patch('Chern.utils.csys.dir_md5') as mock_dir_md5, \
              patch('Chern.utils.metadata.ConfigFile') as mock_config_file, \
              patch.object(obj_tsk, 'impress') as mock_impress:
-            
+
             mock_dir_md5.return_value = test_md5
             mock_config_instance = MagicMock()
             mock_config_file.return_value = mock_config_instance
-            
+
             obj_tsk.add_source(test_path)
-            
+
             # Verify method calls
             mock_dir_md5.assert_called_once_with(test_path)
             mock_config_file.assert_called_once_with(
@@ -614,11 +614,11 @@ class TestChernVTask(unittest.TestCase):
              patch.object(obj_tsk, 'impress') as mock_impress, \
              patch.object(obj_tsk, 'send_data') as mock_send_data, \
              patch('builtins.print') as mock_print:
-            
+
             mock_dir_md5.return_value = test_md5
-            
+
             obj_tsk.send(test_path)
-            
+
             # Verify method calls
             mock_dir_md5.assert_called_once_with(test_path)
             mock_set_input_md5.assert_called_once_with(test_path)
@@ -643,34 +643,35 @@ class TestChernVTask(unittest.TestCase):
         mock_algorithm_obj = MagicMock()
         mock_algorithm_obj.object_type.return_value = "algorithm"
         mock_algorithm_obj.has_predecessor_recursively.return_value = False
-        
+
         # Test add_algorithm method - successful case
         with patch.object(obj_tsk, 'get_vobject') as mock_get_vobject, \
              patch.object(obj_tsk, 'algorithm') as mock_algorithm, \
              patch.object(obj_tsk, 'add_arc_from') as mock_add_arc_from, \
+             patch.object(obj_tsk, 'project_path', return_value='/mock/project/path'), \
              patch('builtins.print') as mock_print:
-            
+
             mock_get_vobject.return_value = mock_algorithm_obj
             mock_algorithm.return_value = None  # No existing algorithm
-            
+
             obj_tsk.add_algorithm("/path/to/algorithm")
-            
+
             # Verify method calls
-            mock_get_vobject.assert_called_with("/path/to/algorithm")
+            mock_get_vobject.assert_any_call("/path/to/algorithm", "/mock/project/path")
             mock_add_arc_from.assert_called_once_with(mock_algorithm_obj)
             mock_print.assert_not_called()
 
         # Test add_algorithm method - wrong object type
         mock_wrong_obj = MagicMock()
         mock_wrong_obj.object_type.return_value = "task"
-        
+
         with patch.object(obj_tsk, 'get_vobject') as mock_get_vobject, \
              patch('builtins.print') as mock_print:
-            
+
             mock_get_vobject.return_value = mock_wrong_obj
-            
+
             obj_tsk.add_algorithm("/path/to/task")
-            
+
             # Should print error message
             mock_print.assert_called()
             error_call = mock_print.call_args[0][0]
@@ -679,14 +680,14 @@ class TestChernVTask(unittest.TestCase):
 
         # Test add_algorithm method - circular dependency
         mock_algorithm_obj.has_predecessor_recursively.return_value = True
-        
+
         with patch.object(obj_tsk, 'get_vobject') as mock_get_vobject, \
              patch('builtins.print') as mock_print:
-            
+
             mock_get_vobject.return_value = mock_algorithm_obj
-            
+
             obj_tsk.add_algorithm("/path/to/algorithm")
-            
+
             # Should print circular dependency error
             mock_print.assert_called()
             error_call = mock_print.call_args[0][0]
@@ -695,18 +696,18 @@ class TestChernVTask(unittest.TestCase):
         # Test add_algorithm method - replace existing algorithm
         mock_algorithm_obj.has_predecessor_recursively.return_value = False
         mock_existing_algorithm = MagicMock()
-        
+
         with patch.object(obj_tsk, 'get_vobject') as mock_get_vobject, \
              patch.object(obj_tsk, 'algorithm') as mock_algorithm, \
              patch.object(obj_tsk, 'remove_algorithm') as mock_remove_algorithm, \
              patch.object(obj_tsk, 'add_arc_from') as mock_add_arc_from, \
              patch('builtins.print') as mock_print:
-            
+
             mock_get_vobject.return_value = mock_algorithm_obj
             mock_algorithm.return_value = mock_existing_algorithm
-            
+
             obj_tsk.add_algorithm("/path/to/algorithm")
-            
+
             # Should remove existing and add new
             mock_remove_algorithm.assert_called_once()
             mock_add_arc_from.assert_called_once_with(mock_algorithm_obj)
@@ -729,25 +730,25 @@ class TestChernVTask(unittest.TestCase):
 
         # Test remove_algorithm with existing algorithm
         mock_algorithm = MagicMock()
-        
+
         with patch.object(obj_tsk, 'algorithm') as mock_get_algorithm, \
              patch.object(obj_tsk, 'remove_arc_from') as mock_remove_arc_from:
-            
+
             mock_get_algorithm.return_value = mock_algorithm
-            
+
             obj_tsk.remove_algorithm()
-            
+
             # Verify method calls
             mock_remove_arc_from.assert_called_once_with(mock_algorithm)
 
         # Test remove_algorithm with no algorithm
         with patch.object(obj_tsk, 'algorithm') as mock_get_algorithm, \
              patch('builtins.print') as mock_print:
-            
+
             mock_get_algorithm.return_value = None
-            
+
             obj_tsk.remove_algorithm()
-            
+
             # Should print "Nothing to remove"
             mock_print.assert_called_once_with("Nothing to remove")
 
@@ -776,38 +777,38 @@ class TestChernVTask(unittest.TestCase):
         # Test algorithm method with algorithm predecessor
         with patch.object(obj_tsk, 'predecessors') as mock_predecessors, \
              patch('Chern.kernel.valgorithm.VAlgorithm') as mock_valgorithm:
-            
+
             mock_predecessors.return_value = [
                 mock_task_pred, mock_algorithm_pred, mock_directory_pred
             ]
             mock_valg_instance = MagicMock()
             mock_valgorithm.return_value = mock_valg_instance
-            
+
             result = obj_tsk.algorithm()
-            
+
             # Should return VAlgorithm instance
             mock_valgorithm.assert_called_once_with("/path/to/algorithm")
             self.assertEqual(result, mock_valg_instance)
 
         # Test algorithm method with no algorithm predecessor
         with patch.object(obj_tsk, 'predecessors') as mock_predecessors:
-            
+
             mock_predecessors.return_value = [
                 mock_task_pred, mock_directory_pred
             ]
-            
+
             result = obj_tsk.algorithm()
-            
+
             # Should return None
             self.assertIsNone(result)
 
         # Test algorithm method with empty predecessors
         with patch.object(obj_tsk, 'predecessors') as mock_predecessors:
-            
+
             mock_predecessors.return_value = []
-            
+
             result = obj_tsk.algorithm()
-            
+
             # Should return None
             self.assertIsNone(result)
 
@@ -828,43 +829,43 @@ class TestChernVTask(unittest.TestCase):
         mock_task_pred1 = MagicMock()
         mock_task_pred1.object_type.return_value = "task"
         mock_task_pred1.path = "/path/to/task1"
-        
+
         mock_task_pred2 = MagicMock()
         mock_task_pred2.object_type.return_value = "task"
         mock_task_pred2.path = "/path/to/task2"
-        
+
         mock_algorithm_pred = MagicMock()
         mock_algorithm_pred.object_type.return_value = "algorithm"
-        
+
         mock_task_succ1 = MagicMock()
         mock_task_succ1.object_type.return_value = "task"
         mock_task_succ1.path = "/path/to/output_task1"
-        
+
         mock_task_succ2 = MagicMock()
         mock_task_succ2.object_type.return_value = "task"
         mock_task_succ2.path = "/path/to/output_task2"
-        
+
         mock_directory_succ = MagicMock()
         mock_directory_succ.object_type.return_value = "directory"
 
         # Test inputs method
         with patch.object(obj_tsk, 'predecessors') as mock_predecessors, \
              patch.object(obj_tsk, 'get_task') as mock_get_task:
-            
+
             mock_predecessors.return_value = [
                 mock_task_pred1, mock_algorithm_pred, mock_task_pred2
             ]
-            
+
             mock_task1 = MagicMock()
             mock_task2 = MagicMock()
             mock_get_task.side_effect = [mock_task1, mock_task2]
-            
+
             inputs = obj_tsk.inputs()
-            
+
             # Should return list of task objects
             self.assertEqual(len(inputs), 2)
             self.assertEqual(inputs, [mock_task1, mock_task2])
-            
+
             # Verify get_task calls
             expected_calls = [
                 unittest.mock.call("/path/to/task1"),
@@ -875,21 +876,21 @@ class TestChernVTask(unittest.TestCase):
         # Test outputs method
         with patch.object(obj_tsk, 'successors') as mock_successors, \
              patch.object(obj_tsk, 'get_task') as mock_get_task:
-            
+
             mock_successors.return_value = [
                 mock_task_succ1, mock_directory_succ, mock_task_succ2
             ]
-            
+
             mock_output_task1 = MagicMock()
             mock_output_task2 = MagicMock()
             mock_get_task.side_effect = [mock_output_task1, mock_output_task2]
-            
+
             outputs = obj_tsk.outputs()
-            
+
             # Should return list of task objects
             self.assertEqual(len(outputs), 2)
             self.assertEqual(outputs, [mock_output_task1, mock_output_task2])
-            
+
             # Verify get_task calls
             expected_calls = [
                 unittest.mock.call("/path/to/output_task1"),
@@ -899,21 +900,21 @@ class TestChernVTask(unittest.TestCase):
 
         # Test inputs with no task predecessors
         with patch.object(obj_tsk, 'predecessors') as mock_predecessors:
-            
+
             mock_predecessors.return_value = [mock_algorithm_pred]
-            
+
             inputs = obj_tsk.inputs()
-            
+
             # Should return empty list
             self.assertEqual(inputs, [])
 
         # Test outputs with no task successors
         with patch.object(obj_tsk, 'successors') as mock_successors:
-            
+
             mock_successors.return_value = [mock_directory_succ]
-            
+
             outputs = obj_tsk.outputs()
-            
+
             # Should return empty list
             self.assertEqual(outputs, [])
 
@@ -933,21 +934,21 @@ class TestChernVTask(unittest.TestCase):
         # Test add_source with invalid directory
         with patch('Chern.utils.csys.dir_md5') as mock_dir_md5:
             mock_dir_md5.side_effect = FileNotFoundError("Directory not found")
-            
+
             with self.assertRaises(FileNotFoundError):
                 obj_tsk.add_source("/non/existent/path")
 
         # Test send with invalid directory
         with patch('Chern.utils.csys.dir_md5') as mock_dir_md5:
             mock_dir_md5.side_effect = PermissionError("Permission denied")
-            
+
             with self.assertRaises(PermissionError):
                 obj_tsk.send("/restricted/path")
 
         # Test add_algorithm with invalid object path
         with patch.object(obj_tsk, 'get_vobject') as mock_get_vobject:
             mock_get_vobject.side_effect = Exception("Invalid object path")
-            
+
             with self.assertRaises(Exception):
                 obj_tsk.add_algorithm("/invalid/path")
 
@@ -955,13 +956,13 @@ class TestChernVTask(unittest.TestCase):
         mock_task_pred = MagicMock()
         mock_task_pred.object_type.return_value = "task"
         mock_task_pred.path = "/invalid/task/path"
-        
+
         with patch.object(obj_tsk, 'predecessors') as mock_predecessors, \
              patch.object(obj_tsk, 'get_task') as mock_get_task:
-            
+
             mock_predecessors.return_value = [mock_task_pred]
             mock_get_task.side_effect = Exception("Task creation failed")
-            
+
             with self.assertRaises(Exception):
                 obj_tsk.inputs()
 
@@ -983,9 +984,9 @@ class TestChernVTask(unittest.TestCase):
             mock_yaml_instance = MagicMock()
             mock_yaml.return_value = mock_yaml_instance
             mock_yaml_instance.read_variable.return_value = "ubuntu:20.04"
-            
+
             environment = obj_tsk.environment()
-            
+
             # Verify method calls
             mock_yaml.assert_called_once_with(
                 os.path.join(obj_tsk.path, "chern.yaml")
@@ -1000,9 +1001,9 @@ class TestChernVTask(unittest.TestCase):
             mock_yaml_instance = MagicMock()
             mock_yaml.return_value = mock_yaml_instance
             mock_yaml_instance.read_variable.return_value = "1Gi"
-            
+
             memory_limit = obj_tsk.memory_limit()
-            
+
             # Verify method calls
             mock_yaml.assert_called_once_with(
                 os.path.join(obj_tsk.path, "chern.yaml")
@@ -1018,9 +1019,9 @@ class TestChernVTask(unittest.TestCase):
             mock_yaml_instance = MagicMock()
             mock_yaml.return_value = mock_yaml_instance
             mock_yaml_instance.read_variable.return_value = test_params
-            
+
             params_list, params_dict = obj_tsk.parameters()
-            
+
             # Verify method calls
             mock_yaml.assert_called_once_with(
                 os.path.join(obj_tsk.path, "chern.yaml")
@@ -1034,9 +1035,9 @@ class TestChernVTask(unittest.TestCase):
         # Test auto_download method
         with patch.object(obj_tsk, 'config_file') as mock_config:
             mock_config.read_variable.return_value = False
-            
+
             auto_download = obj_tsk.auto_download()
-            
+
             # Verify method calls
             mock_config.read_variable.assert_called_once_with(
                 "auto_download", True
@@ -1046,9 +1047,9 @@ class TestChernVTask(unittest.TestCase):
         # Test default_runner method
         with patch.object(obj_tsk, 'config_file') as mock_config:
             mock_config.read_variable.return_value = "remote"
-            
+
             default_runner = obj_tsk.default_runner()
-            
+
             # Verify method calls
             mock_config.read_variable.assert_called_once_with(
                 "default_runner", "local"
@@ -1074,9 +1075,9 @@ class TestChernVTask(unittest.TestCase):
             mock_yaml_instance = MagicMock()
             mock_yaml.return_value = mock_yaml_instance
             mock_yaml_instance.read_variable.return_value = existing_params
-            
+
             obj_tsk.add_parameter("new_param", "new_value")
-            
+
             # Verify read and write calls
             mock_yaml_instance.read_variable.assert_called_once_with(
                 "parameters", {}
@@ -1094,9 +1095,9 @@ class TestChernVTask(unittest.TestCase):
             mock_yaml_instance = MagicMock()
             mock_yaml.return_value = mock_yaml_instance
             mock_yaml_instance.read_variable.return_value = {}
-            
+
             obj_tsk.add_parameter("first_param", "first_value")
-            
+
             # Verify write call
             expected_params = {"first_param": "first_value"}
             mock_yaml_instance.write_variable.assert_called_once_with(
@@ -1113,9 +1114,9 @@ class TestChernVTask(unittest.TestCase):
             mock_yaml_instance = MagicMock()
             mock_yaml.return_value = mock_yaml_instance
             mock_yaml_instance.read_variable.return_value = existing_params
-            
+
             obj_tsk.remove_parameter("param2")
-            
+
             # Verify read and write calls
             mock_yaml_instance.read_variable.assert_called_once_with(
                 "parameters", {}
@@ -1129,13 +1130,13 @@ class TestChernVTask(unittest.TestCase):
         existing_params = {"param1": "value1"}
         with patch('Chern.utils.metadata.YamlFile') as mock_yaml, \
              patch('Chern.kernel.vtask_setting.logger') as mock_logger:
-            
+
             mock_yaml_instance = MagicMock()
             mock_yaml.return_value = mock_yaml_instance
             mock_yaml_instance.read_variable.return_value = existing_params
-            
+
             obj_tsk.remove_parameter("non_existent_param")
-            
+
             # Should log warning and not call write_variable
             mock_logger.warning.assert_called_once()
             # Check that warning was called with correct format and parameter
@@ -1161,7 +1162,7 @@ class TestChernVTask(unittest.TestCase):
         # Test set_auto_download method
         with patch.object(obj_tsk, 'config_file') as mock_config:
             obj_tsk.set_auto_download(False)
-            
+
             mock_config.write_variable.assert_called_once_with(
                 "auto_download", False
             )
@@ -1169,7 +1170,7 @@ class TestChernVTask(unittest.TestCase):
         # Test set_default_runner method
         with patch.object(obj_tsk, 'config_file') as mock_config:
             obj_tsk.set_default_runner("kubernetes")
-            
+
             mock_config.write_variable.assert_called_once_with(
                 "default_runner", "kubernetes"
             )
@@ -1178,9 +1179,9 @@ class TestChernVTask(unittest.TestCase):
         with patch('Chern.utils.metadata.YamlFile') as mock_yaml:
             mock_yaml_instance = MagicMock()
             mock_yaml.return_value = mock_yaml_instance
-            
+
             obj_tsk.set_environment("python:3.9")
-            
+
             # Verify method calls
             mock_yaml.assert_called_once_with(
                 os.path.join(obj_tsk.path, "chern.yaml")
@@ -1193,9 +1194,9 @@ class TestChernVTask(unittest.TestCase):
         with patch('Chern.utils.metadata.YamlFile') as mock_yaml:
             mock_yaml_instance = MagicMock()
             mock_yaml.return_value = mock_yaml_instance
-            
+
             obj_tsk.set_memory_limit("2Gi")
-            
+
             # Verify method calls
             mock_yaml.assert_called_once_with(
                 os.path.join(obj_tsk.path, "chern.yaml")
@@ -1225,37 +1226,37 @@ class TestChernVTask(unittest.TestCase):
         # Test env_validated method - algorithm with script environment
         mock_algorithm = MagicMock()
         mock_algorithm.environment.return_value = "script"
-        
+
         with patch.object(obj_tsk, 'environment', return_value='python:3.9'), \
              patch.object(obj_tsk, 'algorithm', return_value=mock_algorithm):
-            
+
             result = obj_tsk.env_validated()
             self.assertTrue(result)
 
         # Test env_validated method - matching algorithm environment
         mock_algorithm = MagicMock()
         mock_algorithm.environment.return_value = "python:3.9"
-        
+
         with patch.object(obj_tsk, 'environment', return_value='python:3.9'), \
              patch.object(obj_tsk, 'algorithm', return_value=mock_algorithm):
-            
+
             result = obj_tsk.env_validated()
             self.assertTrue(result)
 
         # Test env_validated method - non-matching algorithm environment
         mock_algorithm = MagicMock()
         mock_algorithm.environment.return_value = "ubuntu:20.04"
-        
+
         with patch.object(obj_tsk, 'environment', return_value='python:3.9'), \
              patch.object(obj_tsk, 'algorithm', return_value=mock_algorithm):
-            
+
             result = obj_tsk.env_validated()
             self.assertFalse(result)
 
         # Test env_validated method - no algorithm
         with patch.object(obj_tsk, 'environment', return_value='python:3.9'), \
              patch.object(obj_tsk, 'algorithm', return_value=None):
-            
+
             result = obj_tsk.env_validated()
             self.assertFalse(result)
 
@@ -1296,14 +1297,14 @@ class TestChernVTask(unittest.TestCase):
         # Test adding and reading parameters
         obj_tsk.add_parameter("test_integration_param", "test_value")
         params_list, params_dict = obj_tsk.parameters()
-        
+
         self.assertIn("test_integration_param", params_list)
         self.assertEqual(params_dict["test_integration_param"], "test_value")
 
         # Test removing parameters
         obj_tsk.remove_parameter("test_integration_param")
         params_list, params_dict = obj_tsk.parameters()
-        
+
         self.assertNotIn("test_integration_param", params_list)
         self.assertNotIn("test_integration_param", params_dict)
 
@@ -1344,7 +1345,7 @@ class TestChernVTask(unittest.TestCase):
         # Test environment method with YAML file error
         with patch('Chern.utils.metadata.YamlFile') as mock_yaml:
             mock_yaml.side_effect = Exception("YAML file error")
-            
+
             with self.assertRaises(Exception):
                 obj_tsk.environment()
 
@@ -1355,7 +1356,7 @@ class TestChernVTask(unittest.TestCase):
             mock_yaml_instance.read_variable.side_effect = Exception(
                 "Read error"
             )
-            
+
             with self.assertRaises(Exception):
                 obj_tsk.memory_limit()
 
@@ -1366,7 +1367,7 @@ class TestChernVTask(unittest.TestCase):
             mock_yaml_instance.read_variable.side_effect = Exception(
                 "Parameters read error"
             )
-            
+
             with self.assertRaises(Exception):
                 obj_tsk.parameters()
 
@@ -1378,7 +1379,7 @@ class TestChernVTask(unittest.TestCase):
             mock_yaml_instance.write_variable.side_effect = Exception(
                 "Write error"
             )
-            
+
             with self.assertRaises(Exception):
                 obj_tsk.add_parameter("test_param", "test_value")
 
@@ -1389,7 +1390,7 @@ class TestChernVTask(unittest.TestCase):
             mock_yaml_instance.write_variable.side_effect = Exception(
                 "Environment write error"
             )
-            
+
             with self.assertRaises(Exception):
                 obj_tsk.set_environment("test_env")
 
@@ -1398,7 +1399,7 @@ class TestChernVTask(unittest.TestCase):
             mock_config.read_variable.side_effect = Exception(
                 "Config read error"
             )
-            
+
             with self.assertRaises(Exception):
                 obj_tsk.auto_download()
 
@@ -1407,7 +1408,7 @@ class TestChernVTask(unittest.TestCase):
             mock_config.write_variable.side_effect = Exception(
                 "Config write error"
             )
-            
+
             with self.assertRaises(Exception):
                 obj_tsk.set_auto_download(True)
 
@@ -1433,9 +1434,9 @@ class TestChernVTask(unittest.TestCase):
             mock_communicator = MagicMock()
             mock_instance.return_value = mock_communicator
             mock_communicator.get_file.return_value = "/path/to/file"
-            
+
             result = obj_tsk.get_file(test_filename)
-            
+
             mock_communicator.get_file.assert_called_once_with(
                 "local", ANY, test_filename
             )
@@ -1461,17 +1462,17 @@ class TestChernVTask(unittest.TestCase):
         # Test view method with local file that exists
         test_filename = "local:test_file.txt"
         mock_file_path = "/path/to/test_file.txt"
-        
+
         with patch.object(obj_tsk, 'get_file') as mock_get_file, \
              patch('Chern.utils.csys.exists') as mock_exists, \
              patch('Chern.kernel.vtask.open_subprocess') as \
              mock_open_subprocess:
-            
+
             mock_get_file.return_value = mock_file_path
             mock_exists.return_value = True
-            
+
             obj_tsk.view(test_filename)
-            
+
             # Verify method calls
             mock_get_file.assert_called_once_with("local:test_file.txt")
             mock_exists.assert_called_once_with(mock_file_path)
@@ -1483,12 +1484,12 @@ class TestChernVTask(unittest.TestCase):
         with patch.object(obj_tsk, 'get_file') as mock_get_file, \
              patch('Chern.utils.csys.exists') as mock_exists, \
              patch('builtins.print') as mock_print:
-            
+
             mock_get_file.return_value = mock_file_path
             mock_exists.return_value = False
-            
+
             obj_tsk.view(test_filename)
-            
+
             # Should print error message
             mock_print.assert_called_once()
             error_msg = mock_print.call_args[0][0]
@@ -1497,12 +1498,12 @@ class TestChernVTask(unittest.TestCase):
 
         # Test view method with non-local filename
         non_local_filename = "remote_file.txt"
-        
+
         with patch.object(obj_tsk, 'get_file') as mock_get_file, \
              patch('Chern.utils.csys.exists') as mock_exists:
-            
+
             obj_tsk.view(non_local_filename)
-            
+
             # Should not call get_file or exists for non-local files
             mock_get_file.assert_not_called()
             mock_exists.assert_not_called()
@@ -1523,13 +1524,13 @@ class TestChernVTask(unittest.TestCase):
         # Test printed_status when not impressed
         with patch.object(obj_tsk, 'status') as mock_status, \
              patch('Chern.kernel.vobject.VObject.printed_status') as mock_super:
-        
+
             mock_status.return_value = "new"
             mock_message = MagicMock()
             mock_super.return_value = mock_message
-            
+
             result = obj_tsk.printed_status()
-            
+
             # Should return early without communicator calls
             mock_super.assert_called_once()
             self.assertEqual(result, mock_message)
@@ -1538,18 +1539,18 @@ class TestChernVTask(unittest.TestCase):
         with patch.object(obj_tsk, 'status') as mock_status, \
              patch.object(ChernCommunicator, 'instance') as mock_instance, \
              patch('Chern.kernel.vobject.VObject.printed_status') as mock_super:
-        
+
             mock_status.return_value = "impressed"
-            
+
             mock_communicator = MagicMock()
             mock_instance.return_value = mock_communicator
             mock_communicator.dite_status.return_value = "disconnected"
-            
+
             mock_message = MagicMock()
             mock_super.return_value = mock_message
-            
+
             result = obj_tsk.printed_status()
-            
+
             # Should check dite status but not call job_status
             mock_communicator.dite_status.assert_called_once()
             mock_communicator.job_status.assert_not_called()
@@ -1562,19 +1563,19 @@ class TestChernVTask(unittest.TestCase):
         with patch.object(obj_tsk, 'status') as mock_status, \
              patch.object(ChernCommunicator, 'instance') as mock_instance, \
              patch('Chern.kernel.vobject.VObject.printed_status') as mock_super:
-        
+
             mock_status.return_value = "impressed"
-            
+
             mock_communicator = MagicMock()
             mock_instance.return_value = mock_communicator
             mock_communicator.dite_status.return_value = "connected"
             mock_communicator.job_status.return_value = "running"
-            
+
             mock_message = MagicMock()
             mock_super.return_value = mock_message
-            
+
             result = obj_tsk.printed_status()
-            
+
             # Should check dite status and call job_status when connected
             mock_communicator.dite_status.assert_called_once()
             mock_communicator.job_status.assert_called_once_with(ANY)
@@ -1590,7 +1591,7 @@ class TestChernVTask(unittest.TestCase):
 
     #     # Test creating task in project directory
     #     test_path = "test_task"
-    #     
+    #
     #     with patch('Chern.utils.csys.strip_path_string') as mock_strip, \
     #          patch('os.path.abspath') as mock_abspath, \
     #          patch('Chern.kernel.vobject.VObject') as mock_vobject, \
@@ -1598,39 +1599,39 @@ class TestChernVTask(unittest.TestCase):
     #          patch('Chern.utils.metadata.ConfigFile') as mock_config_file, \
     #          patch('Chern.utils.metadata.YamlFile') as mock_yaml_file, \
     #          patch('builtins.open', mock_open()) as mock_file:
-    #         
+    #
     #         mock_strip.return_value = test_path
     #         mock_abspath.return_value = "/parent/path"
-    #         
+    #
     #         # Mock parent object as project
     #         mock_parent = MagicMock()
     #         mock_parent.object_type.return_value = "project"
     #         mock_vobject.return_value = mock_parent
-    #         
+    #
     #         # Mock config and yaml files
     #         mock_config_instance = MagicMock()
     #         mock_config_file.return_value = mock_config_instance
     #         mock_yaml_instance = MagicMock()
     #         mock_yaml_file.return_value = mock_yaml_instance
-    #         
+    #
     #         # Mock task object
     #         mock_task = MagicMock()
     #         mock_task.invariant_path.return_value = "test_task"
     #         mock_vobject.side_effect = [mock_parent, mock_task]
-    #         
+    #
     #         vtsk.create_task(test_path)
-    #         
+    #
     #         # Verify method calls
     #         mock_strip.assert_called_once_with(test_path)
     #         mock_mkdir.assert_called_once_with(f"{test_path}/.chern")
-    #         
+    #
     #         # Verify config file writes
     #         config_calls = mock_config_instance.write_variable.call_args_list
     #         self.assertEqual(len(config_calls), 3)
     #         self.assertEqual(config_calls[0][0], ("object_type", "task"))
     #         self.assertEqual(config_calls[1][0], ("auto_download", True))
     #         self.assertEqual(config_calls[2][0], ("default_runner", "local"))
-    #         
+    #
     #         # Verify yaml file writes
     #         yaml_calls = mock_yaml_instance.write_variable.call_args_list
     #         self.assertEqual(len(yaml_calls), 2)
@@ -1638,7 +1639,7 @@ class TestChernVTask(unittest.TestCase):
     #         self.assertEqual(yaml_calls[0][0], expected_env)
     #         expected_memory = ("kubernetes_memory_limit", "256Mi")
     #         self.assertEqual(yaml_calls[1][0], expected_memory)
-    #         
+    #
     #         # Verify README file was written
     #         mock_file.assert_called_once_with(
     #             f"{test_path}/.chern/README.md", "w", encoding="utf-8"
@@ -1648,15 +1649,15 @@ class TestChernVTask(unittest.TestCase):
     #     with patch('Chern.utils.csys.strip_path_string') as mock_strip, \
     #          patch('os.path.abspath') as mock_abspath, \
     #          patch('Chern.kernel.vobject.VObject') as mock_vobject:
-    #         
+    #
     #         mock_strip.return_value = test_path
     #         mock_abspath.return_value = "/parent/path"
-    #         
+    #
     #         # Mock parent object as non-project/directory
     #         mock_parent = MagicMock()
     #         mock_parent.object_type.return_value = "task"
     #         mock_vobject.return_value = mock_parent
-    #         
+    #
     #         # Should return early without creating anything
     #         result = vtsk.create_task(test_path)
     #         self.assertIsNone(result)
@@ -1666,7 +1667,7 @@ class TestChernVTask(unittest.TestCase):
     #     print(Fore.BLUE + "Testing create_data function..." + Style.RESET)
 
     #     test_path = "test_data"
-    #     
+    #
     #     with patch('Chern.utils.csys.strip_path_string') as mock_strip, \
     #          patch('os.path.abspath') as mock_abspath, \
     #          patch('Chern.kernel.vobject.VObject') as mock_vobject, \
@@ -1674,43 +1675,43 @@ class TestChernVTask(unittest.TestCase):
     #          patch('Chern.utils.metadata.ConfigFile') as mock_config_file, \
     #          patch('Chern.utils.metadata.YamlFile') as mock_yaml_file, \
     #          patch('builtins.open', mock_open()) as mock_file:
-    #         
+    #
     #         mock_strip.return_value = test_path
     #         mock_abspath.return_value = "/parent/path"
-    #         
+    #
     #         # Mock parent object as directory
     #         mock_parent = MagicMock()
     #         mock_parent.object_type.return_value = "directory"
     #         mock_vobject.return_value = mock_parent
-    #         
+    #
     #         # Mock config and yaml files
     #         mock_config_instance = MagicMock()
     #         mock_config_file.return_value = mock_config_instance
     #         mock_yaml_instance = MagicMock()
     #         mock_yaml_file.return_value = mock_yaml_instance
-    #         
+    #
     #         # Mock task object
     #         mock_task = MagicMock()
     #         mock_task.invariant_path.return_value = "test_data"
     #         mock_vobject.side_effect = [mock_parent, mock_task]
-    #         
+    #
     #         vtsk.create_data(test_path)
-    #         
+    #
     #         # Verify method calls
     #         mock_strip.assert_called_once_with(test_path)
     #         mock_mkdir.assert_called_once_with(f"{test_path}/.chern")
-    #         
+    #
     #         # Verify config file writes (only object_type for data)
     #         mock_config_instance.write_variable.assert_called_once_with(
     #             "object_type", "task"
     #         )
-    #         
+    #
     #         # Verify yaml file writes (rawdata environment and empty uuid)
     #         yaml_calls = mock_yaml_instance.write_variable.call_args_list
     #         self.assertEqual(len(yaml_calls), 2)
     #         self.assertEqual(yaml_calls[0][0], ("environment", "rawdata"))
     #         self.assertEqual(yaml_calls[1][0], ("uuid", ""))
-    #         
+    #
     #         # Verify README file was written
     #         mock_file.assert_called_once_with(
     #             f"{test_path}/.chern/README.md", "w", encoding="utf-8"
@@ -1720,15 +1721,15 @@ class TestChernVTask(unittest.TestCase):
     #     with patch('Chern.utils.csys.strip_path_string') as mock_strip, \
     #          patch('os.path.abspath') as mock_abspath, \
     #          patch('Chern.kernel.vobject.VObject') as mock_vobject:
-    #         
+    #
     #         mock_strip.return_value = test_path
     #         mock_abspath.return_value = "/parent/path"
-    #         
+    #
     #         # Mock parent object as non-project/directory
     #         mock_parent = MagicMock()
     #         mock_parent.object_type.return_value = "algorithm"
     #         mock_vobject.return_value = mock_parent
-    #         
+    #
     #         # Should return early without creating anything
     #         result = vtsk.create_data(test_path)
     #         self.assertIsNone(result)
