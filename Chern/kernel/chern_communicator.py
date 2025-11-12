@@ -447,4 +447,4 @@ class ChernCommunicator():
     def impview(self, impression):
         """ View the impression in the browser """
         url = self.serverurl()
-        subprocess.call(["open", f"http://{url}/imp-view/{impression.uuid}"])
+        return f"http://{url}/imp-view/{impression.uuid}"
