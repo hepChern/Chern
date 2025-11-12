@@ -111,7 +111,7 @@ class ArcManagement(Core):
         """
         succ_str = self.config_file.read_variable("successors", [])
         successors = []
-        project_path = csys.project_path(self.path)
+        project_path = self.project_path()
         for path in succ_str:
             successors.append(self.get_vobject(f"{project_path}/{path}"))
         return successors
@@ -122,7 +122,7 @@ class ArcManagement(Core):
         """
         pred_str = self.config_file.read_variable("predecessors", [])
         predecessors = []
-        project_path = csys.project_path(self.path)
+        project_path = self.project_path()
         for path in pred_str:
             predecessors.append(self.get_vobject(f"{project_path}/{path}"))
         return predecessors
@@ -158,12 +158,12 @@ class ArcManagement(Core):
         if now - last_consult_time < 1:
             return has_predecessor
 
-        modification_time = csys.dir_mtime(csys.project_path(self.path))
+        modification_time = csys.dir_mtime(self.project_path())
         if modification_time < last_consult_time:
             return has_predecessor
 
         for pred_path in pred_str:
-            project_path = csys.project_path(self.path)
+            project_path = self.project_path()
             pred_obj = self.get_vobject(f"{project_path}/{pred_path}")
             if pred_obj.has_predecessor_recursively(obj):
                 consult_table[self.path] = (time(), True)
@@ -236,7 +236,7 @@ class ArcManagement(Core):
         """
         path_to_alias = obj.config_file.read_variable("path_to_alias", {})
         for path in path_to_alias.keys():
-            project_path = csys.project_path(self.path)
+            project_path = self.project_path()
             pred_obj = self.get_vobject(f"{project_path}/{path}")
             if not obj.has_predecessor(pred_obj):
                 print("There seems to be a zombie alias to")
@@ -272,7 +272,7 @@ class ArcManagement(Core):
         if self.has_alias(alias):
             print("The alias already exists. "
                   "The original input and alias will be replaced.")
-            project_path = csys.project_path(self.path)
+            project_path = self.project_path()
             original_object = self.get_vobject(
                 join(project_path, self.alias_to_path(alias))
             )
@@ -288,7 +288,7 @@ class ArcManagement(Core):
         if path == "":
             print("Alias not found")
             return
-        project_path = csys.project_path(self.path)
+        project_path = self.project_path()
         obj = self.get_vobject(join(project_path, path))
         self.remove_arc_from(obj)
         self.remove_alias(alias)
