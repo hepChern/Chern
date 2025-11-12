@@ -111,7 +111,7 @@ class VObject(ArcManagement, FileManagement, AliasManagement,
     """
 
     # Initialization and Representation
-    def __init__(self, path: str) -> None:
+    def __init__(self, path: str, project_path: str = "") -> None:
         """ Initialize a instance of the object.
         All the information is directly read from and write to the disk.
         parameter ``path'' is allowed to be a string
@@ -164,5 +164,5 @@ class VObject(ArcManagement, FileManagement, AliasManagement,
         file_name = os.path.join(self.path, ".chern/README.md")
         subprocess.call(f"{editor} {file_name}", shell=True)
 
-    def get_vobject(self, path: str) -> 'VObject':
-        return VObject(path)
+    def get_vobject(self, path: str, project_path: str = "") -> 'VObject':
+        return VObject(path, project_path)
