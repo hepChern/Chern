@@ -555,12 +555,25 @@ class ChernShell(cmd.Cmd):
         except Exception as e:
             print(f"Error sending: {e}")
 
-    def do_impview(self, _: str) -> None:
+    def do_view(self, arg: str) -> None:
         """View impressions."""
         try:
-            shell.impview()
+            if arg != "":
+                shell.view(arg)
+            else:
+                shell.view()
         except Exception as e:
             print(f"Error viewing impressions: {e}")
+
+    def complete_view(self, _: str, line: str, _begidx: int, _endidx: int) -> list:
+        """Complete view command with [browsers] option"""
+        options = ["firefox", "chrome", "safari", "edge", "browsers"]
+        if line.strip() == "view":
+            return options
+        for option in options:
+            if option.startswith(line.strip().split()[-1]):
+                return [option]
+        return []
 
     def do_danger_call(self, arg: str) -> None:
         """Dangerous call to execute a command directly."""
