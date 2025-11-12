@@ -3,6 +3,7 @@ Created by Mingrui Zhao @ 2017
 define some classes and functions used throughout the project
 """
 # Load module
+import time
 import os
 import shutil
 import uuid
@@ -202,6 +203,7 @@ def project_path(path=None):
 def dir_mtime(path):
     """ Get the latest modified time of the directory
     """
+    now = time.time()
     mtime = os.path.getmtime(path)
     if path.endswith(".chern"):
         mtime = -1
@@ -209,6 +211,8 @@ def dir_mtime(path):
         return mtime
     for sub_dir in os.listdir(path):
         if sub_dir == ".git":
+            continue
+        if sub_dir == "impressions":
             continue
         mtime = max(mtime, dir_mtime(os.path.join(path, sub_dir)))
     return mtime
