@@ -75,7 +75,7 @@ class JobManager(Core):
         for pre in self.inputs():
             if not pre.is_impressed_fast():
                 return (False, f"Preceding job {pre} is not impressed")
-            pre_status = pre.run_status()
+            pre_status = pre.job_status()
             if pre_status != "finished":
                 return (False, f"Preceding job {pre} is not finished")
             cherncc.collect(pre.impression())
