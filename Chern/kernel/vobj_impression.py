@@ -65,9 +65,6 @@ class ImpressionManagement(Core):
             if not pred.is_impressed_fast():
                 return False
 
-        logger.debug("Check the dependencies is consistent "
-                     "with the predecessors")
-
         self_pred_impressions_uuid = [x.uuid for x in self.pred_impressions()]
         impr_pred_impressions_uuid = [
             x.uuid for x in impression.pred_impressions()
@@ -99,7 +96,6 @@ class ImpressionManagement(Core):
             uuid2 = impression.alias_to_impression_uuid(alias)
             if uuid1 != uuid2:
                 return False
-
 
         for dirpath, dirnames, filenames in file_list: # pylint: disable=unused-variable
             for f in filenames:

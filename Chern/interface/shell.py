@@ -351,6 +351,49 @@ def import_file(filename: str) -> None:
 
 def add_input(path: str, alias: str) -> None:
     """Add an input to current task or algorithm."""
+    if MANAGER.c.object_type() == "directory":
+        destination_path = MANAGER.c.relative_path(path)
+        dest_obj = VObject(os.path.join(MANAGER.c.path, destination_path))
+        if dest_obj.object_type() == "task":
+            sub_objects = MANAGER.c.sub_objects()
+            for obj in sub_objects:
+                if obj.object_type() != "task":
+                    continue
+                obj_path = MANAGER.c.relative_path(obj.path)
+                task = MANAGER.sub_object(obj_path)
+                task.add_input(path, alias)
+        elif dest_obj.object_type() == "directory":
+            dest_sub_objects = dest_obj.sub_objects()
+            sub_objects = MANAGER.c.sub_objects()
+            if len(dest_sub_objects) != len(sub_objects):
+                print("The number of sub-objects does not match.")
+                return
+            # Check whether the sub-objects name ends with _<index>
+            # By getting the _<index> and check whether <index> is a digit
+            for obj in sub_objects:
+                ending = obj.path.split("_")[-1]
+                if not ending.isdigit():
+                    print("The sub-objects are not in indexed format.")
+                    return
+            for dest_obj in sub_objects:
+                ending = dest_obj.path.split("_")[-1]
+                if not ending.isdigit():
+                    print("The dest-sub-objects are not in indexed format.")
+                    return
+            # Sort both lists by the index
+            sub_objects.sort(key=lambda x: int(x.path.split("_")[-1]))
+            dest_sub_objects.sort(key=lambda x: int(x.path.split("_")[-1]))
+            length = len(sub_objects)
+            for obj, dest_obj in zip(sub_objects, dest_sub_objects):
+                if obj.path.split("_")[-1] != dest_obj.path.split("_")[-1]:
+                    print("The sub-objects are not aligned.")
+                    return
+                obj_path = MANAGER.c.relative_path(obj.path)
+                task = MANAGER.sub_object(obj_path)
+                task.add_input(dest_obj.path, alias)
+                if length > 100 and int(dest_obj.path.split("_")[-1]) % (length // 10) == 0:
+                    print(f"Progress: {int(dest_obj.path.split('_')[-1])}/{length}")
+        return
     if MANAGER.c.object_type() not in ("task", "algorithm"):
         print("Unable to call add_input if you are not in a task or algorithm.")
         return
@@ -359,6 +402,15 @@ def add_input(path: str, alias: str) -> None:
 
 def add_algorithm(path: str) -> None:
     """Add an algorithm to current task."""
+    if MANAGER.c.object_type() == "directory":
+        sub_objects = MANAGER.c.sub_objects()
+        for obj in sub_objects:
+            if obj.object_type() != "task":
+                continue
+            obj_path = MANAGER.c.relative_path(obj.path)
+            task = MANAGER.sub_object(obj_path)
+            task.add_algorithm(path)
+        return
     if MANAGER.c.object_type() != "task":
         print("Unable to call add_algorithm if you are not in a task.")
         return
@@ -383,6 +435,22 @@ def add_parameter_subtask(dirname: str, par: str, value: str) -> None:
         return
     obj.add_parameter(par, value)
 
+def set_environment(env: str) -> None:
+    """Set environment for current task."""
+    if MANAGER.c.object_type() == "directory":
+        sub_objects = MANAGER.c.sub_objects()
+        for obj in sub_objects:
+            if obj.object_type() != "task":
+                continue
+            obj_path = MANAGER.c.relative_path(obj.path)
+            task = MANAGER.sub_object(obj_path)
+            task.set_environment(env)
+        return
+    if MANAGER.c.object_type() != "task":
+        print("Unable to call set_environment if you are not in a task.")
+        return
+    MANAGER.c.set_environment(env)
+
 
 def rm_parameter(par: str) -> None:
     """Remove a parameter from current task."""
@@ -394,6 +462,15 @@ def rm_parameter(par: str) -> None:
 
 def remove_input(alias: str) -> None:
     """Remove an input from current task or algorithm."""
+    if MANAGER.c.object_type() == "directory":
+        sub_objects = MANAGER.c.sub_objects()
+        for obj in sub_objects:
+            if obj.object_type() != "task":
+                continue
+            obj_path = MANAGER.c.relative_path(obj.path)
+            task = MANAGER.sub_object(obj_path)
+            task.remove_input(alias)
+        return
     if not MANAGER.c.is_task_or_algorithm():
         print("Unable to call remove_input if you are not in a task.")
         return

@@ -49,11 +49,38 @@ class ChernShell(cmd.Cmd):
         current_path = os.path.relpath(MANAGER.c.path, csys.project_path(MANAGER.c.path))
         self.prompt = f"[Chern][{current_project_name}][{current_path}]\n>>>> "
 
-    def parseline(self, line: str) -> Tuple[str, str, str]:
+    def cmdloop(self, intro=None):
+        """Keep tab completion and catch Ctrl-C during input"""
+        while True:
+            try:
+                # Call the original cmdloop() to preserve readline & completion
+                return super().cmdloop(intro)
+            except KeyboardInterrupt:
+                # This catches Ctrl-C during typing (inside readline)
+                print("^C")
+                # restart the loop (this re-enters cmdloop, preserving state)
+                intro = None
+                continue
+
+    def parseline(self, line: str) -> tuple[str, str, str]:
         """Parse a command line input."""
-        # Replace ALL dashes with underscores to map to method names
-        cmd, arg, line = super().parseline(line.replace('-', '_'))
+        # Split the line to isolate the command name
+        parts = line.strip().split(maxsplit=1)
+        if not parts:
+            return None, None, line
+
+        cmd = parts[0].replace('-', '_')  # Replace only in command
+        rest = parts[1] if len(parts) > 1 else ""
+
+        # Recombine for superclass parsing
+        cmd, arg, line = super().parseline(f"{cmd} {rest}".strip())
         return cmd, arg, line
+
+    # def parseline(self, line: str) -> Tuple[str, str, str]:
+    #     """Parse a command line input."""
+    #     # Replace ALL dashes with underscores to map to method names
+    #     cmd, arg, line = super().parseline(line.replace('-', '_'))
+    #     return cmd, arg, line
 
     def completenames(self, text, *ignored):
         """Complete command names based on user input."""
@@ -159,6 +186,16 @@ class ChernShell(cmd.Cmd):
         except Exception as e:
             print(f"Error killing process: {e}")
 
+    def do_set_environment(self, arg: str) -> None:
+        """Set environment for current object."""
+        try:
+            environment = arg.split()[0]
+            shell.set_environment(environment)
+        except (IndexError, ValueError) as e:
+            print(f"Error: Please provide an environment name. {e}")
+        except Exception as e:
+            print(f"Error setting environment: {e}")
+
     def do_auto_download(self, arg: str) -> None:
         """Enable or disable auto download."""
         try:
@@ -229,6 +266,12 @@ class ChernShell(cmd.Cmd):
         except Exception as e:
             print(f"Error copying object: {e}")
 
+    def complete_cp(self, _: str, line: str, _begidx: int, _endidx: int) -> list:
+        """Complete cp command with available paths."""
+        current_path = MANAGER.c.path
+        filepath = csys.strip_path_string(line[3:])
+        return self.get_completions(current_path, filepath, line)
+
     def do_rm(self, arg: str) -> None:
         """Remove an object."""
         try:
@@ -281,11 +324,15 @@ class ChernShell(cmd.Cmd):
                 print("Error: Please provide at least two task arguments: base_name and number_of_tasks.")
                 return
             base_name = objs[0]
-            number_of_tasks = int(objs[1])
+            begin_number_of_tasks = 0
+            if len(objs) == 3:
+                begin_number_of_tasks = int(objs[1])
+            end_number_of_tasks = int(objs[-1])
+            number_of_tasks = end_number_of_tasks - begin_number_of_tasks
             if number_of_tasks <= 0 and number_of_tasks > 10000:
                 print("Error: number_of_tasks should be between 1 and 10000.")
                 return
-            for i in range(number_of_tasks):
+            for i in range(begin_number_of_tasks, end_number_of_tasks):
                 task_name = f"{base_name}_{i}"
                 shell.mktask(task_name)
                 shell.add_parameter_subtask(task_name, "index", str(i))
