@@ -236,11 +236,11 @@ class FileManagement(Core):
             alias = self.path_to_alias(pred_object.invariant_path())
 
             # --- temporary alias‑list patch (delete after new version) ---
-            yaml_file = metadata.YamlFile(os.path.join(self.path, "chern.yaml"))
-            alias_list = yaml_file.read_variable("alias", [])
-            if alias and alias not in alias_list:
-                alias_list.append(alias)
-            yaml_file.write_variable("alias", alias_list)
+            # yaml_file = metadata.YamlFile(os.path.join(self.path, "chern.yaml"))
+            # alias_list = yaml_file.read_variable("alias", [])
+            # if alias and alias not in alias_list:
+            #     alias_list.append(alias)
+            # yaml_file.write_variable("alias", alias_list)
             # -------------------------------------------------------------
 
             order = f"[{total + index}]"
