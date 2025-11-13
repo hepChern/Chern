@@ -49,6 +49,11 @@ class AliasManagement(Core):
         alias_to_path.pop(alias)
         self.config_file.write_variable("alias_to_path", alias_to_path)
         self.config_file.write_variable("path_to_alias", path_to_alias)
+        yaml_file = metadata.YamlFile(os.path.join(self.path, "chern.yaml"))
+        yaml_alias = yaml_file.read_variable("alias", [])
+        if alias in yaml_alias:
+            yaml_alias.remove(alias)
+            yaml_file.write_variable("alias", yaml_alias)
 
     def set_alias(self, alias: str, path: str) -> None: # UnitTest: DONE
         """ Set the alias of the vobj by the path."""
