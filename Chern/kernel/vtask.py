@@ -201,7 +201,7 @@ def create_task(path):
     # Create the default chern.yaml file
     yaml_file = metadata.YamlFile(join(path, "chern.yaml"))
     yaml_file.write_variable("environment", "reanahub/reana-env-root6:6.18.04")
-    yaml_file.write_variable("kubernetes_memory_limit", "256Mi")
+    yaml_file.write_variable("memory_limit", "256Mi")
 
     with open(path + "/.chern/README.md", "w", encoding="utf-8") as f:
         f.write(f"Please write README for task {task.invariant_path()}")

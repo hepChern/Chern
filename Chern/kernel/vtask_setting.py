@@ -38,7 +38,13 @@ class SettingManager(Core):
         """
         parameters_file = metadata.YamlFile(join(self.path, "chern.yaml"))
         memory_limit = parameters_file.read_variable(
-            "kubernetes_memory_limit", "")
+            "memory_limit", "")
+        # Backward compatibility
+        # ---------------------------------------------
+        if not memory_limit:
+            memory_limit = parameters_file.read_variable(
+                "kubernetes_memory_limit", "")
+        # ---------------------------------------------
         return memory_limit
 
     def parameters(self):
@@ -107,7 +113,7 @@ class SettingManager(Core):
         Set the memory limit
         """
         parameters_file = metadata.YamlFile(join(self.path, "chern.yaml"))
-        parameters_file.write_variable("kubernetes_memory_limit", memory_limit)
+        parameters_file.write_variable("memory_limit", memory_limit)
 
     # Validation
     def env_validated(self):
