@@ -196,6 +196,16 @@ class ChernShell(cmd.Cmd):
         except Exception as e:
             print(f"Error setting environment: {e}")
 
+    def do_set_memory_limit(self, arg: str) -> None:
+        """Set memory limit for current object."""
+        try:
+            memory_limit = arg.split()[0]
+            shell.set_memory_limit(memory_limit)
+        except (IndexError, ValueError) as e:
+            print(f"Error: Please provide a memory limit. {e}")
+        except Exception as e:
+            print(f"Error setting memory limit: {e}")
+
     def do_auto_download(self, arg: str) -> None:
         """Enable or disable auto download."""
         try:
@@ -382,6 +392,39 @@ class ChernShell(cmd.Cmd):
         current_path = MANAGER.c.path
         filepath = csys.strip_path_string(line[9:])
         return self.get_completions(current_path, filepath, line)
+
+    def do_add_multi_inputs(self, arg: str) -> None:
+        """Create multiple tasks with a base name and number of tasks."""
+        try:
+            objs = arg.split()
+            if len(objs) < 3:
+                print("Error: Please provide at least tree task arguments: path/base_name, alias and number_of_tasks.")
+                return
+            base_name = objs[0]
+            alias = objs[1]
+            begin_number_of_tasks = 0
+            if len(objs) == 4:
+                begin_number_of_tasks = int(objs[2])
+            end_number_of_tasks = int(objs[-1])
+            number_of_tasks = end_number_of_tasks - begin_number_of_tasks
+            if number_of_tasks <= 0 and number_of_tasks > 10000:
+                print("Error: number_of_tasks should be between 1 and 10000.")
+                return
+            for i in range(begin_number_of_tasks, end_number_of_tasks):
+                task_name = f"{base_name}_{i}"
+                alias_index = f"{alias}_{i}"
+                shell.add_input(task_name, alias_index)
+        except Exception as e:
+            print(f"Error creating task: {e}")
+
+    def complete_add_multi_inputs(self, _: str, line: str, _begidx: int, _endidx: int) -> list:
+        """Complete add_input command with available paths."""
+        current_path = MANAGER.c.path
+        filepath = csys.strip_path_string(line[16:])
+        return self.get_completions(current_path, filepath, line)
+
+
+
 
     def do_remove_input(self, arg: str) -> None:
         """Remove an input from current object."""
