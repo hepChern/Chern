@@ -419,6 +419,15 @@ def add_algorithm(path: str) -> None:
 
 def add_parameter(par: str, value: str) -> None:
     """Add a parameter to current task."""
+    if MANAGER.c.object_type() == "directory":
+        sub_objects = MANAGER.c.sub_objects()
+        for obj in sub_objects:
+            if obj.object_type() != "task":
+                continue
+            obj_path = MANAGER.c.relative_path(obj.path)
+            task = MANAGER.sub_object(obj_path)
+            task.add_parameter(par, value)
+        return
     if MANAGER.c.object_type() != "task":
         print("Unable to call add_input if you are not in a task.")
         return
@@ -450,6 +459,22 @@ def set_environment(env: str) -> None:
         print("Unable to call set_environment if you are not in a task.")
         return
     MANAGER.c.set_environment(env)
+
+def set_memory_limit(limit: str) -> None:
+    """Set memory limit for current task."""
+    if MANAGER.c.object_type() == "directory":
+        sub_objects = MANAGER.c.sub_objects()
+        for obj in sub_objects:
+            if obj.object_type() != "task":
+                continue
+            obj_path = MANAGER.c.relative_path(obj.path)
+            task = MANAGER.sub_object(obj_path)
+            task.set_memory_limit(limit)
+        return
+    if MANAGER.c.object_type() != "task":
+        print("Unable to call set_memory_limit if you are not in a task.")
+        return
+    MANAGER.c.set_memory_limit(limit)
 
 
 def rm_parameter(par: str) -> None:
