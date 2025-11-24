@@ -19,6 +19,7 @@ class ChernCache:
         self.status_consult_table = {}
         self.job_status_consult_table = {}
         self.project_modification_time = (None, -1)
+        self.update_table = {}
 
     @classmethod
     def instance(cls): # UnitTest: DONE
