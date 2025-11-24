@@ -327,7 +327,7 @@ class ChernCommunicator():
         url = self.serverurl()
         r = requests.get(
                 f"http://{url}/collect/{impression.uuid}",
-                timeout=self.timeout
+                timeout=self.timeout * 1000
         )
         return r.text
 
