@@ -12,6 +12,8 @@ from .chern_cache import ChernCache
 CHERN_CACHE = ChernCache.instance()
 logger = getLogger("ChernLogger")
 
+import networkx as nx
+
 
 class ArcManagement(Core):
     """ The class for arc management of VObject
@@ -292,3 +294,77 @@ class ArcManagement(Core):
         obj = self.get_vobject(join(project_path, path))
         self.remove_arc_from(obj)
         self.remove_alias(alias)
+
+    def build_dependency_dag(self, exclude_algorithms=False):
+        """
+        Builds a NetworkX Directed Acyclic Graph (DAG) containing this object
+        and all its recursive predecessors.
+
+        Nodes in the graph are the VObject objects themselves.
+        Edges represent the dependency (predecessor -> successor).
+
+        Args:
+            exclude_algorithms (bool): If True, VObjects of type "algorithm"
+                                       will be excluded from the resulting DAG.
+
+        Returns:
+            nx.DiGraph: The NetworkX DAG representing the dependency graph.
+        """
+        G = nx.DiGraph()
+
+        # Use a queue for a controlled graph traversal (Breadth-First Search)
+        # to find all unique predecessors.
+        # queue = [self]
+        sub_objects = self.sub_objects_recursively()
+        queue = [s for s in sub_objects if s.object_type() == "task"]
+        visited = {s.invariant_path() : s for s in queue}
+        for s in queue:
+            G.add_node(s)
+
+        # Add the starting node (self)
+        # if not (exclude_algorithms and self.is_algorithm()):
+        #   G.add_node(self)
+
+        while queue:
+            current_obj = queue.pop(0)
+
+            # If the current node is an excluded algorithm type, skip its processing
+            # but still process its predecessors if they haven't been visited.
+            if exclude_algorithms and current_obj.is_algorithm():
+                # Process predecessors only to find other non-algorithm nodes
+                # connected further up the chain, but don't add current_obj or its edges.
+                for pred_obj in current_obj.predecessors():
+                    pred_path = pred_obj.invariant_path()
+                    if pred_path not in visited:
+                        visited[pred_path] = pred_obj
+                        queue.append(pred_obj)
+                continue
+
+            # Standard processing for non-excluded nodes
+
+            # Check if current_obj is in the graph (it should be, unless it's the
+            # starting node and was excluded, but we checked that above).
+            if current_obj not in G:
+                 G.add_node(current_obj) # Add if it somehow got here without being added
+
+            for pred_obj in current_obj.predecessors():
+                pred_path = pred_obj.invariant_path()
+
+                # Apply the exclusion rule for the predecessor
+                is_excluded = exclude_algorithms and pred_obj.is_algorithm()
+
+                # Add the predecessor to the queue for traversal if not visited
+                if pred_path not in visited:
+                    visited[pred_path] = pred_obj
+                    queue.append(pred_obj)
+
+                # Add the predecessor node and the dependency edge only if the
+                # predecessor is NOT excluded.
+                if not is_excluded:
+                    if pred_obj not in G:
+                        G.add_node(pred_obj)
+
+                    # Add the edge: Predecessor (source) -> Successor (target)
+                    G.add_edge(pred_obj, current_obj)
+
+        return G
