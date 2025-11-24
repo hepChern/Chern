@@ -68,6 +68,7 @@ class JobManager(Core):
     def workaround_preshell(self) -> (tuple[bool, str]): # pylint: disable=too-many-locals
         """ Pre-shell workaround"""
         # FIXME: Still WIP
+        print("Start constructing workaround environment...")
         cherncc = ChernCommunicator.instance()
         status = cherncc.dite_status()
         if status != "connected":
@@ -81,6 +82,7 @@ class JobManager(Core):
                 return (False, f"Preceding job {pre} is not finished")
             cherncc.collect(pre.impression())
 
+        print("All preceding jobs are finished. Preparing data...")
         # make a temporal directory for data deposit
         temp_dir = csys.create_temp_dir(prefix="chernws_")
         # copy the data to the temporal directory
@@ -93,6 +95,7 @@ class JobManager(Core):
                 dest_path = os.path.join(temp_dir, rel_path)
                 csys.copy(full_path, dest_path)
 
+        print("Linking preceding jobs...")
         # Create the temporal directory and copy the data there
         for pre in self.inputs():
             pre_temp_dir = csys.create_temp_dir(prefix="chernimp_")
@@ -113,7 +116,6 @@ class JobManager(Core):
         if algorithm:
             alg_temp_dir = csys.create_temp_dir(prefix="chernws_")
             file_list = csys.tree_excluded(algorithm.path)
-            print(file_list)
             for dirpath, _, filenames in file_list:
                 for f in filenames:
                     full_path = os.path.join(
@@ -129,9 +131,46 @@ class JobManager(Core):
                 os.path.join(temp_dir, "code"),
             )
 
+            # if the algorithm have inputs, link them too
+            alg_inputs = filter(
+                lambda x: (x.object_type() == "algorithm"), algorithm.predecessors()
+                )
+            for alg_in in list(map(lambda x: self.get_task(x.path), alg_inputs)):
+                alg_in_temp_dir = csys.create_temp_dir(prefix="chernimp_")
+                alg_in_file_list = csys.tree_excluded(alg_in.path)
+                for dirpath, _, filenames in alg_in_file_list:
+                    for f in filenames:
+                        full_path = os.path.join(
+                                self.project_path(),
+                                alg_in.invariant_path(),
+                                dirpath, f
+                        )
+                        rel_path = os.path.relpath(full_path, alg_in.path)
+                        dest_path = os.path.join(alg_in_temp_dir, rel_path)
+                        csys.copy(full_path, dest_path)
+                alias = algorithm.path_to_alias(alg_in.invariant_path())
+                # Link it under code
+                csys.symlink(
+                    os.path.join(alg_in_temp_dir),
+                    os.path.join(temp_dir, "code", alias),
+                )
+
         return (True, temp_dir)
 
     def workaround_postshell(self, path) -> bool:
         """ Post-shell workaround"""
-        print(path)
+        algorithm = self.algorithm()
+        if algorithm:
+            alg_temp_dir = os.path.join(path, "code")
+            file_list = csys.tree_excluded(algorithm.path)
+            for dirpath, _, filenames in file_list:
+                for f in filenames:
+                    full_path = os.path.join(
+                            self.project_path(),
+                            algorithm.invariant_path(),
+                            dirpath, f
+                    )
+                    rel_path = os.path.relpath(full_path, algorithm.path)
+                    dest_path = os.path.join(alg_temp_dir, rel_path)
+                    csys.copy(dest_path, full_path)
         return True
