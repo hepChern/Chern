@@ -17,6 +17,8 @@ from ..interface import shell
 from ..interface.ChernManager import get_manager
 from ..kernel.vproject import VProject
 from ..utils import csys
+from ..utils.metadata import YamlFile
+
 
 MANAGER = get_manager()
 CURRENT_PROJECT_NAME = MANAGER.get_current_project()
@@ -27,13 +29,11 @@ class ChernShell(cmd.Cmd):
     intro = ''
     prompt = '[Chern]'
     file = None
+    readline_file = None
 
     def __init__(self):
         """Initialize the shell and set custom completer delimiters."""
         super().__init__()
-        # Treat the dash as part of a command name for completion
-        import readline
-        self.completerdelims = readline.get_completer_delims().replace('-', '')
 
     def init(self) -> None:
         """Initialize the shell with current project context."""
@@ -42,9 +42,23 @@ class ChernShell(cmd.Cmd):
         MANAGER.p = VProject(current_project_path)
         MANAGER.c = MANAGER.p
         os.chdir(current_project_path)
+        self.readline_file = YamlFile(os.path.join(os.environ["HOME"], ".chern", "readline.yaml"))
+
 
     def preloop(self) -> None:
         """Set up the prompt before entering the command loop."""
+        # Treat the dash as part of a command name for completion
+        import readline
+        # Get the default delimiters
+        delims = readline.get_completer_delims()
+
+        # Remove characters that appear inside your environment names
+        # We remove: - (dash), : (colon), / (slash), . (dot)
+        # for char in ['-']:
+        for char in ['-', ':', '/', '.']:
+            delims = delims.replace(char, '')
+        readline.set_completer_delims(delims)
+
         current_project_name = MANAGER.get_current_project()
         current_path = os.path.relpath(MANAGER.c.path, csys.project_path(MANAGER.c.path))
         self.prompt = f"[Chern][{current_project_name}][{current_path}]\n>>>> "
@@ -195,6 +209,27 @@ class ChernShell(cmd.Cmd):
             print(f"Error: Please provide an environment name. {e}")
         except Exception as e:
             print(f"Error setting environment: {e}")
+
+    def do_setenv(self, arg: str) -> None:
+        """Set environment for current object (alias for set-environment)."""
+        try:
+            environment = arg.split()[0]
+            shell.set_environment(environment)
+        except (IndexError, ValueError) as e:
+            print(f"Error: Please provide an environment name. {e}")
+        except Exception as e:
+            print(f"Error setting environment: {e}")
+
+    def complete_setenv(self, text: str, line: str, _begidx: int, _endidx: int) -> list:
+        """Complete set_environment command with available environments."""
+        # 1. Get the list
+        environments = self.readline_file.read_variable("environments", [])
+
+        # 2. Filter using 'text' (which contains the word currently being typed)
+        # If text is empty, it returns the full list.
+        matches = [env for env in environments if env.startswith(text)]
+
+        return matches
 
     def do_set_memory_limit(self, arg: str) -> None:
         """Set memory limit for current object."""
@@ -369,11 +404,12 @@ class ChernShell(cmd.Cmd):
         except Exception as e:
             print(f"Error adding algorithm: {e}")
 
-    def complete_add_algorithm(self, _: str, line: str, _begidx: int, _endidx: int) -> list:
+    def complete_add_algorithm(self, text: str, line: str, _begidx: int, _endidx: int) -> list:
         """Complete add_algorithm command with available paths."""
         current_path = MANAGER.c.path
-        filepath = csys.strip_path_string(line[14:])
-        return self.get_completions(current_path, filepath, line)
+        # Use 'text' instead of slicing 'line'
+        # 'text' is automatically extracted by cmd based on cursor position
+        return self.get_completions(current_path, text, line)
 
     def do_add_input(self, arg: str) -> None:
         """Add input with path and alias."""
@@ -387,11 +423,18 @@ class ChernShell(cmd.Cmd):
         except Exception as e:
             print(f"Error adding input: {e}")
 
-    def complete_add_input(self, _: str, line: str, _begidx: int, _endidx: int) -> list:
+    def complete_add_input(self, text: str, line: str, _begidx: int, _endidx: int) -> list:
         """Complete add_input command with available paths."""
         current_path = MANAGER.c.path
-        filepath = csys.strip_path_string(line[9:])
-        return self.get_completions(current_path, filepath, line)
+        # Use 'text' instead of slicing 'line'
+        # 'text' is automatically extracted by cmd based on cursor position
+        return self.get_completions(current_path, text, line)
+
+    # def complete_add_input(self, _: str, line: str, _begidx: int, _endidx: int) -> list:
+    #     """Complete add_input command with available paths."""
+    #     current_path = MANAGER.c.path
+    #     filepath = csys.strip_path_string(line[9:])
+    #     return self.get_completions(current_path, filepath, line)
 
     def do_add_multi_inputs(self, arg: str) -> None:
         """Create multiple tasks with a base name and number of tasks."""
@@ -508,6 +551,17 @@ class ChernShell(cmd.Cmd):
                 shell.submit(obj)
         except Exception as e:
             print(f"Error submitting: {e}")
+
+    def complete_submit(self, _: str, line: str, _begidx: int, _endidx: int) -> list:
+        """Complete submit command with readline file"""
+        runners = self.readline_file.read_variable("runners", [])
+        if line.strip() == "submit":
+            return runners
+        matches = []
+        for runner in runners:
+            if runner.startswith(line.strip().split()[-1]):
+                matches.append(runner)
+        return matches
 
     def do_impression(self, _: str) -> None:
         """Get impression of current object."""
@@ -700,6 +754,164 @@ class ChernShell(cmd.Cmd):
         except Exception as e:
             print(f"Error executing command: {e}")
 
+    def do_draw_dag(self, arg):
+        """
+        Generates a dependency DAG.
+
+        Usage:
+            draw-dag [-x] [filename.html]
+
+        Options:
+            -x              : Exclude 'algorithm' type objects.
+            [filename.html] : If provided, saves the graph to this file
+                              instead of opening the browser.
+        """
+        import plotly.graph_objects as go
+        import networkx as nx
+
+        # 1. Parse Arguments
+        args = arg.split()
+        exclude_algorithms = "-x" in args
+
+        # Look for an argument that isn't a flag (assumed to be filename)
+        output_file = next((a for a in args if not a.startswith("-")), "dag.html")
+        output_file = os.path.join(os.environ["HOME"], "Downloads", output_file) if output_file else None
+
+        # 2. Build Graph
+        try:
+            G = MANAGER.c.build_dependency_dag(exclude_algorithms=exclude_algorithms)
+        except Exception as e:
+            print(f"Error building DAG: {e}")
+            return
+
+        if not G.nodes:
+            print("Graph is empty.")
+            return
+
+        print("Generating graph...")
+
+        # 3. Layout (Positions)
+        try:
+            pos = nx.nx_pydot.graphviz_layout(G, prog="dot")
+        except ImportError:
+            print("Warning: Graphviz not found. Using spring layout.")
+            pos = nx.spring_layout(G, k=0.08, iterations=50)
+
+        # 4. Create Edges (Traces)
+        edge_x = []
+        edge_y = []
+
+        for edge in G.edges():
+            x0, y0 = pos[edge[0]]
+            x1, y1 = pos[edge[1]]
+            edge_x.append(x0)
+            edge_x.append(x1)
+            edge_x.append(None)
+            edge_y.append(y0)
+            edge_y.append(y1)
+            edge_y.append(None)
+
+        edge_trace = go.Scatter(
+            x=edge_x, y=edge_y,
+            line=dict(width=1, color='#888'),
+            hoverinfo='none',
+            mode='lines'
+        )
+
+        # 5. Create Nodes (Trace)
+        node_x = []
+        node_y = []
+        node_text = []
+
+        for node in G.nodes():
+            x, y = pos[node]
+            node_x.append(x)
+            node_y.append(y)
+            node_text.append(node.invariant_path())
+
+        node_trace = go.Scatter(
+            x=node_x, y=node_y,
+            mode='markers',
+            hoverinfo='text',
+            marker=dict(
+                showscale=False,
+                color='#ADD8E6',
+                size=20,
+                line_width=2,
+                line_color='#333'
+            )
+        )
+        node_trace.text = node_text
+
+        # 6. Create Figure
+        layout = go.Layout(
+            title=dict(
+                text=f'Dependency DAG: {MANAGER.c.invariant_path()}',
+                font=dict(size=16)
+            ),
+            showlegend=False,
+            hovermode='closest',
+            margin=dict(b=20,l=5,r=5,t=40),
+            xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+            yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+            plot_bgcolor='white'
+        )
+
+        fig = go.Figure(data=[edge_trace, node_trace], layout=layout)
+
+        # Add Arrowheads
+        annotations = []
+        for edge in G.edges():
+            x0, y0 = pos[edge[0]]
+            x1, y1 = pos[edge[1]]
+
+            annotations.append(
+                dict(
+                    ax=x0, ay=y0, axref='x', ayref='y',
+                    x=x1, y=y1, xref='x', yref='y',
+                    showarrow=True,
+                    arrowhead=2,
+                    arrowsize=1,
+                    arrowwidth=1,
+                    arrowcolor='#888',
+                    standoff=12
+                )
+            )
+        fig.update_layout(annotations=annotations)
+
+        # 7. Output Handling (Save vs Show)
+        if output_file:
+            # If the filename does not have an extension, default to .html
+            if "." not in output_file:
+                output_file += ".html"
+
+            print(f"Saving graph to {output_file}...")
+
+            # Check for static image formats (requires 'kaleido' package)
+            if output_file.endswith(('.png', '.jpeg', '.jpg', '.pdf', '.svg')):
+                try:
+                    fig.write_image(output_file)
+                    print("Done.")
+                except ValueError as e:
+                     print(f"Error saving image: {e}")
+                     print("To save as static image, install kaleido: pip install -U kaleido")
+            else:
+                # Default to HTML (Interactive)
+                fig.write_html(output_file)
+                print(f"Done. Open '{output_file}' in your browser to view.")
+
+    def help_draw_dag(self):
+        """Help message for draw-dag."""
+        print('\n'.join([
+            "draw-dag [-x]",
+            "Generates and displays a dependency graph (DAG) starting from the current object.",
+            "The graph shows the object's predecessors (dependencies) recursively.",
+            "Options:",
+            "  -x: Exclude objects whose type is 'algorithm' from the graph.",
+            "",
+            "Requires 'matplotlib' and optionally 'pydot' or 'pygraphviz' for best layout.",
+        ]))
+
     def do_system_shell(self, arg):
         """Enter a system shell (bash). Type 'exit' or press Ctrl-D to return."""
         print("Entering system shell. Type 'exit' to return.\n")
@@ -716,6 +928,7 @@ class ChernShell(cmd.Cmd):
 
         print("\nReturned to Chern Shell.")
 
+
     def emptyline(self) -> None:
         """Handle empty line input."""
 
@@ -728,20 +941,48 @@ class ChernShell(cmd.Cmd):
 
     def get_completions(self, current_path: str, filepath: str, line: str) -> list:
         """Get command completions for file paths."""
-        path = os.path.join(current_path, filepath)
-        if os.path.exists(path):
-            listdir = os.listdir(path)
-            if line.endswith("/"):
-                return [f for f in listdir if f != ".chern"]
-            return []
+        # Calculate the full path to look in
+        full_search_path = os.path.join(current_path, filepath)
 
-        basename = os.path.basename(path)
-        dirname = os.path.dirname(path)
+        # Separate the directory user typed from the file prefix user typed
+        # Example: filepath = "Task/r" -> user_dir = "Task", user_base = "r"
+        user_dir = os.path.dirname(filepath)
+        dirname = os.path.dirname(full_search_path)
+        basename = os.path.basename(full_search_path)
+
         if os.path.exists(dirname):
-            listdir = os.listdir(dirname)
-            completions = [f for f in listdir if f.startswith(basename) and f != ".chern"]
-            return completions
+            # Get all files in that directory
+            candidates = [f for f in os.listdir(dirname) if not f.startswith('.chern')]
+
+            # Filter for matches
+            matches = [f for f in candidates if f.startswith(basename)]
+
+            # CRITICAL FIX:
+            # If the user typed a directory (user_dir), we must prepend it
+            # to the results so Readline replaces "Task/r" with "Task/read"
+            if user_dir:
+                return [os.path.join(user_dir, m) for m in matches]
+
+            return matches
+
         return []
+
+    # def get_completions(self, current_path: str, filepath: str, line: str) -> list:
+    #     """Get command completions for file paths."""
+    #     path = os.path.join(current_path, filepath)
+    #     if os.path.exists(path):
+    #         listdir = os.listdir(path)
+    #         if line.endswith("/"):
+    #             return [f for f in listdir if f != ".chern"]
+    #         return []
+
+    #     basename = os.path.basename(path)
+    #     dirname = os.path.dirname(path)
+    #     if os.path.exists(dirname):
+    #         listdir = os.listdir(dirname)
+    #         completions = [f for f in listdir if f.startswith(basename) and f != ".chern"]
+    #         return completions
+    #     return []
 
     def get_completions_out(self, abspath: str, line: str) -> list:
         """Get command completions for absolute paths."""
