@@ -757,27 +757,60 @@ class ChernShell(cmd.Cmd):
     def do_draw_dag(self, arg):
         """
         Generates a dependency DAG.
-
-        Usage:
-            draw-dag [-x] [filename.html]
-
-        Options:
-            -x              : Exclude 'algorithm' type objects.
-            [filename.html] : If provided, saves the graph to this file
-                              instead of opening the browser.
+        ... (Docstring unchanged) ...
         """
+        import os
         import plotly.graph_objects as go
         import networkx as nx
+        from colorsys import hls_to_rgb, rgb_to_hls
 
-        # 1. Parse Arguments
+        # --- Helper function for color manipulation --- (Unchanged)
+        def lighten_color(hex_color, depth_factor):
+            # Convert hex to RGB (0-255 range)
+            h = hex_color.lstrip('#')
+            rgb = tuple(int(h[i:i+2], 16) / 255.0 for i in (0, 2, 4))
+
+            # Convert RGB to HLS
+            hls = rgb_to_hls(*rgb)
+
+            base_lightness = hls[1]
+            new_lightness = max(0.1, min(0.9, base_lightness + 0.15 * (depth_factor % 5)))
+
+            # Convert HLS back to RGB (0-1 range)
+            r, g, b = hls_to_rgb(hls[0], new_lightness, hls[2])
+
+            # Convert RGB (0-255) back to hex
+            return f'#{int(r*255):02x}{int(g*255):02x}{int(b*255):02x}'
+
+        # ------------------------------------------------------------------
+        # 🎨 COLOR DEFINITIONS (Unchanged)
+        # ------------------------------------------------------------------
+        BASE_COLOR_MAP = {
+            'red': '#FF4500',    # OrangeRed
+            'blue': '#4169E1',   # RoyalBlue
+            'green': '#3CB371',  # MediumSeaGreen
+            'yellow': '#FFD700', # Gold
+        }
+
+        BASE_COLOR_LIST = list(BASE_COLOR_MAP.values())
+
+        NODE_BORDER_COLOR = '#333'  # Dark Gray marker border color
+        EDGE_COLOR_DEFAULT = '#D3D3D3' # Default fallback line color
+        EDGE_HOVER_COLOR = 'black'  # Edge color when hovering (Trace lines are black)
+        LABEL_COLOR = 'black'       # Color for permanent text labels
+
+        top_level_map = {}
+        next_base_color_index = 0
+        # ------------------------------------------------------------------
+
+        # 1 & 2. Arguments and Graph Building (Unchanged)
         args = arg.split()
         exclude_algorithms = "-x" in args
+        show_permanent_labels = "-L" in args
 
-        # Look for an argument that isn't a flag (assumed to be filename)
         output_file = next((a for a in args if not a.startswith("-")), "dag.html")
         output_file = os.path.join(os.environ["HOME"], "Downloads", output_file) if output_file else None
 
-        # 2. Build Graph
         try:
             G = MANAGER.c.build_dependency_dag(exclude_algorithms=exclude_algorithms)
         except Exception as e:
@@ -790,115 +823,203 @@ class ChernShell(cmd.Cmd):
 
         print("Generating graph...")
 
-        # 3. Layout (Positions)
+        # 3. Layout (Positions) and Pre-calculate Colors 🎨 (Unchanged)
+        print("Calculating hierarchical layout (Top-to-Bottom)...")
+
+        node_map = {}; node_label_map = {}; NODE_COLOR_MAP = {}
+
+        for node in G.nodes():
+            # ... (Node mapping and path logic unchanged) ...
+            if G.nodes[node].get('node_type') == 'aggregate':
+                simple_id = G.nodes[node]['label']
+                node_path = G.nodes[node].get('aggregated_path', simple_id)
+            else:
+                simple_id = node.invariant_path() if hasattr(node, 'invariant_path') else str(node)
+                node_path = simple_id
+                if callable(node_path): node_path = node_path()
+
+            node_map[node] = simple_id
+            node_label_map[simple_id] = simple_id
+
+            # --- COLOR CALCULATION ---
+            path_segments = node_path.replace("AGGREGATE:", "").strip("/").split('/')
+            top_level_group = path_segments[0] if path_segments else 'default'
+            depth = len(path_segments) - 1
+
+            if top_level_group not in top_level_map:
+                base_color = BASE_COLOR_LIST[next_base_color_index % len(BASE_COLOR_LIST)]
+                top_level_map[top_level_group] = base_color
+                next_base_color_index += 1
+            else:
+                base_color = top_level_map[top_level_group]
+
+            final_color = lighten_color(base_color, depth)
+            NODE_COLOR_MAP[node] = final_color
+            # --- END COLOR CALCULATION ---
+
+        H = nx.relabel_nodes(G, node_map)
+
         try:
-            pos = nx.nx_pydot.graphviz_layout(G, prog="dot")
-        except ImportError:
-            print("Warning: Graphviz not found. Using spring layout.")
-            pos = nx.spring_layout(G, k=0.08, iterations=50)
+            pos_simple = nx.nx_pydot.graphviz_layout(H, prog="dot")
+            pos = {original_node: pos_simple[node_map[original_node]] for original_node in G.nodes()}
 
-        # 4. Create Edges (Traces)
-        edge_x = []
-        edge_y = []
+        except (ImportError, FileNotFoundError, Exception) as e:
+            print(f"Warning: Layout error ({type(e).__name__}). Falling back to spring layout.")
+            pos = nx.spring_layout(G, weight='weight', k=0.15, iterations=50)
 
-        for edge in G.edges():
-            x0, y0 = pos[edge[0]]
-            x1, y1 = pos[edge[1]]
-            edge_x.append(x0)
-            edge_x.append(x1)
-            edge_x.append(None)
-            edge_y.append(y0)
-            edge_y.append(y1)
-            edge_y.append(None)
 
-        edge_trace = go.Scatter(
-            x=edge_x, y=edge_y,
-            line=dict(width=1, color='#888'),
-            hoverinfo='none',
-            mode='lines'
-        )
+        # 4. Create Edges (Traces) - **MODIFIED FOR HOVER SENSITIVITY**
+        edge_traces = []
+        arrow_annotations = []
 
-        # 5. Create Nodes (Trace)
-        node_x = []
-        node_y = []
-        node_text = []
+        for u, v, data in G.edges(data=True):
+            if data.get('type') != 'dependency': continue
+
+            edge_base_color = NODE_COLOR_MAP.get(u, EDGE_COLOR_DEFAULT)
+
+            x0, y0 = pos[u]
+            x1, y1 = pos[v]
+
+            source_label = node_label_map.get(node_map.get(u), str(u))
+            target_label = node_label_map.get(node_map.get(v), str(v))
+            hover_text = f"Source: {source_label}<br>Target: {target_label}"
+
+            # 🎯 4a. GHOST HOVER TRACE: Invisible, thick line to capture hover events
+            # recalculate the x0, y0, x1, y1 for better hover area
+            # with a dr = 5
+            dr_hover = 20
+            x0_hover = x0 + (x1 - x0) * dr_hover / (( (x1 - x0)**2 + (y1 - y0)**2 )**0.5)
+            y0_hover = y0 + (y1 - y0) * dr_hover / (( (x1 - x0)**2 + (y1 - y0)**2 )**0.5)
+            x1_hover = x1 - (x1 - x0) * dr_hover / (( (x1 - x0)**2 + (y1 - y0)**2 )**0.5)
+            y1_hover = y1 - (y1 - y0) * dr_hover / (( (x1 - x0)**2 + (y1 - y0)**2 )**0.5)
+            ghost_hover_trace = go.Scatter(
+                x=[x0_hover, x1_hover, None],
+                y=[y0_hover, y1_hover, None],
+                # line=dict(width=10, color='rgba(0,0,0,0)'), # Invisible but thick line
+                line=dict(width=10, color='rgba(0,0,0,0)'), # Invisible but thick line
+                hoverinfo='text',
+                hovertext=hover_text,
+                mode='lines',
+                opacity=0, # Completely invisible
+                # Use a slightly darker color for the hover label text (optional, but good contrast)
+                hoverlabel=dict(bgcolor="white", font=dict(size=10, color=EDGE_HOVER_COLOR))
+            )
+            edge_traces.append(ghost_hover_trace)
+
+            # 🎯 4b. VISIBLE EDGE TRACE: Thin, colored line drawn over the ghost line
+            # dr_visible = 15
+            # x0_visible = x0 + (x1 - x0) * dr_visible / (( (x1 - x0)**2 + (y1 - y0)**2 )**0.5)
+            # y0_visible = y0 + (y1 - y0) * dr_visible / (( (x1 - x0)**2 + (y1 - y0)**2 )**0.5)
+            # x1_visible = x1 - (x1 - x0) * dr_visible / (( (x1 - x0)**2 + (y1 - y0)**2 )**0.5)
+            # y1_visible = y1 - (y1 - y0) * dr_visible / (( (x1 - x0)**2 + (y1 - y0)**2 )**0.5)
+            # x0, y0, x1, y1 = x0_visible, y0_visible, x1_visible, y1_visible
+            visible_edge_trace = go.Scatter(
+                x=[x0, x1, None],
+                y=[y0, y1, None],
+                line=dict(width=2.5, color=edge_base_color),
+                hoverinfo='none', # Crucially, disable hover on the visible line
+                mode='lines',
+                opacity=0.8,
+            )
+            edge_traces.append(visible_edge_trace)
+
+            arrow_length = 50
+            arrow_x0 = x1 - (arrow_length * (x1 - x0)) / (((x1 - x0)**2 + (y1 - y0)**2)**0.5)
+            arrow_y0 = y1 - (arrow_length * (y1 - y0)) / (((x1 - x0)**2 + (y1 - y0)**2)**0.5)
+            arrow_x1 = x1
+            arrow_y1 = y1
+
+            # 4c. Create Arrowhead annotation
+            arrow_annotations.append(
+                dict(
+                    ax=arrow_x0, ay=arrow_y0, axref='x', ayref='y', x=arrow_x1, y=arrow_y1, xref='x', yref='y',
+                    showarrow=True, arrowhead=2, arrowsize=2, arrowwidth=1,
+                    arrowcolor=edge_base_color,
+                    standoff=12
+
+                )
+            )
+
+
+        # 5. Create Nodes (Trace) (Unchanged)
+        node_x = []; node_y = []; node_text = []; node_colors = []
+        permanent_annotations = []
 
         for node in G.nodes():
             x, y = pos[node]
-            node_x.append(x)
-            node_y.append(y)
-            node_text.append(node.invariant_path())
+            node_x.append(x); node_y.append(y)
+            node_colors.append(NODE_COLOR_MAP[node])
 
+            if G.nodes[node].get('node_type') == 'aggregate':
+                 text_label = G.nodes[node]['label']
+            else:
+                 text_label = getattr(node, 'invariant_path', str(node))
+                 if callable(text_label): text_label = text_label()
+
+            node_text.append(text_label)
+
+            permanent_annotations.append(
+                dict(
+                    x=x, y=y + 15,
+                    xref='x', yref='y',
+                    text=text_label,
+                    showarrow=False,
+                    font=dict(size=10, color=LABEL_COLOR),
+                    xanchor='center', yanchor='bottom'
+                )
+            )
+
+        # Node trace (created last to ensure it is in the foreground)
         node_trace = go.Scatter(
             x=node_x, y=node_y,
-            mode='markers',
-            hoverinfo='text',
+            mode='markers', hoverinfo='text',
             marker=dict(
                 showscale=False,
-                color='#ADD8E6',
+                color=node_colors,
                 size=20,
                 line_width=2,
-                line_color='#333'
-            )
+                line_color=NODE_BORDER_COLOR
+            ),
         )
         node_trace.text = node_text
 
-        # 6. Create Figure
+        # 6 & 7. Figure, Annotations, and Output (Unchanged)
         layout = go.Layout(
             title=dict(
-                text=f'Dependency DAG: {MANAGER.c.invariant_path()}',
-                font=dict(size=16)
+                text=f'Dependency DAG: {MANAGER.c.invariant_path()}', font=dict(size=16)
             ),
-            showlegend=False,
-            hovermode='closest',
+            showlegend=False, hovermode='closest',
             margin=dict(b=20,l=5,r=5,t=40),
             xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
             yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
             plot_bgcolor='white'
         )
 
-        fig = go.Figure(data=[edge_trace, node_trace], layout=layout)
+        # TRACE ORDER: (Ghost Edges -> Visible Edges -> Nodes)
+        fig = go.Figure(data=edge_traces + [node_trace], layout=layout)
 
-        # Add Arrowheads
-        annotations = []
-        for edge in G.edges():
-            x0, y0 = pos[edge[0]]
-            x1, y1 = pos[edge[1]]
+        annotations = arrow_annotations
 
-            annotations.append(
-                dict(
-                    ax=x0, ay=y0, axref='x', ayref='y',
-                    x=x1, y=y1, xref='x', yref='y',
-                    showarrow=True,
-                    arrowhead=2,
-                    arrowsize=1,
-                    arrowwidth=1,
-                    arrowcolor='#888',
-                    standoff=12
-                )
-            )
+        if show_permanent_labels:
+            annotations.extend(permanent_annotations)
+
         fig.update_layout(annotations=annotations)
 
-        # 7. Output Handling (Save vs Show)
         if output_file:
-            # If the filename does not have an extension, default to .html
-            if "." not in output_file:
-                output_file += ".html"
-
+            if "." not in output_file: output_file += ".html"
             print(f"Saving graph to {output_file}...")
 
-            # Check for static image formats (requires 'kaleido' package)
             if output_file.endswith(('.png', '.jpeg', '.jpg', '.pdf', '.svg')):
                 try:
                     fig.write_image(output_file)
                     print("Done.")
                 except ValueError as e:
-                     print(f"Error saving image: {e}")
-                     print("To save as static image, install kaleido: pip install -U kaleido")
+                    print(f"Error saving image: {e}")
+                    print("To save as static image, install kaleido: pip install -U kaleido")
             else:
-                # Default to HTML (Interactive)
                 fig.write_html(output_file)
                 print(f"Done. Open '{output_file}' in your browser to view.")
+
 
     def help_draw_dag(self):
         """Help message for draw-dag."""

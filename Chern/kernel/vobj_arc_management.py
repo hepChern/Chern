@@ -1,5 +1,6 @@
 """ The module for arc management of VObject
 """
+import os
 from os.path import join
 from time import time
 from logging import getLogger
@@ -13,7 +14,9 @@ CHERN_CACHE = ChernCache.instance()
 logger = getLogger("ChernLogger")
 
 import networkx as nx
-
+import re # Import regex for pattern matching
+from collections import defaultdict
+from itertools import combinations
 
 class ArcManagement(Core):
     """ The class for arc management of VObject
@@ -295,44 +298,186 @@ class ArcManagement(Core):
         self.remove_arc_from(obj)
         self.remove_alias(alias)
 
+    # def build_dependency_dag(self, exclude_algorithms=False):
+    #     """
+    #     Builds a NetworkX Directed Acyclic Graph (DAG) containing this object
+    #     and all its recursive predecessors.
+
+    #     Nodes in the graph are the VObject objects themselves.
+    #     Edges represent the dependency (predecessor -> successor).
+
+    #     Args:
+    #         exclude_algorithms (bool): If True, VObjects of type "algorithm"
+    #                                    will be excluded from the resulting DAG.
+
+    #     Returns:
+    #         nx.DiGraph: The NetworkX DAG representing the dependency graph.
+    #     """
+    #     G = nx.DiGraph()
+
+    #     # Use a queue for a controlled graph traversal (Breadth-First Search)
+    #     # to find all unique predecessors.
+    #     # queue = [self]
+    #     sub_objects = self.sub_objects_recursively()
+    #     queue = [s for s in sub_objects if s.object_type() == "task"]
+    #     visited = {s.invariant_path() : s for s in queue}
+    #     for s in queue:
+    #         G.add_node(s)
+
+    #     # Add the starting node (self)
+    #     # if not (exclude_algorithms and self.is_algorithm()):
+    #     #   G.add_node(self)
+
+    #     while queue:
+    #         current_obj = queue.pop(0)
+
+    #         # If the current node is an excluded algorithm type, skip its processing
+    #         # but still process its predecessors if they haven't been visited.
+    #         if exclude_algorithms and current_obj.is_algorithm():
+    #             # Process predecessors only to find other non-algorithm nodes
+    #             # connected further up the chain, but don't add current_obj or its edges.
+    #             for pred_obj in current_obj.predecessors():
+    #                 pred_path = pred_obj.invariant_path()
+    #                 if pred_path not in visited:
+    #                     visited[pred_path] = pred_obj
+    #                     queue.append(pred_obj)
+    #             continue
+
+    #         # Standard processing for non-excluded nodes
+
+    #         # Check if current_obj is in the graph (it should be, unless it's the
+    #         # starting node and was excluded, but we checked that above).
+    #         if current_obj not in G:
+    #              G.add_node(current_obj) # Add if it somehow got here without being added
+
+    #         for pred_obj in current_obj.predecessors():
+    #             pred_path = pred_obj.invariant_path()
+
+    #             # Apply the exclusion rule for the predecessor
+    #             is_excluded = exclude_algorithms and pred_obj.is_algorithm()
+
+    #             # Add the predecessor to the queue for traversal if not visited
+    #             if pred_path not in visited:
+    #                 visited[pred_path] = pred_obj
+    #                 queue.append(pred_obj)
+
+    #             # Add the predecessor node and the dependency edge only if the
+    #             # predecessor is NOT excluded.
+    #             if not is_excluded:
+    #                 if pred_obj not in G:
+    #                     G.add_node(pred_obj)
+
+    #                 # Add the edge: Predecessor (source) -> Successor (target)
+    #                 G.add_edge(pred_obj, current_obj)
+
+    #     return G
+
+    import os
+    import re
+    import networkx as nx
+    import plotly.graph_objects as go
+    from collections import defaultdict
+    from itertools import combinations
+    # Note: nx_pydot is often imported automatically with networkx if installed,
+    # but may be needed explicitly in some environments.
+
+    # ----------------------------------------------------------------------
+    # HELPER METHOD: NODE AGGREGATION
+    # ----------------------------------------------------------------------
+
+    def _aggregate_sequential_nodes(self, G):
+        """
+        Aggregates nodes like 'path/task_0', 'path/task_1', ... into 'path/task_[0..N]'.
+        This logic should be defined as a method of the same class as build_dependency_dag.
+        """
+
+        # Matches patterns like 'prefix_number' or 'prefix_number.ext'
+        PATTERN = re.compile(r'^(.*?)_(\d+)(\..*)?$')
+
+        groups = defaultdict(lambda: {'nodes': [], 'indices': []})
+
+        # 1. Group nodes by prefix
+        for node in list(G.nodes()):
+            path = node.invariant_path() if hasattr(node, 'invariant_path') else str(node)
+            match = PATTERN.match(path)
+
+            if match:
+                prefix = match.group(1) + '_'
+                index = int(match.group(2))
+
+                # Grouping key should include the directory path
+                group_key = os.path.dirname(path) + ":" + prefix
+
+                groups[group_key]['nodes'].append(node)
+                groups[group_key]['indices'].append(index)
+
+        # 2. Process groups and aggregate
+        for group_key, data in groups.items():
+            if len(data['nodes']) < 2:
+                continue # Only aggregate groups with 2 or more nodes
+
+            min_idx = min(data['indices'])
+            max_idx = max(data['indices'])
+
+            prefix_path = data['nodes'][0].invariant_path()
+            prefix = prefix_path[:prefix_path.rfind('_') + 1]
+
+            new_name = f"{prefix}[{min_idx}..{max_idx}]"
+            new_node_id = f"AGGREGATE:{new_name}"
+
+            # Get a representative path for spatial grouping
+            representative_path = data['nodes'][0].invariant_path()
+
+            # 3. Add the aggregated node
+            G.add_node(new_node_id,
+                       node_type='aggregate',
+                       label=new_name,
+                       aggregated_path=representative_path)
+
+            # 4. Remap Edges
+            predecessors_to_add = set()
+            successors_to_add = set()
+
+            for node_to_remove in data['nodes']:
+                # Collect unique neighbors, excluding the new aggregated node itself
+                predecessors_to_add.update([p for p in G.predecessors(node_to_remove) if p != new_node_id])
+                successors_to_add.update([s for s in G.successors(node_to_remove) if s != new_node_id])
+
+                G.remove_node(node_to_remove)
+
+            # 5. Add new dependency edges to the aggregate node
+            for pred in predecessors_to_add:
+                G.add_edge(pred, new_node_id, weight=1.0, type='dependency')
+
+            for succ in successors_to_add:
+                G.add_edge(new_node_id, succ, weight=1.0, type='dependency')
+
+        return G
+
+    # ----------------------------------------------------------------------
+    # CORE METHOD: GRAPH CONSTRUCTION
+    # ----------------------------------------------------------------------
+
     def build_dependency_dag(self, exclude_algorithms=False):
         """
-        Builds a NetworkX Directed Acyclic Graph (DAG) containing this object
-        and all its recursive predecessors.
-
-        Nodes in the graph are the VObject objects themselves.
-        Edges represent the dependency (predecessor -> successor).
-
-        Args:
-            exclude_algorithms (bool): If True, VObjects of type "algorithm"
-                                       will be excluded from the resulting DAG.
-
-        Returns:
-            nx.DiGraph: The NetworkX DAG representing the dependency graph.
+        Builds a NetworkX DiGraph optimized for visualization.
         """
         G = nx.DiGraph()
 
-        # Use a queue for a controlled graph traversal (Breadth-First Search)
-        # to find all unique predecessors.
-        # queue = [self]
+        # --- 1. Standard Graph Traversal (with Canonical Node Tracking) ---
         sub_objects = self.sub_objects_recursively()
         queue = [s for s in sub_objects if s.object_type() == "task"]
-        visited = {s.invariant_path() : s for s in queue}
+
+        # Use visited as the canonical node registry (key=path, value=unique object instance)
+        visited = {s.invariant_path(): s for s in queue}
         for s in queue:
             G.add_node(s)
-
-        # Add the starting node (self)
-        # if not (exclude_algorithms and self.is_algorithm()):
-        #   G.add_node(self)
 
         while queue:
             current_obj = queue.pop(0)
 
-            # If the current node is an excluded algorithm type, skip its processing
-            # but still process its predecessors if they haven't been visited.
+            # Exclude algorithms logic (omitted for brevity)
             if exclude_algorithms and current_obj.is_algorithm():
-                # Process predecessors only to find other non-algorithm nodes
-                # connected further up the chain, but don't add current_obj or its edges.
                 for pred_obj in current_obj.predecessors():
                     pred_path = pred_obj.invariant_path()
                     if pred_path not in visited:
@@ -340,31 +485,52 @@ class ArcManagement(Core):
                         queue.append(pred_obj)
                 continue
 
-            # Standard processing for non-excluded nodes
-
-            # Check if current_obj is in the graph (it should be, unless it's the
-            # starting node and was excluded, but we checked that above).
-            if current_obj not in G:
-                 G.add_node(current_obj) # Add if it somehow got here without being added
-
             for pred_obj in current_obj.predecessors():
                 pred_path = pred_obj.invariant_path()
-
-                # Apply the exclusion rule for the predecessor
                 is_excluded = exclude_algorithms and pred_obj.is_algorithm()
 
-                # Add the predecessor to the queue for traversal if not visited
                 if pred_path not in visited:
+                    # Node instance is new; register it and add to queue
                     visited[pred_path] = pred_obj
                     queue.append(pred_obj)
+                else:
+                    # Use the existing, canonical object instance for this path
+                    pred_obj = visited[pred_path]
 
-                # Add the predecessor node and the dependency edge only if the
-                # predecessor is NOT excluded.
                 if not is_excluded:
                     if pred_obj not in G:
                         G.add_node(pred_obj)
 
-                    # Add the edge: Predecessor (source) -> Successor (target)
-                    G.add_edge(pred_obj, current_obj)
+                    # Add standard dependency (weight=1)
+                    G.add_edge(pred_obj, current_obj, weight=1.0, type='dependency')
+
+        # --- 1.5. NODE AGGREGATION ---
+        G = self._aggregate_sequential_nodes(G)
+
+        # --- 2. Calculate Spatial Weights (Clustering) ---
+        dir_groups = defaultdict(list)
+        for node in G.nodes():
+            p = getattr(node, 'path', None) or (node.invariant_path() if hasattr(node, 'invariant_path') else str(node))
+
+            # Handle Aggregated Node path retrieval
+            if isinstance(p, str) and p.startswith("AGGREGATE:"):
+                 if G.nodes[node].get('aggregated_path'):
+                     dir_groups[os.path.dirname(G.nodes[node]['aggregated_path'])].append(node)
+                 continue
+
+            if p:
+                dir_groups[os.path.dirname(p)].append(node)
+
+        # Create 'sibling' cliques for clustering
+        for directory, siblings in dir_groups.items():
+            if len(siblings) < 2: continue
+            for u, v in combinations(siblings, 2):
+                if G.has_edge(u, v):
+                    G[u][v]['weight'] = 10.0 # Reinforce existing dependency
+                elif G.has_edge(v, u):
+                    G[v][u]['weight'] = 10.0 # Reinforce existing dependency
+                else:
+                    # Add high-weight 'sibling' edge for layout clustering
+                    G.add_edge(u, v, weight=10.0, type='sibling', style='dashed')
 
         return G
