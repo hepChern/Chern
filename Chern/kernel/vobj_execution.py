@@ -102,6 +102,8 @@ class ExecutionManagement(Core):
             sub_objects = self.sub_objects()
             pending = False
             for sub_object in sub_objects:
+                if sub_object.object_type() == "algorithm":
+                    continue
                 status = sub_object.job_status(consult_id, runner)
                 if status == "failed":
                     consult_table[self.path] = (consult_id, "failed")
