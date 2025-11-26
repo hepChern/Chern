@@ -460,6 +460,7 @@ def set_environment(env: str) -> None:
         return
     MANAGER.c.set_environment(env)
 
+
 def set_memory_limit(limit: str) -> None:
     """Set memory limit for current task."""
     if MANAGER.c.object_type() == "directory":
@@ -621,3 +622,12 @@ def workaround_postshell() -> None:
         print("Not able to call workaround if you are not in a task.")
         return
     MANAGER.c.workaround_postshell("")
+
+
+def trace(impression: str) -> None:
+    """Trace back to the task or algorithm that generated the impression."""
+    MANAGER.c.trace(impression)
+
+def history() -> None:
+    """Print the history of a task or algorithm."""
+    MANAGER.c.history()
