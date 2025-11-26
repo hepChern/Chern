@@ -38,7 +38,7 @@ class AliasManagement(Core):
         alias_to_path = self.config_file.read_variable("alias_to_path", {})
         return alias in alias_to_path.keys()
 
-    def remove_alias(self, alias: str) -> None: # UnitTest: DONE
+    def remove_alias(self, alias: str, ignore_yaml: bool = False) -> None: # UnitTest: DONE
         """ Remove the alias from the alias list."""
         if alias == "":
             return
@@ -49,13 +49,14 @@ class AliasManagement(Core):
         alias_to_path.pop(alias)
         self.config_file.write_variable("alias_to_path", alias_to_path)
         self.config_file.write_variable("path_to_alias", path_to_alias)
-        yaml_file = metadata.YamlFile(os.path.join(self.path, "chern.yaml"))
-        yaml_alias = yaml_file.read_variable("alias", [])
-        if alias in yaml_alias:
-            yaml_alias.remove(alias)
-            yaml_file.write_variable("alias", yaml_alias)
+        if not ignore_yaml:
+            yaml_file = metadata.YamlFile(os.path.join(self.path, "chern.yaml"))
+            yaml_alias = yaml_file.read_variable("alias", [])
+            if alias in yaml_alias:
+                yaml_alias.remove(alias)
+                yaml_file.write_variable("alias", yaml_alias)
 
-    def set_alias(self, alias: str, path: str) -> None: # UnitTest: DONE
+    def set_alias(self, alias: str, path: str, ignore_yaml: bool = False) -> None: # UnitTest: DONE
         """ Set the alias of the vobj by the path."""
         if alias == "":
             return
@@ -71,11 +72,12 @@ class AliasManagement(Core):
         alias_to_path[alias] = path
         self.config_file.write_variable("path_to_alias", path_to_alias)
         self.config_file.write_variable("alias_to_path", alias_to_path)
-        yaml_file = metadata.YamlFile(os.path.join(self.path, "chern.yaml"))
-        yaml_alias = yaml_file.read_variable("alias", [])
-        if alias not in yaml_alias:
-            yaml_alias.append(alias)
-            yaml_file.write_variable("alias", yaml_alias)
+        if not ignore_yaml:
+            yaml_file = metadata.YamlFile(os.path.join(self.path, "chern.yaml"))
+            yaml_alias = yaml_file.read_variable("alias", [])
+            if alias not in yaml_alias:
+                yaml_alias.append(alias)
+                yaml_file.write_variable("alias", yaml_alias)
 
     def get_alias_list(self) -> List[str]: # UnitTest: DONE
         """ Get the alias list."""

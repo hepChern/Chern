@@ -391,7 +391,7 @@ class FileManagement(Core):
                     # if in the outside directory
                     new_object.add_arc_from(pred_object)
                     alias = obj.path_to_alias(pred_object.invariant_path())
-                    new_object.set_alias(alias, pred_object.invariant_path())
+                    new_object.set_alias(alias, pred_object.invariant_path(), ignore_yaml=True)
                 else:
                     # if in the same tree
                     relative_path = self.relative_path(pred_object.path)
@@ -405,11 +405,13 @@ class FileManagement(Core):
                     )
                     new_object.set_alias(
                         alias1,
-                        self.get_vobject(norm_path).invariant_path()
+                        self.get_vobject(norm_path).invariant_path(),
+                        ignore_yaml=True
                     )
                     self.get_vobject(norm_path, self.project_path()).set_alias(
                         alias2,
-                        new_object.invariant_path()
+                        new_object.invariant_path(),
+                        ignore_yaml=True
                     )
 
             for succ_object in obj.successors():
@@ -418,8 +420,8 @@ class FileManagement(Core):
                     new_object.add_arc_to(succ_object)
                     succ_object.remove_arc_from(self)
                     alias = succ_object.path_to_alias(obj.invariant_path())
-                    succ_object.remove_alias(alias)
-                    succ_object.set_alias(alias, new_object.invariant_path())
+                    succ_object.remove_alias(alias, ignore_yaml=True)
+                    succ_object.set_alias(alias, new_object.invariant_path(), ignore_yaml=True)
 
         for obj in queue:
             for pred_object in obj.predecessors():
