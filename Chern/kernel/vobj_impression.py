@@ -1,5 +1,8 @@
 """ Module for impression management
 """
+import difflib
+import os
+
 import filecmp
 import time
 from logging import getLogger
@@ -57,12 +60,14 @@ class ImpressionManagement(Core):
         impression = self.impression()
         logger.debug("Impression: %s", impression)
         if impression is None or impression.is_zombie():
+            print("No impression or impression is zombie")
             return False
 
         logger.debug("Check the predecessors is impressed or not")
         # Fast check whether it is impressed
         for pred in self.predecessors():
             if not pred.is_impressed_fast():
+                print("Predecessor not impressed:", pred.path)
                 return False
 
         self_pred_impressions_uuid = [x.uuid for x in self.pred_impressions()]
@@ -72,6 +77,9 @@ class ImpressionManagement(Core):
         # Check whether the dependent impressions
         # are the same as the impressed things
         if self_pred_impressions_uuid != impr_pred_impressions_uuid:
+            # print("Predecessor mismatch:")
+            # print("Current preds:", self_pred_impressions_uuid)
+            # print("Impression preds:", impr_pred_impressions_uuid)
             return False
 
         logger.debug("Check the file change")
@@ -83,24 +91,34 @@ class ImpressionManagement(Core):
         # if file_list != impression.tree():
         #     return False
         if csys.sorted_tree(file_list) != csys.sorted_tree(impression_tree):
+            # print("Tree mismatch:")
+            # print("Current tree:", csys.sorted_tree(file_list))
+            # print("Impression tree:", csys.sorted_tree(impression_tree))
             return False
 
         # FIXME Add the Unit Test for this part
         alias_to_path = self.config_file.read_variable("alias_to_path", {})
         for alias in alias_to_path.keys():
             if not impression.has_alias(alias):
+                # print("Alias missing in impression:", alias)
                 return False
             if not self.alias_to_impression(alias):
+                # print("Alias missing in self:", alias)
                 return False
             uuid1 = self.alias_to_impression(alias).uuid
             uuid2 = impression.alias_to_impression_uuid(alias)
             if uuid1 != uuid2:
+                # print("Alias uuid mismatch:", alias, uuid1, uuid2)
                 return False
 
         for dirpath, dirnames, filenames in file_list: # pylint: disable=unused-variable
             for f in filenames:
                 if not filecmp.cmp(f"{self.path}/{dirpath}/{f}",
                                    f"{impression.path}/contents/{dirpath}/{f}"):
+                    # print("# File difference:")
+                    # print(f"cp {impression.path}/contents/{dirpath}/{f}",
+                    #       f"{self.path}/{dirpath}/{f} ",
+                    #       )
                     return False
         return True
 
@@ -207,3 +225,205 @@ class ImpressionManagement(Core):
         if consult_id:
             consult_table[self.path] = (consult_id, status)
         return status
+
+    def trace(self, impression=None):
+        """
+        Compare the *current* dependency DAG of `self` with the DAG stored in
+        a given impression (or the current impression if not provided).
+        Print the differences.
+
+        Output example:
+
+            === DAG Node Differences ===
+            Added nodes:   {uuid3}
+            Removed nodes: {uuid7}
+
+            === DAG Edge Differences ===
+            Added edges:   {(uuid3 -> uuid1)}
+            Removed edges: {(uuid7 -> uuid2)}
+
+        """
+        logger.debug("Tracing DAG differences for %s", self.path)
+
+        if impression is None:
+            impression = self.impression()
+        if impression is None:
+            print("No impression exists. Object is NEW.")
+            return
+        impression = VImpression(impression)
+
+        # ---------------------------------------------
+        # Build DAG from current object state
+        # ---------------------------------------------
+        def build_current_dag(obj, dag, visited):
+            if obj in visited:
+                return
+            visited.add(obj)
+
+            im = obj.impression()
+            uid = im.uuid if im else None
+            dag["nodes"].add(uid)
+
+            for p in obj.predecessors():
+                pim = p.impression()
+                puid = pim.uuid if pim else None
+                dag["nodes"].add(puid)
+                dag["edges"].add((puid, uid))
+                build_current_dag(p, dag, visited)
+
+        current_dag = {"nodes": set(), "edges": set()}
+        build_current_dag(self, current_dag, set())
+
+        # ---------------------------------------------
+        # Build DAG from stored impression
+        # ---------------------------------------------
+        def build_impression_dag(impr, dag, visited):
+            if impr.uuid in visited:
+                return
+            visited.add(impr.uuid)
+
+            dag["nodes"].add(impr.uuid)
+            for p in impr.pred_impressions():
+                dag["nodes"].add(p.uuid)
+                dag["edges"].add((p.uuid, impr.uuid))
+                build_impression_dag(p, dag, visited)
+
+        stored_dag = {"nodes": set(), "edges": set()}
+        build_impression_dag(impression, stored_dag, set())
+
+        # ------------------------------------------------------
+        # Compare nodes
+        # ------------------------------------------------------
+        added_nodes   = current_dag["nodes"] - stored_dag["nodes"]
+        removed_nodes = stored_dag["nodes"] - current_dag["nodes"]
+
+        # ------------------------------------------------------
+        # Compare edges
+        # ------------------------------------------------------
+        added_edges   = current_dag["edges"] - stored_dag["edges"]
+        removed_edges = stored_dag["edges"] - current_dag["edges"]
+
+        # ------------------------------------------------------
+        # Pretty print
+        # ------------------------------------------------------
+        print("\n=== DAG Node Differences ===")
+        print(f"Added nodes:   {added_nodes if added_nodes else '{}'}")
+        print(f"Removed nodes: {removed_nodes if removed_nodes else '{}'}")
+
+        print("\n=== DAG Edge Differences ===")
+        print(f"Added edges:   {added_edges if added_edges else '{}'}")
+        print(f"Removed edges: {removed_edges if removed_edges else '{}'}")
+
+        # --------------------------------------------------------
+        #  Check parent-child relationships between removed/added
+        # --------------------------------------------------------
+        print("\n=== Detailed Diff (removed parent → added child) ===")
+
+        def is_parent(parent_uuid, child_uuid):
+            return parent_uuid in VImpression(child_uuid).parents()
+
+        def colorize_diff(diff_lines):
+            RED = "\033[31m"
+            GREEN = "\033[32m"
+            CYAN = "\033[36m"
+            BOLD = "\033[1m"
+            RESET = "\033[0m"
+
+            out = []
+            for line in diff_lines:
+                if line.startswith("---") or line.startswith("+++"):
+                    out.append(BOLD + CYAN + line.rstrip() + RESET)
+                elif line.startswith("@@"):
+                    out.append(CYAN + line.rstrip() + RESET)
+                elif line.startswith("-"):
+                    out.append(RED + line.rstrip() + RESET)
+                elif line.startswith("+"):
+                    out.append(GREEN + line.rstrip() + RESET)
+                else:
+                    out.append(line.rstrip())
+
+            return "\n".join(out)
+
+
+        for r in removed_nodes:
+            for a in added_nodes:
+                if is_parent(r, a):
+                    print(f"\n--- Change detected: {r} → {a}")
+
+                    # --------------------------------------------------------
+                    #  Run impression diff
+                    # --------------------------------------------------------
+                    old_impr = VImpression(r) if r else None
+                    new_impr = VImpression(a) if a else None
+
+                    if not (old_impr and new_impr):
+                        print("One of the impressions does not exist, skipping diff.")
+                        continue
+
+                    old_root = old_impr.path + "/contents"
+                    new_root = new_impr.path + "/contents"
+
+                    # Compare file lists (sorted, relative paths)
+                    old_files = []
+                    new_files = []
+
+                    for dirpath, _, files in os.walk(old_root):
+                        for f in files:
+                            rel = os.path.relpath(os.path.join(dirpath, f), old_root)
+                            old_files.append(rel)
+
+                    for dirpath, _, files in os.walk(new_root):
+                        for f in files:
+                            rel = os.path.relpath(os.path.join(dirpath, f), new_root)
+                            new_files.append(rel)
+
+                    old_files_set = set(old_files)
+                    new_files_set = set(new_files)
+
+                    common = old_files_set & new_files_set
+                    removed_files = old_files_set - new_files_set
+                    added_files   = new_files_set - old_files_set
+
+                    print(f"  Added files:   {added_files}")
+                    print(f"  Removed files: {removed_files}")
+
+                    # diff the common files
+                    for rel in sorted(common):
+                        old_f = os.path.join(old_root, rel)
+                        new_f = os.path.join(new_root, rel)
+
+                        with open(old_f, 'r', errors="ignore") as f1:
+                            old_txt = f1.readlines()
+                        with open(new_f, 'r', errors="ignore") as f2:
+                            new_txt = f2.readlines()
+
+                        diff = list(difflib.unified_diff(
+                            old_txt, new_txt,
+                            fromfile=f"{r}:{rel}",
+                            tofile=f"{a}:{rel}"
+                        ))
+
+                        if diff:
+                            diff = colorize_diff(diff).splitlines(keepends=True)
+                            print(f"\n  Diff in file: {rel}")
+                            print("".join(diff))
+
+                    # Calculate the changes in incoming edges
+                    added_edges_to_a = [e[0] for e in added_edges if e[1] == a]
+                    removed_edges_from_r = [e[0] for e in removed_edges if e[0] == r]
+                    # estimating the difference in edges
+                    edge_diff_a = set(added_edges_to_a) - set(removed_edges_from_r)
+                    edge_diff_r = set(removed_edges_from_r) - set(added_edges_to_a)
+                    print(f"  Changed incoming edges to {a}:")
+                    print(f"    Added from:   {edge_diff_a if edge_diff_a else '{}'}")
+                    print(f"    Removed from: {edge_diff_r if edge_diff_r else '{}'}")
+
+
+        print("\nTrace complete.\n")
+
+    def history(self, options=None):
+        """Print all the parents of the current impression.
+        """
+        parents = self.impression().parents()
+        for i, uuid in enumerate(parents):
+            print(f"[{i}] {uuid}")
