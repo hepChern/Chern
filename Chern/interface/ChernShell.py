@@ -1033,6 +1033,22 @@ class ChernShell(cmd.Cmd):
             "Requires 'matplotlib' and optionally 'pydot' or 'pygraphviz' for best layout.",
         ]))
 
+    def do_trace(self, arg):
+        """Trace the execution of the current task."""
+        try:
+            obj = arg.split()[0] if arg else None
+            shell.trace(obj)
+        except Exception as e:
+            print(f"Error tracing execution: {e}")
+
+    def do_history(self, arg):
+        """Print the history of the current object."""
+        try:
+            obj = arg.split()[0] if arg else None
+            shell.history()
+        except Exception as e:
+            print(f"Error printing history: {e}")
+
     def do_system_shell(self, arg):
         """Enter a system shell (bash). Type 'exit' or press Ctrl-D to return."""
         print("Entering system shell. Type 'exit' to return.\n")
