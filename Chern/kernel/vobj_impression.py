@@ -60,14 +60,14 @@ class ImpressionManagement(Core):
         impression = self.impression()
         logger.debug("Impression: %s", impression)
         if impression is None or impression.is_zombie():
-            print("No impression or impression is zombie")
+            # print("No impression or impression is zombie")
             return False
 
         logger.debug("Check the predecessors is impressed or not")
         # Fast check whether it is impressed
         for pred in self.predecessors():
             if not pred.is_impressed_fast():
-                print("Predecessor not impressed:", pred.path)
+                # print("Predecessor not impressed:", pred.path)
                 return False
 
         self_pred_impressions_uuid = [x.uuid for x in self.pred_impressions()]
