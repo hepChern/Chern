@@ -92,32 +92,6 @@ def _cd_by_path(line: str) -> None:
     MANAGER.switch_current_object(line)
     os.chdir(MANAGER.c.path)
 
-
-def mv(source: str, destination: str) -> None:
-    """
-    Move or rename file. Will keep the link relationship.
-    mv SOURCE DEST
-    or
-    mv SOURCE DIRECTORY
-    BECAREFULL!!
-    mv SOURCE1 SOURCE2 SOURCE3 ... DIRECTORY is not supported
-    """
-    if destination.startswith("@/") or destination == "@":
-        destination = os.path.normpath(csys.project_path() + destination.strip("@"))
-    else:
-        destination = os.path.abspath(destination)
-    if csys.exists(destination):
-        destination += "/" + source
-    if source.startswith("@/") or source == "@":
-        source = os.path.normpath(csys.project_path() +destination.strip("@"))
-    else:
-        source = os.path.abspath(source)
-
-    result = VObject(source).move_to(destination)
-    if result.messages:  # If there are error messages
-        print(result.colored())
-
-
 def _normalize_paths(source: str, destination: str) -> tuple[str, str]:
     """Normalize source and destination paths."""
     if source.startswith("@/") or source == "@":
@@ -131,7 +105,6 @@ def _normalize_paths(source: str, destination: str) -> tuple[str, str]:
         destination = os.path.abspath(destination)
 
     return source, destination
-
 
 def _validate_copy_operation(source: str, destination: str) -> bool:
     """Validate if copy operation is allowed. Returns True if valid."""
@@ -170,6 +143,34 @@ def _adjust_destination_path(source: str, destination: str) -> str:
         if dest_obj.object_type() in ("directory", "project"):
             return os.path.join(destination, os.path.basename(source))
     return destination
+
+
+def mv(source: str, destination: str) -> None:
+    """
+    Move or rename file. Will keep the link relationship.
+    mv SOURCE DEST
+    or
+    mv SOURCE DIRECTORY
+    BECAREFULL!!
+    mv SOURCE1 SOURCE2 SOURCE3 ... DIRECTORY is not supported
+    """
+    source, destination = _normalize_paths(source, destination)
+    print(source)
+    print(destination)
+    # Initial validation
+    if not _validate_copy_operation(source, destination):
+        return
+
+    # Adjust destination if it's an existing directory
+    destination = _adjust_destination_path(source, destination)
+
+    # Validate again after path adjustment
+    if not _validate_copy_operation(source, destination):
+        return
+
+    result = VObject(source).move_to(destination)
+    if result.messages:  # If there are error messages
+        print(result.colored())
 
 
 def cp(source: str, destination: str) -> None:
