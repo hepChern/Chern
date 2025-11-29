@@ -389,7 +389,7 @@ class TestChernCommunicator(unittest.TestCase):
         result = self.comm.collect(impression)
 
         mock_get.assert_called_once_with(
-            "http://localhost:8080/collect/abc123", timeout=10
+            "http://localhost:8080/collect/abc123", timeout=10000
         )
         self.assertEqual(result, "collected")
 

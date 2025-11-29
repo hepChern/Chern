@@ -1009,7 +1009,7 @@ class TestChernVTask(unittest.TestCase):
                 os.path.join(obj_tsk.path, "chern.yaml")
             )
             mock_yaml_instance.read_variable.assert_called_once_with(
-                "kubernetes_memory_limit", ""
+                "memory_limit", ""
             )
             self.assertEqual(memory_limit, "1Gi")
 
@@ -1202,7 +1202,7 @@ class TestChernVTask(unittest.TestCase):
                 os.path.join(obj_tsk.path, "chern.yaml")
             )
             mock_yaml_instance.write_variable.assert_called_once_with(
-                "kubernetes_memory_limit", "2Gi"
+                "memory_limit", "2Gi"
             )
 
         os.chdir("..")
