@@ -48,17 +48,73 @@ chern
 
 ## Common Commands
 
-| Command | Description |
-|---------|-------------|
-| `cd` | Navigate between objects |
-| `ls` | List contents of current object |
-| `mkdir` | Create new objects |
-| `mv` | Rename or move objects |
-| `rm` | Remove objects |
-| `add input/output` | Configure task inputs/outputs |
-| `set_algorithm` | Associate algorithm with task |
-| `run` | Execute a task |
-| `readme edit` | Edit the README for any object |
+| Command       | Description                                                     |
+| ------------- | --------------------------------------------------------------- |
+| `ls`          | Lists the contents of the current directory or specified path.  |
+| `cd`          | Changes the current working directory.                          |
+| `mkdir`       | Creates a new directory.                                        |
+| `cp`          | Copies files or directories.                                    |
+| `mv`          | Moves or renames files or directories.                          |
+| `rm`          | Removes (deletes) files or directories.                         |
+| `cat`         | Concatenates files and prints their content to standard output. |
+| `ls-projects` | Lists all available projects within the system environment.     |
+| `cd-project`  | Changes the active project context (project-level `cd`).        |
+
+
+| Command              | Description                                                             |
+| -------------------- | ----------------------------------------------------------------------- |
+| `create-algorithm`   | Defines a new reusable algorithm (self-contained script or code block). |
+| `add-algorithm`      | Adds an existing algorithm to a project or task configuration.          |
+| `add-input`          | Specifies a single input dependency for an algorithm or task.           |
+| `add-multi-inputs`   | Specifies multiple inputs at once (batch / parameter sweep).            |
+| `add-parameter`      | Defines a configurable parameter for a task or algorithm.               |
+| `remove-input`       | Removes a specified input dependency.                                   |
+| `remove-parameter`   | Removes a specified parameter.                                          |
+| `create-task`        | Defines a single task instance of an algorithm.                         |
+| `create-multi-tasks` | Defines multiple tasks simultaneously.                                  |
+| `create-data`        | Registers a new data object or artifact.                                |
+| `edit-script`        | Opens the script associated with an algorithm for editing.              |
+| `edit-readme`        | Opens and edits the README documentation.                               |
+
+| Command           | Description                                                    |
+| ----------------- | -------------------------------------------------------------- |
+| `submit`          | Submits tasks or workflows for execution.                      |
+| `status`          | Checks execution status (pending, running, failed, completed). |
+| `kill`            | Cancels a running or pending job.                              |
+| `collect`         | Retrieves outputs or artifacts from completed tasks.           |
+| `trace`           | Displays detailed execution logs or history.                   |
+| `display`         | Prints output or results to the console.                       |
+| `runners`         | Lists available execution environments.                        |
+| `register-runner` | Adds a new execution environment (runner).                     |
+| `remove-runner`   | Deletes an existing runner configuration.                      |
+
+
+| Command         | Description                                                         |
+| --------------- | ------------------------------------------------------------------- |
+| `import`        | Imports data, tasks, or definitions from another project or source. |
+| `export`        | Exports data or definitions to an external location.                |
+| `import-file`   | Imports a specific external file into the managed file system.      |
+| `rm-file`       | Removes a managed file.                                             |
+| `mv-file`       | Moves or renames a managed file.                                    |
+| `auto-download` | Automatically retrieves required inputs or dependencies.            |
+
+
+| Command            | Description                                     |
+| ------------------ | ----------------------------------------------- |
+| `config`           | Displays or modifies configuration settings.    |
+| `setenv`           | Sets an environment variable.                   |
+| `set-environment`  | Configures the execution environment for tasks. |
+| `set-memory-limit` | Defines the maximum memory allowed for a task.  |
+
+| Command             | Description                                                      |
+| ------------------- | ---------------------------------------------------------------- |
+| `draw-dag-graphviz` | Generates a static DAG visualization using Graphviz.             |
+| `draw-live-dag`     | Generates a live (dynamic) DAG visualization with task statuses. |
+| `impress`           | Records a key result or output for reporting.                    |
+| `impression`        | Lists or retrieves recorded impressions.                         |
+| `clean-impressions` | Deletes old or unwanted impressions.                             |
+| `view`              | Opens a file or component in the default viewer/editor.          |
+
 
 See the [User Guide](doc/source/UserGuide.md) for more details.
 
