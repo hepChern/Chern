@@ -3,7 +3,7 @@ Navigation Command Handlers for Chern Shell.
 
 This module contains command handlers for navigation operations.
 """
-# pylint: disable=broad-exception-caught,no-member
+# pylint: disable=broad-exception-caught,no-member,import-outside-toplevel
 import os
 from ..interface import shell
 from ..interface.ChernManager import get_manager
@@ -33,6 +33,7 @@ class NavigationCommands:
             current_path = os.path.relpath(
                 MANAGER.c.path, csys.project_path(MANAGER.c.path)
             )
+            # pylint: disable=attribute-defined-outside-init
             self.prompt = (
                 f"[Chern][{current_project_name}][{current_path}]\n>>>> "
             )

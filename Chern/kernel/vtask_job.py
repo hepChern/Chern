@@ -65,7 +65,8 @@ class JobManager(Core):
         cherncc = ChernCommunicator.instance()
         cherncc.deposit_with_data(self.impression(), path)
 
-    def workaround_preshell(self) -> (tuple[bool, str]): # pylint: disable=too-many-locals
+    # pylint: disable=too-many-locals,too-many-branches
+    def workaround_preshell(self) -> (tuple[bool, str]):
         """ Pre-shell workaround"""
         # FIXME: Still WIP
         print("Start constructing workaround environment...")
@@ -107,7 +108,8 @@ class JobManager(Core):
             else:
                 csys.mkdir(os.path.join(pre_temp_dir, "outputs"))
                 for f in outputs:
-                    cherncc.export(pre.impression(), f"{f}", os.path.join(pre_temp_dir, "outputs", f))
+                    output_path = os.path.join(pre_temp_dir, "outputs", f)
+                    cherncc.export(pre.impression(), f"{f}", output_path)
             alias = self.path_to_alias(pre.invariant_path())
             print(f"Linking preceding job {pre} to {alias}")
             # Make a symlink

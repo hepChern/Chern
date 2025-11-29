@@ -350,6 +350,7 @@ def import_file(filename: str) -> None:
         print(result.colored())
 
 
+# pylint: disable=too-many-branches
 def add_input(path: str, alias: str) -> None:
     """Add an input to current task or algorithm."""
     if MANAGER.c.object_type() == "directory":
@@ -596,7 +597,7 @@ def config() -> None:
     editor = yaml_file.read_variable("editor", "vi")
     # Generate a template file if the config file does not exist
     if not os.path.exists(f"{MANAGER.c.path}/chern.yaml"):
-        with open(f"{MANAGER.c.path}/chern.yaml", "w") as f:
+        with open(f"{MANAGER.c.path}/chern.yaml", "w", encoding="utf-8") as f:
             if MANAGER.c.object_type() == "task":
                 f.write("""environment: chern
 memory_limit: 256Mi
@@ -610,15 +611,20 @@ commands:
     subprocess.call([editor, f"{MANAGER.c.path}/chern.yaml"])
 
 def danger_call(cmd: str) -> None:
+    """Execute a dangerous command and print the result."""
     message = MANAGER.c.danger_call(cmd)
     print(message.colored())
 
+
 def workaround_preshell() -> tuple[bool, str]:
+    """Execute pre-shell workaround for the current task."""
     if not MANAGER.c.is_task():
         return (False, "Not able to call workaround if you are not in a task.")
     return MANAGER.c.workaround_preshell()
 
+
 def workaround_postshell() -> None:
+    """Execute post-shell workaround for the current task."""
     if not MANAGER.c.is_task():
         print("Not able to call workaround if you are not in a task.")
         return
@@ -628,6 +634,7 @@ def workaround_postshell() -> None:
 def trace(impression: str) -> None:
     """Trace back to the task or algorithm that generated the impression."""
     MANAGER.c.trace(impression)
+
 
 def history() -> None:
     """Print the history of a task or algorithm."""

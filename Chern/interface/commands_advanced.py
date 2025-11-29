@@ -77,14 +77,14 @@ class AdvancedCommands:
         except Exception as e:
             print(f"Error tracing execution: {e}")
 
-    def do_history(self, arg):
+    def do_history(self, _arg):
         """Print the history of the current object."""
         try:
             shell.history()
         except Exception as e:
             print(f"Error printing history: {e}")
 
-    def do_system_shell(self, arg):
+    def do_system_shell(self, _arg):
         """Enter a system shell (bash). Type 'exit' or Ctrl-D to return."""
         print("Entering system shell. Type 'exit' to return.\n")
 

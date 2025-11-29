@@ -36,4 +36,3 @@ class Message:
         """ Return colored messages
         """
         return "".join(colorize(text, msg_type) for text, msg_type in self.messages)
-

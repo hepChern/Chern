@@ -1,3 +1,4 @@
+# pylint: disable=invalid-name
 """
 Chern
 """
@@ -9,5 +10,3 @@ __version_info = ()
 __revision__ = ''
 __license__ = ''
 __date__ = ''
-
-

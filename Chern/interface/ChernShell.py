@@ -1,3 +1,4 @@
+# pylint: disable=invalid-name
 """
 Chern Shell Interface Module.
 
@@ -40,10 +41,6 @@ class ChernShell(
     - ChernShellVisualization: DAG drawing and visualization
     """
 
-    def __init__(self):
-        """Initialize the shell and set custom completer delimiters."""
-        super().__init__()
-
-    def init(self) -> None:
+    def init(self) -> None:  # pylint: disable=arguments-differ
         """Initialize the shell with current project context."""
         super().init(MANAGER)

@@ -2,20 +2,22 @@
 Created by Mingrui Zhao @ 2017
 define some classes and functions used throughout the project
 """
+# pylint: disable=broad-exception-caught
 # Load module
-import time
 import os
 import shutil
 import uuid
 import hashlib
 import tarfile
 import subprocess
-from typing import List, Tuple, Any, Optional, Iterator
+from typing import Any
 
 from contextlib import contextmanager
 from colored import fg, attr
 
 # Utility Functions
+
+
 def generate_uuid() -> str:
     """ Generate a uuid
     """
@@ -120,11 +122,13 @@ def exists(path: str) -> bool:
         current_path = os.path.join(current_path, part)
     return True
 
+
 def mkdir(directory):
     """ Safely make directory
     """
     if not os.path.exists(directory):
         os.makedirs(directory)
+
 
 def symlink(src, dst):
     """ Safely create a symbolic link
@@ -134,6 +138,7 @@ def symlink(src, dst):
     if os.path.exists(dst):
         os.remove(dst)
     os.symlink(src, dst)
+
 
 def list_dir(src):
     """ List the files in the directory
@@ -176,10 +181,11 @@ def tree_excluded(path):
         file_tree.append([dirpath, sorted(dirnames), sorted(filenames)])
     return sorted(file_tree)
 
+
 def sorted_tree(tree):
     """ Sort the tree
     """
-    for dirpath, dirnames, filenames in tree:
+    for _, dirnames, filenames in tree:
         dirnames.sort()
         filenames.sort()
     tree.sort()
@@ -203,7 +209,6 @@ def project_path(path=None):
 def dir_mtime(path):
     """ Get the latest modified time of the directory
     """
-    now = time.time()
     mtime = os.path.getmtime(path)
     if path.endswith(".chern"):
         mtime = -1
@@ -258,10 +263,12 @@ def copy_tree(src, dst):
     """
     shutil.copytree(src, dst)
 
+
 def move(src, dst):
     """ Move the directory
     """
     shutil.move(src, dst)
+
 
 def make_archive(filename, dir_name):
     """ Make the tar.gz file
@@ -326,7 +333,8 @@ def create_temp_dir(prefix="chern_tmp_"):
 #     """
 #     md5_hash = hashlib.md5()
 #
-#     for root, dirs, files in os.walk(directory_path): # pylint: disable=unused-variable
+#     for root, dirs, files in os.walk(directory_path):
+#         # pylint: disable=unused-variable
 #         for file in files:
 #             file_path = os.path.join(root, file)
 #             file_hash = md5sum(file_path)
@@ -343,10 +351,10 @@ def md5sum(file_path):
             hash_md5.update(chunk)
     return hash_md5.hexdigest()
 
+
 def dir_md5(directory_path):
+    """Get the md5sum of the directory."""
     md5_hash = hashlib.md5()
-    """ Get the md5sum of the directory
-    """
     for root, dirs, files in os.walk(directory_path):
         dirs.sort()
         files.sort()
@@ -356,6 +364,7 @@ def dir_md5(directory_path):
             md5_hash.update(file_hash.encode("utf-8"))
 
     return md5_hash.hexdigest()
+
 
 @contextmanager
 def open_subprocess(command):

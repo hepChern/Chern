@@ -16,6 +16,7 @@ from ..utils import csys
 MANAGER = get_manager()
 
 
+# pylint: disable=too-many-public-methods
 class ChernShellCompletions:
     """Mixin class providing all completion handlers for Chern Shell."""
 
@@ -44,7 +45,7 @@ class ChernShellCompletions:
         return self.get_completions(current_path, filepath, line)
 
     def complete_setenv(
-        self, text: str, line: str, _begidx: int, _endidx: int
+        self, text: str, _line: str, _begidx: int, _endidx: int
     ) -> list:
         """Complete set_environment command with available environments."""
         # Get the list
@@ -237,7 +238,7 @@ class ChernShellCompletions:
     # ====================================================================
 
     def complete_set_environment(
-        self, text: str, line: str, _begidx: int, _endidx: int
+        self, text: str, _line: str, _begidx: int, _endidx: int
     ) -> list:
         """Complete set_environment command with available environments."""
         environments = self.readline_file.read_variable("environments", [])

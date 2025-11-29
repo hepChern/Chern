@@ -20,15 +20,19 @@
         prologue:
             print the prologue
 """
-import click
+# pylint: disable=broad-exception-caught,import-outside-toplevel
 import os
+import logging
 from os.path import join
+from logging import getLogger
+
+import click
+
 from .kernel import vproject
 from .utils import csys
 from .utils import metadata
 from .interface.ChernShell import ChernShell
-from logging import getLogger
-import logging
+
 
 def is_first_time():
     """ Check if it is the first time to use the software """
@@ -43,6 +47,7 @@ def start_first_time():
 
 
 def start_chern_command_line():
+    """Start the Chern command line interface."""
     logger = getLogger("ChernLogger")
     handler = logging.StreamHandler()
     formatter = logging.Formatter('[%(asctime)s][%(levelname)s] %(message)s')
@@ -81,7 +86,8 @@ def cli(ctx):
             ):
 
                 print("No project is selected as the current project")
-                print("Please use ``chern workon PROJECT''' to select a project")
+                msg = "Please use ``chern workon PROJECT''' to select"
+                print(msg + " a project")
                 print("Please use ``chern projects'' to list all the projects")
             else:
                 start_chern_command_line()
@@ -131,14 +137,15 @@ def use(path):
 def projects():
     """ List all the projects """
     try:
-        config_file = metadata.ConfigFile(csys.local_config_dir()+"/config.json")
-        projects = config_file.read_variable("projects_path")
+        config_path = csys.local_config_dir() + "/config.json"
+        config_file = metadata.ConfigFile(config_path)
+        projects_list = config_file.read_variable("projects_path")
         current_project = config_file.read_variable("current_project")
-        for project in projects.keys():
+        for project in projects_list.keys():
             if project == current_project:
-                print("*", project, ":", projects[project])
+                print("*", project, ":", projects_list[project])
             else:
-                print(project, ":", projects[project])
+                print(project, ":", projects_list[project])
     except Exception as e:
         print("Fail to list all the projects:", e)
 
@@ -151,12 +158,12 @@ def workon(project):
         config_file = metadata.ConfigFile(
             join(csys.local_config_dir(), "config.json")
         )
-        projects = config_file.read_variable("projects_path")
-        if project in projects.keys():
+        projects_list = config_file.read_variable("projects_path")
+        if project in projects_list.keys():
             config_file.write_variable("current_project", project)
             print("Switch to project: ", project)
         else:
-            print("Project ``{}'' not found".format(project))
+            print(f"Project ``{project}'' not found")
     except Exception as e:
         print("Fail to switch to the project:", e)
 
@@ -169,18 +176,18 @@ def remove(project):
         config_file = metadata.ConfigFile(
             join(csys.local_config_dir, "config.json")
         )
-        projects = config_file.read_variable("projects_path")
+        projects_list = config_file.read_variable("projects_path")
         current_project = config_file.read_variable("current_project")
         if project == current_project:
             config_file.write_variable("current_project", "")
 
-        if project in projects:
-            projects.pop(project)
-            config_file.write_variable("projects_path", projects)
+        if project in projects_list:
+            projects_list.pop(project)
+            config_file.write_variable("projects_path", projects_list)
             print("Remove project: ", project)
         else:
-            print("Project ``{}'' not found".format(project))
-    except Exception as e:
+            print(f"Project ``{project}'' not found")
+    except Exception:
         print("Fail to remove the project")
 
 
@@ -198,15 +205,24 @@ def prologue():
           @ Niels Bohr Institute, Copenhagen University
     Email: mingrui.zhao@mail.labz0.org
 
-    I started the project when I was a undergraduate student in Tsinghua University and working for LHCb collaboration.
-    And the software in LHCb is usually named after the Great name, such as ``Gauss'' and ``Davinci''.
-    The term ``Chern''(陈) is a common surname in China and it is usually written as ``Chen'' in English now.
-    The unusual spelling "Chern" is a transliteration in the old Gwoyeu Romatzyh (GR) romanization used in the early twentieth century China.
-    Nowadays, when written in the form of ``Chern'', it usually refer to ``Shiing-Shen Chern'',
-    the great Chinese-American mathematician who made fundamental contributions to differential geometry and topology.
-    The well-known ``Chern classes'', ``Chern–Gauss–Bonnet theorem'' and many others are named after him.
+    I started the project when I was a undergraduate student in Tsinghua \
+University and working for LHCb collaboration.
+    And the software in LHCb is usually named after the Great name, such \
+as ``Gauss'' and ``Davinci''.
+    The term ``Chern''(陈) is a common surname in China and it is usually \
+written as ``Chen'' in English now.
+    The unusual spelling "Chern" is a transliteration in the old Gwoyeu \
+Romatzyh (GR) romanization used in the early twentieth century China.
+    Nowadays, when written in the form of ``Chern'', it usually refer to \
+``Shiing-Shen Chern'',
+    the great Chinese-American mathematician who made fundamental \
+contributions to differential geometry and topology.
+    The well-known ``Chern classes'', ``Chern–Gauss–Bonnet theorem'' and \
+many others are named after him.
     This is the origin of the software name.
     """)
+
+
 @click.group()
 def cli_sh():
     """ Chern command line command
@@ -215,6 +231,7 @@ def cli_sh():
 
 @cli_sh.command()
 def ls():
+    """List files in the current directory."""
     from Chern.interface import shell
     shell.ls("")
 
@@ -222,28 +239,23 @@ def ls():
 @cli_sh.command()
 @click.argument("path", type=str)
 def mkdir(path):
+    """Create a directory at the specified path."""
     from Chern.interface import shell
     shell.mkdir(path)
-
-
-@cli_sh.command()
-def ls_projects():
-    from Chern.interface import shell
-    shell.ls_projects("")
-
 
 @cli_sh.command()
 @click.argument("project", type=str)
 def cd_project(project):
-    """ Switch to the project ``PROJECT'
-    '"""
+    """Switch to the project ``PROJECT'."""
     from Chern.interface import shell
     shell.cd_project(project)
 
 
 def sh():
+    """Entry point for shell commands."""
     cli_sh()
 
 
 def main():
-    cli()
+    """Main entry point for the Chern CLI."""
+    cli()  # pylint: disable=no-value-for-parameter

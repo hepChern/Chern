@@ -22,6 +22,7 @@ MANAGER = get_manager()
 class ChernShellVisualization:
     """Mixin class providing visualization methods for Chern Shell."""
 
+    # pylint: disable=too-many-branches
     def do_draw_live_dag(self, arg):
         """Draw interactive DAG using Plotly."""
         import plotly.graph_objects as go
@@ -74,14 +75,14 @@ class ChernShellVisualization:
 
         # Build Graph
         try:
-            G = MANAGER.c.build_dependency_dag(
+            graph = MANAGER.c.build_dependency_dag(
                 exclude_algorithms=exclude_algorithms
             )
         except Exception as e:
             print(f"Error building DAG: {e}")
             return
 
-        if not G.nodes:
+        if not graph.nodes:
             print("Graph is empty.")
             return
 
@@ -93,11 +94,11 @@ class ChernShellVisualization:
         node_color_map = {}
         node_depth_map = {}
 
-        for node in G.nodes():
+        for node in graph.nodes():
 
-            if G.nodes[node].get('node_type') == 'aggregate':
-                simple_id = G.nodes[node]['label']
-                node_path = G.nodes[node].get('aggregated_path', simple_id)
+            if graph.nodes[node].get('node_type') == 'aggregate':
+                simple_id = graph.nodes[node]['label']
+                node_path = graph.nodes[node].get('aggregated_path', simple_id)
             else:
                 simple_id = (
                     node.invariant_path() if hasattr(node, 'invariant_path')
@@ -129,10 +130,10 @@ class ChernShellVisualization:
             final_color = lighten_color(base_color, depth)
             node_color_map[node] = final_color
 
-        H = nx.relabel_nodes(G, node_map)
+        relabeled_graph = nx.relabel_nodes(graph, node_map)
 
         # TRUE RANKED GRAPHVIZ LAYOUT
-        P = nx.nx_pydot.to_pydot(H)
+        pydot_graph = nx.nx_pydot.to_pydot(relabeled_graph)
 
         rank_groups = {}
         for node_name, depth in node_depth_map.items():
@@ -142,26 +143,26 @@ class ChernShellVisualization:
             r = pydot.Subgraph(rank='same')
             for n in nodes:
                 r.add_node(pydot.Node(n))
-            P.add_subgraph(r)
+            pydot_graph.add_subgraph(r)
 
-        P.set_rankdir("TB")
-        P.set_nodesep("0.7")
-        P.set_ranksep("1.3")
+        pydot_graph.set_rankdir("TB")
+        pydot_graph.set_nodesep("0.7")
+        pydot_graph.set_ranksep("1.3")
 
         try:
-            H2 = nx.nx_pydot.from_pydot(P)
-            pos_simple = nx.nx_pydot.graphviz_layout(H2, prog="dot")
+            layout_graph = nx.nx_pydot.from_pydot(pydot_graph)
+            pos_simple = nx.nx_pydot.graphviz_layout(layout_graph, prog="dot")
             pos = {
                 original: pos_simple[node_map[original]]
-                for original in G.nodes()
+                for original in graph.nodes()
             }
         except Exception as e:
             print(f"Warning: Graphviz failed, using spring layout ({e}).")
-            pos = nx.spring_layout(G, k=0.25, iterations=80)
+            pos = nx.spring_layout(graph, k=0.25, iterations=80)
 
         # LABEL COLLISION AVOIDANCE (VERTICAL JITTER)
         rank_bins = defaultdict(list)
-        for node in G.nodes():
+        for node in graph.nodes():
             x, y = pos[node]
             rank_bins[round(y, 3)].append(node)
 
@@ -182,7 +183,7 @@ class ChernShellVisualization:
         edge_traces = []
         arrow_annotations = []
 
-        for u, v, data in G.edges(data=True):
+        for u, v, data in graph.edges(data=True):
             if data.get('type') != 'dependency':
                 continue
 
@@ -209,63 +210,61 @@ class ChernShellVisualization:
             ghost_hover_trace = go.Scatter(
                 x=list(curve_x) + [None],
                 y=list(curve_y) + [None],
-                line=dict(width=12, color='rgba(0,0,0,0)'),
+                line={'width': 12, 'color': 'rgba(0,0,0,0)'},
                 hoverinfo='text',
                 hovertext=hover_text,
                 mode='lines',
                 opacity=0,
-                hoverlabel=dict(
-                    bgcolor="white",
-                    font=dict(size=10, color=edge_hover_color)
-                )
+                hoverlabel={
+                    'bgcolor': 'white',
+                    'font': {'size': 10, 'color': edge_hover_color}
+                }
             )
             edge_traces.append(ghost_hover_trace)
 
             visible_edge_trace = go.Scatter(
                 x=list(curve_x) + [None],
                 y=list(curve_y) + [None],
-                line=dict(width=2.5, color=edge_base_color),
+                line={'width': 2.5, 'color': edge_base_color},
                 hoverinfo='none',
                 mode='lines',
                 opacity=0.85,
             )
             edge_traces.append(visible_edge_trace)
 
-            arrow_annotations.append(
-                dict(
-                    ax=curve_x[-3], ay=curve_y[-3],
-                    x=curve_x[-1], y=curve_y[-1],
-                    axref='x', ayref='y', xref='x', yref='y',
-                    showarrow=True,
-                    arrowhead=2,
-                    arrowsize=2,
-                    arrowwidth=1,
-                    arrowcolor=edge_base_color,
-                    standoff=10,
-                )
-            )
+            arrow_annotations.append({
+                'ax': curve_x[-3], 'ay': curve_y[-3],
+                'x': curve_x[-1], 'y': curve_y[-1],
+                'axref': 'x', 'ayref': 'y', 'xref': 'x', 'yref': 'y',
+                'showarrow': True,
+                'arrowhead': 2,
+                'arrowsize': 2,
+                'arrowwidth': 1,
+                'arrowcolor': edge_base_color,
+                'standoff': 10,
+            })
 
         # Nodes + Labels
         node_x, node_y, node_text, node_colors = [], [], [], []
         permanent_annotations = []
 
-        for node in G.nodes():
+        for node in graph.nodes():
             x, y = pos[node]
             node_x.append(x)
             node_y.append(y)
             node_colors.append(node_color_map[node])
 
             # Visible label
-            if G.nodes[node].get('node_type') == 'aggregate':
-                text_label = G.nodes[node]['label']
+            if graph.nodes[node].get('node_type') == 'aggregate':
+                text_label = graph.nodes[node]['label']
             else:
                 text_label = getattr(node, 'invariant_path', str(node))
                 if callable(text_label):
                     text_label = text_label()
 
             # Predecessors & Successors
-            preds = list(G.predecessors(node))
-            succs = list(G.successors(node))
+            preds = list(graph.predecessors(node))
+            succs = list(graph.successors(node))
 
             def _fmt(n):
                 v = getattr(n, 'invariant_path', str(n))
@@ -287,43 +286,42 @@ class ChernShellVisualization:
             node_text.append(hover_text)
 
             # Permanent annotation (static label on canvas)
-            permanent_annotations.append(
-                dict(
-                    x=x, y=y + 20,
-                    xref='x', yref='y',
-                    text=text_label,
-                    showarrow=False,
-                    font=dict(size=10, color=label_color),
-                    xanchor='center', yanchor='bottom'
-                )
-            )
+            permanent_annotations.append({
+                'x': x, 'y': y + 20,
+                'xref': 'x', 'yref': 'y',
+                'text': text_label,
+                'showarrow': False,
+                'font': {'size': 10, 'color': label_color},
+                'xanchor': 'center', 'yanchor': 'bottom'
+            })
 
         node_trace = go.Scatter(
             x=node_x, y=node_y,
             mode='markers',
             hoverinfo='text',
             text=node_text,
-            marker=dict(
-                showscale=False,
-                color=node_colors,
-                size=20,
-                line_width=2,
-                line_color=node_border_color
-            ),
+            marker={
+                'showscale': False,
+                'color': node_colors,
+                'size': 20,
+                'line_width': 2,
+                'line_color': node_border_color
+            },
         )
 
         # Final Figure
         layout = go.Layout(
-            title=dict(
-                text=f'Dependency DAG: {MANAGER.c.invariant_path()}',
-                font=dict(size=16)
-            ),
+            title={
+                'text': f'Dependency DAG: {MANAGER.c.invariant_path()}',
+                'font': {'size': 16}
+            },
             showlegend=False,
             hovermode='closest',
-            margin=dict(b=20, l=5, r=5, t=40),
-            xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
-            yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
-            plot_bgcolor='white'
+            margin={'b': 20, 'l': 5, 'r': 5, 't': 40},
+            xaxis={'showgrid': False, 'zeroline': False,
+                   'showticklabels': False},
+            yaxis={'showgrid': False, 'zeroline': False,
+                   'showticklabels': False}
         )
 
         fig = go.Figure(data=edge_traces + [node_trace], layout=layout)
@@ -398,14 +396,14 @@ class ChernShellVisualization:
 
         # Build graph
         try:
-            G = MANAGER.c.build_dependency_dag(
+            graph = MANAGER.c.build_dependency_dag(
                 exclude_algorithms=exclude_algorithms
             )
         except Exception as e:
             print(f"Error building DAG: {e}")
             return
 
-        if not G.nodes:
+        if not graph.nodes:
             print("Graph empty.")
             return
 
@@ -416,10 +414,10 @@ class ChernShellVisualization:
         color_idx = 0
         layers = defaultdict(list)
 
-        for n in G.nodes():
-            if G.nodes[n].get('node_type') == 'aggregate':
-                sid = str(G.nodes[n]['label'])
-                path = G.nodes[n].get('aggregated_path', sid)
+        for n in graph.nodes():
+            if graph.nodes[n].get('node_type') == 'aggregate':
+                sid = str(graph.nodes[n]['label'])
+                path = graph.nodes[n].get('aggregated_path', sid)
             else:
                 v = getattr(n, 'invariant_path', str(n))
                 sid = str(v() if callable(v) else v)
@@ -440,24 +438,24 @@ class ChernShellVisualization:
                 ]
                 color_idx += 1
 
-            G.nodes[n]['color_fill'] = lighten_color(
+            graph.nodes[n]['color_fill'] = lighten_color(
                 top_color_map[top], depth
             )
-            G.nodes[n]['label'] = sid
+            graph.nodes[n]['label'] = sid
 
         # Transitive Reduction
         dependency_graph = nx.DiGraph(
-            (u, v, data) for u, v, data in G.edges(data=True)
+            (u, v, data) for u, v, data in graph.edges(data=True)
             if data.get('type') == 'dependency'
         )
-        dependency_graph.add_nodes_from(G.nodes(data=True))
+        dependency_graph.add_nodes_from(graph.nodes(data=True))
 
         try:
-            H = nx.relabel_nodes(dependency_graph, node_map)
-            Hred = nx.transitive_reduction(H)
+            relabeled_graph = nx.relabel_nodes(dependency_graph, node_map)
+            reduced_graph = nx.transitive_reduction(relabeled_graph)
             inv = {v: k for k, v in node_map.items()}
             reduced_dependency_edges = [
-                (inv[u], inv[v]) for u, v in Hred.edges()
+                (inv[u], inv[v]) for u, v in reduced_graph.edges()
             ]
         except Exception:
             reduced_dependency_edges = [
@@ -492,11 +490,11 @@ class ChernShellVisualization:
         )
 
         # Add Nodes
-        for n in G.nodes():
+        for n in graph.nodes():
             dot.node(
                 node_map[n],
-                label=G.nodes[n]['label'],
-                fillcolor=G.nodes[n]['color_fill'],
+                label=graph.nodes[n]['label'],
+                fillcolor=graph.nodes[n]['color_fill'],
                 color='#333333',
                 fontcolor='#111111'
             )
@@ -506,7 +504,7 @@ class ChernShellVisualization:
             u_id = node_map[u]
             v_id = node_map[v]
 
-            source_color = G.nodes[u]['color_fill']
+            source_color = graph.nodes[u]['color_fill']
 
             dot.edge(
                 u_id, v_id,

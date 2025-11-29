@@ -41,7 +41,7 @@ class TaskCommands:
                 begin_number_of_tasks = int(objs[1])
             end_number_of_tasks = int(objs[-1])
             number_of_tasks = end_number_of_tasks - begin_number_of_tasks
-            if number_of_tasks <= 0 and number_of_tasks > 10000:
+            if number_of_tasks <= 0 or number_of_tasks > 10000:
                 print("Error: number_of_tasks should be between 1 and 10000.")
                 return
             for i in range(begin_number_of_tasks, end_number_of_tasks):
@@ -120,7 +120,7 @@ class TaskCommands:
                 begin_number_of_tasks = int(objs[2])
             end_number_of_tasks = int(objs[-1])
             number_of_tasks = end_number_of_tasks - begin_number_of_tasks
-            if number_of_tasks <= 0 and number_of_tasks > 10000:
+            if number_of_tasks <= 0 or number_of_tasks > 10000:
                 print("Error: number_of_tasks should be between 1 and 10000.")
                 return
             for i in range(begin_number_of_tasks, end_number_of_tasks):

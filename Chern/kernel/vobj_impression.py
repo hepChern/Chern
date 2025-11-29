@@ -226,6 +226,7 @@ class ImpressionManagement(Core):
             consult_table[self.path] = (consult_id, status)
         return status
 
+    # pylint: disable=too-many-locals,too-many-statements
     def trace(self, impression=None):
         """
         Compare the *current* dependency DAG of `self` with the DAG stored in
@@ -323,22 +324,23 @@ class ImpressionManagement(Core):
             return parent_uuid in VImpression(child_uuid).parents()
 
         def colorize_diff(diff_lines):
-            RED = "\033[31m"
-            GREEN = "\033[32m"
-            CYAN = "\033[36m"
-            BOLD = "\033[1m"
-            RESET = "\033[0m"
+            # ANSI color codes for terminal output
+            _red = "\033[31m"
+            _green = "\033[32m"
+            _cyan = "\033[36m"
+            _bold = "\033[1m"
+            _reset = "\033[0m"
 
             out = []
             for line in diff_lines:
                 if line.startswith("---") or line.startswith("+++"):
-                    out.append(BOLD + CYAN + line.rstrip() + RESET)
+                    out.append(_bold + _cyan + line.rstrip() + _reset)
                 elif line.startswith("@@"):
-                    out.append(CYAN + line.rstrip() + RESET)
+                    out.append(_cyan + line.rstrip() + _reset)
                 elif line.startswith("-"):
-                    out.append(RED + line.rstrip() + RESET)
+                    out.append(_red + line.rstrip() + _reset)
                 elif line.startswith("+"):
-                    out.append(GREEN + line.rstrip() + RESET)
+                    out.append(_green + line.rstrip() + _reset)
                 else:
                     out.append(line.rstrip())
 
@@ -392,9 +394,11 @@ class ImpressionManagement(Core):
                         old_f = os.path.join(old_root, rel)
                         new_f = os.path.join(new_root, rel)
 
-                        with open(old_f, 'r', errors="ignore") as f1:
+                        with open(old_f, 'r', encoding='utf-8',
+                                  errors="ignore") as f1:
                             old_txt = f1.readlines()
-                        with open(new_f, 'r', errors="ignore") as f2:
+                        with open(new_f, 'r', encoding='utf-8',
+                                  errors="ignore") as f2:
                             new_txt = f2.readlines()
 
                         diff = list(difflib.unified_diff(
@@ -418,10 +422,9 @@ class ImpressionManagement(Core):
                     print(f"    Added from:   {edge_diff_a if edge_diff_a else '{}'}")
                     print(f"    Removed from: {edge_diff_r if edge_diff_r else '{}'}")
 
-
         print("\nTrace complete.\n")
 
-    def history(self, options=None):
+    def history(self):
         """Print all the parents of the current impression.
         """
         parents = self.impression().parents()

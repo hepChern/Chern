@@ -4,7 +4,7 @@ Base Shell Module for Chern.
 This module provides the core functionality for the Chern interactive shell,
 including initialization, prompt management, command parsing, and completion.
 """
-# pylint: disable=broad-exception-caught
+# pylint: disable=broad-exception-caught,import-outside-toplevel
 import cmd
 import os
 from ..utils import csys
@@ -75,12 +75,12 @@ class ChernShellBase(cmd.Cmd):
         if not parts:
             return None, None, line
 
-        cmd = parts[0].replace('-', '_')  # Replace only in command
+        command = parts[0].replace('-', '_')  # Replace only in command
         rest = parts[1] if len(parts) > 1 else ""
 
         # Recombine for superclass parsing
-        cmd, arg, line = super().parseline(f"{cmd} {rest}".strip())
-        return cmd, arg, line
+        command, arg, line = super().parseline(f"{command} {rest}".strip())
+        return command, arg, line
 
     def completenames(self, text, *ignored):
         """Complete command names based on user input."""
@@ -96,12 +96,13 @@ class ChernShellBase(cmd.Cmd):
 
         return matches
 
-    def completedefault(self, text, line, begidx, endidx):
+    # pylint: disable=arguments-differ,too-many-nested-blocks
+    def completedefault(self, text, _line, _begidx, endidx):
         """Default completion handler for commands that don't exist."""
         # Check if we're still typing the first word (no spaces)
-        if ' ' not in line.strip():
+        if ' ' not in _line.strip():
             # Get the full command being typed so far
-            full_command = line[:endidx].strip()
+            full_command = _line[:endidx].strip()
 
             # Get all matching commands
             all_matches = self.completenames(full_command)
@@ -142,7 +143,7 @@ class ChernShellBase(cmd.Cmd):
         return True
 
     def get_completions(
-        self, current_path: str, filepath: str, line: str
+        self, current_path: str, filepath: str, _line: str
     ) -> list:
         """Get command completions for file paths."""
         # Calculate the full path to look in

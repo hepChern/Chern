@@ -18,10 +18,13 @@ def colorize(string: str, color: str = "") -> str:
     }
     if color == "":
         possible_status = {
-            "success": ["success", "done", "pass", "connected", "ok", "good", "succeed", "validated", "archived", "finished", "true"],
+            "success": ["success", "done", "pass", "connected", "ok", "good",
+                        "succeed", "validated", "archived", "finished",
+                        "true"],
             "normal": ["normal", "info", "new", "raw", "empty"],
             "running": ["running", "start", "pending", "queued", "waiting"],
-            "warning": ["warning", "error", "fail", "failed", "wrong", "incorrect", "bad", "unsuccessful", "false"],
+            "warning": ["warning", "error", "fail", "failed", "wrong",
+                        "incorrect", "bad", "unsuccessful", "false"],
             "debug": ["debug"],
         }
         for key, value in possible_status.items():

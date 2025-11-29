@@ -1,22 +1,22 @@
 """ The module for arc management of VObject
 """
 import os
+import re
+from collections import defaultdict
+from itertools import combinations
+from logging import getLogger
 from os.path import join
 from time import time
-from logging import getLogger
+
+import networkx as nx
 
 from ..utils import csys
 from .vobj_core import Core
-
 from .chern_cache import ChernCache
 
 CHERN_CACHE = ChernCache.instance()
 logger = getLogger("ChernLogger")
 
-import networkx as nx
-import re # Import regex for pattern matching
-from collections import defaultdict
-from itertools import combinations
 
 class ArcManagement(Core):
     """ The class for arc management of VObject
@@ -372,34 +372,26 @@ class ArcManagement(Core):
 
     #     return G
 
-    import os
-    import re
-    import networkx as nx
-    import plotly.graph_objects as go
-    from collections import defaultdict
-    from itertools import combinations
-    # Note: nx_pydot is often imported automatically with networkx if installed,
-    # but may be needed explicitly in some environments.
-
     # ----------------------------------------------------------------------
     # HELPER METHOD: NODE AGGREGATION
     # ----------------------------------------------------------------------
 
-    def _aggregate_sequential_nodes(self, G):
+    # pylint: disable=too-many-locals
+    def _aggregate_sequential_nodes(self, graph):
         """
         Aggregates nodes like 'path/task_0', 'path/task_1', ... into 'path/task_[0..N]'.
         This logic should be defined as a method of the same class as build_dependency_dag.
         """
 
         # Matches patterns like 'prefix_number' or 'prefix_number.ext'
-        PATTERN = re.compile(r'^(.*?)_(\d+)(\..*)?$')
+        _sequential_pattern = re.compile(r'^(.*?)_(\d+)(\..*)?$')
 
         groups = defaultdict(lambda: {'nodes': [], 'indices': []})
 
         # 1. Group nodes by prefix
-        for node in list(G.nodes()):
+        for node in list(graph.nodes()):
             path = node.invariant_path() if hasattr(node, 'invariant_path') else str(node)
-            match = PATTERN.match(path)
+            match = _sequential_pattern.match(path)
 
             if match:
                 prefix = match.group(1) + '_'
@@ -429,7 +421,7 @@ class ArcManagement(Core):
             representative_path = data['nodes'][0].invariant_path()
 
             # 3. Add the aggregated node
-            G.add_node(new_node_id,
+            graph.add_node(new_node_id,
                        node_type='aggregate',
                        label=new_name,
                        aggregated_path=representative_path)
@@ -440,29 +432,34 @@ class ArcManagement(Core):
 
             for node_to_remove in data['nodes']:
                 # Collect unique neighbors, excluding the new aggregated node itself
-                predecessors_to_add.update([p for p in G.predecessors(node_to_remove) if p != new_node_id])
-                successors_to_add.update([s for s in G.successors(node_to_remove) if s != new_node_id])
+                preds = [p for p in graph.predecessors(node_to_remove)
+                         if p != new_node_id]
+                predecessors_to_add.update(preds)
+                succs = [s for s in graph.successors(node_to_remove)
+                         if s != new_node_id]
+                successors_to_add.update(succs)
 
-                G.remove_node(node_to_remove)
+                graph.remove_node(node_to_remove)
 
             # 5. Add new dependency edges to the aggregate node
             for pred in predecessors_to_add:
-                G.add_edge(pred, new_node_id, weight=1.0, type='dependency')
+                graph.add_edge(pred, new_node_id, weight=1.0, type='dependency')
 
             for succ in successors_to_add:
-                G.add_edge(new_node_id, succ, weight=1.0, type='dependency')
+                graph.add_edge(new_node_id, succ, weight=1.0, type='dependency')
 
-        return G
+        return graph
 
     # ----------------------------------------------------------------------
     # CORE METHOD: GRAPH CONSTRUCTION
     # ----------------------------------------------------------------------
 
+    # pylint: disable=too-many-locals,too-many-branches
     def build_dependency_dag(self, exclude_algorithms=False):
         """
         Builds a NetworkX DiGraph optimized for visualization.
         """
-        G = nx.DiGraph()
+        graph = nx.DiGraph()
 
         # --- 1. Standard Graph Traversal (with Canonical Node Tracking) ---
         sub_objects = self.sub_objects_recursively()
@@ -471,7 +468,7 @@ class ArcManagement(Core):
         # Use visited as the canonical node registry (key=path, value=unique object instance)
         visited = {s.invariant_path(): s for s in queue}
         for s in queue:
-            G.add_node(s)
+            graph.add_node(s)
 
         while queue:
             current_obj = queue.pop(0)
@@ -498,39 +495,49 @@ class ArcManagement(Core):
                     pred_obj = visited[pred_path]
 
                 if not is_excluded:
-                    if pred_obj not in G:
-                        G.add_node(pred_obj)
+                    if pred_obj not in graph:
+                        graph.add_node(pred_obj)
 
                     # Add standard dependency (weight=1)
-                    G.add_edge(pred_obj, current_obj, weight=1.0, type='dependency')
+                    graph.add_edge(pred_obj, current_obj, weight=1.0, type='dependency')
 
         # --- 1.5. NODE AGGREGATION ---
-        G = self._aggregate_sequential_nodes(G)
+        graph = self._aggregate_sequential_nodes(graph)
 
         # --- 2. Calculate Spatial Weights (Clustering) ---
         dir_groups = defaultdict(list)
-        for node in G.nodes():
-            p = getattr(node, 'path', None) or (node.invariant_path() if hasattr(node, 'invariant_path') else str(node))
+        for node in graph.nodes():
+            p = getattr(node, 'path', None)
+            if not p:
+                if hasattr(node, 'invariant_path'):
+                    p = node.invariant_path()
+                else:
+                    p = str(node)
 
             # Handle Aggregated Node path retrieval
             if isinstance(p, str) and p.startswith("AGGREGATE:"):
-                 if G.nodes[node].get('aggregated_path'):
-                     dir_groups[os.path.dirname(G.nodes[node]['aggregated_path'])].append(node)
-                 continue
+                if graph.nodes[node].get('aggregated_path'):
+                    agg_path = graph.nodes[node]['aggregated_path']
+                    dir_groups[os.path.dirname(agg_path)].append(node)
+                continue
 
             if p:
                 dir_groups[os.path.dirname(p)].append(node)
 
         # Create 'sibling' cliques for clustering
-        for directory, siblings in dir_groups.items():
-            if len(siblings) < 2: continue
-            for u, v in combinations(siblings, 2):
-                if G.has_edge(u, v):
-                    G[u][v]['weight'] = 10.0 # Reinforce existing dependency
-                elif G.has_edge(v, u):
-                    G[v][u]['weight'] = 10.0 # Reinforce existing dependency
+        for siblings in dir_groups.values():
+            if len(siblings) < 2:
+                continue
+            for node_u, node_v in combinations(siblings, 2):
+                if graph.has_edge(node_u, node_v):
+                    # Reinforce existing dependency
+                    graph[node_u][node_v]['weight'] = 10.0
+                elif graph.has_edge(node_v, node_u):
+                    # Reinforce existing dependency
+                    graph[node_v][node_u]['weight'] = 10.0
                 else:
                     # Add high-weight 'sibling' edge for layout clustering
-                    G.add_edge(u, v, weight=10.0, type='sibling', style='dashed')
+                    graph.add_edge(node_u, node_v, weight=10.0,
+                                   type='sibling', style='dashed')
 
-        return G
+        return graph

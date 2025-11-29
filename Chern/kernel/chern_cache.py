@@ -5,7 +5,7 @@ used by other parts of the application.
 """
 from ..utils import csys
 
-class ChernCache:
+class ChernCache:  # pylint: disable=too-many-instance-attributes
     """
     The class is the cache of the application.
     """
