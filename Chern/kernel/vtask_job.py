@@ -78,7 +78,7 @@ class JobManager(Core):
             if not pre.is_impressed_fast():
                 return (False, f"Preceding job {pre} is not impressed")
             pre_status = pre.job_status()
-            if pre_status != "finished":
+            if pre_status not in ("finished", "archived"):
                 return (False, f"Preceding job {pre} is not finished")
             cherncc.collect(pre.impression())
 
@@ -101,9 +101,13 @@ class JobManager(Core):
             pre_temp_dir = csys.create_temp_dir(prefix="chernimp_")
             outputs = cherncc.output_files(pre.impression())
             print(pre_temp_dir)
-            csys.mkdir(os.path.join(pre_temp_dir, "outputs"))
-            for f in outputs:
-                cherncc.export(pre.impression(), f"{f}", os.path.join(pre_temp_dir, "outputs", f))
+            if pre.environment() == "rawdata":
+                for f in outputs:
+                    cherncc.export(pre.impression(), f"{f}", os.path.join(pre_temp_dir, f))
+            else:
+                csys.mkdir(os.path.join(pre_temp_dir, "outputs"))
+                for f in outputs:
+                    cherncc.export(pre.impression(), f"{f}", os.path.join(pre_temp_dir, "outputs", f))
             alias = self.path_to_alias(pre.invariant_path())
             print(f"Linking preceding job {pre} to {alias}")
             # Make a symlink
